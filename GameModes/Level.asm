@@ -1,3 +1,7 @@
+; KNOWN ISSUES:
+; - Changing scroll direction results in "ghost tiles"
+; - One tile near top right corner does not update properly
+
 section "Level map",wramx
 def LEVEL_MAX_SCREENS = 16
 def LEVEL_ROW_SIZE = 16
@@ -34,6 +38,7 @@ Level_CameraOffsetX:    db
 Level_CameraOffsetY:    db
 Level_CameraMaxX:       dw
 Level_CameraMaxY:       db
+Level_CameraXPrev:      db
 
 Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 1 = ???
@@ -156,10 +161,13 @@ GM_Level:
     xor     a
     ldh     [rSCX],a
     ld      [Level_CameraX],a
+    ld      [Level_CameraX+1],a
     ld      [Level_CameraSubX],a
+    
     ldh     [rSCY],a
     ld      [Level_CameraY],a
     ld      [Level_CameraSubY],a
+    
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21
     ldh     [rLCDC],a
     ld      a,IEF_VBLANK
@@ -167,7 +175,7 @@ GM_Level:
     ei
     
 LevelLoop:
-    ld      b,b
+    
     ld      a,[Level_CameraY]
     ld      h,a
     ld      a,[Level_CameraSubY]
@@ -178,6 +186,9 @@ LevelLoop:
     ld      b,a
     ld      c,0
     add     hl,bc
+    bit     7,h
+    jr      z,.negativeY
+.positiveY
     call    Math_Neg16
     srl     h
     rr      l
@@ -185,7 +196,17 @@ LevelLoop:
     rr      l
     srl     h
     rr      l
-    ld      b,h
+    jr      :+
+.negativeY
+    srl     h
+    rr      l
+    srl     h
+    rr      l
+    srl     h
+    rr      l
+    call    Math_Neg16
+    dec     hl
+:   ld      b,h
     ld      c,l
     pop     hl
     add     hl,bc
@@ -194,15 +215,75 @@ LevelLoop:
     ld      a,l
     ld      [Level_CameraSubY],a
     
-    ld      a,[Level_CameraY]
-    ldh     [rSCY],a
     ld      a,[Level_CameraX]
     ldh     [rSCX],a
     
+    ld      a,[Level_CameraY]
+    ldh     [rSCY],a
     
-
+    ld      hl,Level_CameraTargetY
+    ldh     a,[hHeldButtons]
+    bit     BIT_UP,a
+    call    nz,.up
+    ldh     a,[hHeldButtons]
+    bit     BIT_DOWN,a
+    call    nz,.down
+    
+    ld      hl,Level_CameraX
+    ldh     a,[hHeldButtons]
+    bit     BIT_LEFT,a
+    call    nz,.left
+    ldh     a,[hHeldButtons]
+    bit     BIT_RIGHT,a
+    call    nz,.right
+    
+    ; level redraw logic
+    ld      a,[Level_CameraX]
+    add     $c0
+    ld      h,high(Level_Map)
+    ld      l,a
+    jr      nc,:+
+    inc     h
+:   ld      a,[Level_CameraX+1]
+    add     h
+    ld      h,a
+    ld      a,[Level_CameraX]
+    ld      b,a
+    ld      a,[Level_CameraXPrev]
+    cp      b
+    jr      z,.skipredraw
+    jr      c,:+
+    dec     h
+:   ld      a,l
+    ld      b,[hl]
+    call    DrawMetatile
+    ld      a,[Level_CameraX]
+    ld      [Level_CameraXPrev],a
+.skipredraw
     rst     WaitForVBlank
-    jr      LevelLoop
+    jp      LevelLoop
+.up
+    dec     [hl]
+    ret
+.down
+    inc     [hl]
+    ret
+.left
+    ld      a,[hl]
+    sub     1   ; apparently dec doesn't affect carry so I *have* to do this
+    ld      [hl],a
+    ret     nc
+    inc     hl
+    dec     [hl]
+    ret
+.right
+    ld      a,[hl]
+    add     1   ; apparently inc doesn't affect carry so I *have* to do this
+    ld      [hl],a
+    ret     nc
+    inc     hl
+    inc     [hl]
+    ret
     
 LoadTileset:
     ; load GFX

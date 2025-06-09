@@ -99,7 +99,7 @@ GetTileProperties:
     pop     af
     ret
     
-; Input:    A = Tile coordinates
+; Input:    A = Tile coordinates (upper nybble = X, lower nybble = Y)
 ;           B = Tile ID
 ; Output:   Metatile to screen RAM
 ; Destroys: BC, DE, HL
