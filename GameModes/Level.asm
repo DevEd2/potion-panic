@@ -1,7 +1,3 @@
-; KNOWN ISSUES:
-; - Changing scroll direction results in "ghost tiles"
-; - One tile near top right corner does not update properly
-
 section "Level map",wramx
 def LEVEL_MAX_SCREENS = 16
 def LEVEL_ROW_SIZE = 16
@@ -39,6 +35,7 @@ Level_CameraOffsetY:    db
 Level_CameraMaxX:       dw
 Level_CameraMaxY:       db
 Level_CameraXPrev:      db
+Level_ScrollAmount:     db
 
 Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 1 = ???
@@ -168,15 +165,45 @@ GM_Level:
     ld      [Level_CameraY],a
     ld      [Level_CameraSubY],a
     
+    ld      [Level_ScrollAmount],a
+    
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21
     ldh     [rLCDC],a
     ld      a,IEF_VBLANK
     ldh     [rIE],a
     ei
     
-LevelLoop:
+LevelLoop:    
+    ld      a,[Level_CameraX]
+    ld      [Level_CameraXPrev],a
+    ld      b,a
+    ld      hl,Level_CameraX
+    ldh     a,[hHeldButtons]
+    bit     BIT_LEFT,a
+    call    nz,.left
+    ldh     a,[hHeldButtons]
+    bit     BIT_RIGHT,a
+    call    nz,.right
+    ld      hl,Level_CameraTargetY
+    ldh     a,[hHeldButtons]
+    bit     BIT_UP,a
+    call    nz,.up
+    ldh     a,[hHeldButtons]
+    bit     BIT_DOWN,a
+    call    nz,.down
     
-    ld      a,[Level_CameraY]
+    ld      a,[Level_CameraX]
+    sub     b
+    jr      z,:+
+    jr      nc,.scrollright
+.scrollleft
+    ld      a,-1
+    ld      [Level_ScrollAmount],a
+    jr      :+
+.scrollright
+    ld      a,1
+    ld      [Level_ScrollAmount],a
+:   ld      a,[Level_CameraY]
     ld      h,a
     ld      a,[Level_CameraSubY]
     ld      l,a
@@ -221,45 +248,56 @@ LevelLoop:
     ld      a,[Level_CameraY]
     ldh     [rSCY],a
     
-    ld      hl,Level_CameraTargetY
-    ldh     a,[hHeldButtons]
-    bit     BIT_UP,a
-    call    nz,.up
-    ldh     a,[hHeldButtons]
-    bit     BIT_DOWN,a
-    call    nz,.down
+
     
-    ld      hl,Level_CameraX
-    ldh     a,[hHeldButtons]
-    bit     BIT_LEFT,a
-    call    nz,.left
-    ldh     a,[hHeldButtons]
-    bit     BIT_RIGHT,a
-    call    nz,.right
     
     ; level redraw logic
+    ld      a,[Level_ScrollAmount]
+    ld      e,a
+    
+    
+    
     ld      a,[Level_CameraX]
-    add     $c0
+    and     $f0
+    ld      b,a
+    ld      a,[Level_CameraXPrev]
+    and     $f0
+    cp      b
+    jr      z,.skipredraw
+    
     ld      h,high(Level_Map)
+    ld      a,[Level_CameraX]
+    and     $f0
+    add     $b0
     ld      l,a
     jr      nc,:+
     inc     h
+    
 :   ld      a,[Level_CameraX+1]
     add     h
     ld      h,a
-    ld      a,[Level_CameraX]
-    ld      b,a
-    ld      a,[Level_CameraXPrev]
-    cp      b
-    jr      z,.skipredraw
-    jr      c,:+
+    
+    bit     7,e
+    jr      z,:+
     dec     h
+    ld      a,l
+    add     $40
+    ld      l,a
+    jr      nc,:+
+    inc     h
+    
 :   ld      a,l
-    ld      b,[hl]
+    ld      c,16
+:   ld      b,[hl]
+    push    bc
     call    DrawMetatile
-    ld      a,[Level_CameraX]
-    ld      [Level_CameraXPrev],a
+    pop     bc
+    inc     l
+    inc     a
+    dec     c
+    jr      nz,:-
 .skipredraw
+    
     rst     WaitForVBlank
     jp      LevelLoop
 .up
