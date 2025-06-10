@@ -1,3 +1,7 @@
+; KNOWN ISSUES:
+; - Changing scroll direction results in "ghost tiles"
+; - One tile near top right corner does not update properly
+
 section "Level map",wramx
 def LEVEL_MAX_SCREENS = 16
 def LEVEL_ROW_SIZE = 16
@@ -258,9 +262,11 @@ LevelLoop:
     
     
     ld      a,[Level_CameraX]
+    inc     a
     and     $f0
     ld      b,a
     ld      a,[Level_CameraXPrev]
+    inc     a
     and     $f0
     cp      b
     jr      z,.skipredraw
