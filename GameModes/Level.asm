@@ -39,7 +39,7 @@ Level_CameraOffsetY:    db
 Level_CameraMaxX:       dw
 Level_CameraMaxY:       db
 Level_CameraXPrev:      db
-Level_ScrollAmount:     db
+Level_ScrollDir:     db
 
 Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 1 = ???
@@ -64,6 +64,11 @@ GM_Level:
     ld      e,0
     call    MemFill
 
+    ; init player
+    call    InitPlayer
+    xor     a
+    ldh     [rVBK],a
+
     ; load test level - TEMP HACK, remove later
     farload hl,Map_testlevel
     ; level size
@@ -71,8 +76,16 @@ GM_Level:
     ld      [Level_Size],a
     inc     a
     ld      b,a
-    ; player start position - TODO, skip for now
+    ; player start position
+    ld      a,[hl]
+    and     $f0
+    add     16
+    ld      [Player_XPos],a
     ld      a,[hl+]
+    swap    a
+    and     $f0
+    add     16
+    ld      [Player_YPos],a
     ; music - TODO, skip for now
     ld      a,[hl+]
     ld      a,[hl+]
@@ -157,9 +170,7 @@ GM_Level:
     xor     a
     ld      [Level_CameraTargetX],a
     ld      a,[Level_CameraMaxY]
-    ld      [Level_CameraTargetY],a
     
-    xor     a
     ldh     [rSCX],a
     ld      [Level_CameraX],a
     ld      [Level_CameraX+1],a
@@ -169,44 +180,57 @@ GM_Level:
     ld      [Level_CameraY],a
     ld      [Level_CameraSubY],a
     
-    ld      [Level_ScrollAmount],a
+    ld      [Level_ScrollDir],a
     
-    ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21
+    ld      a,256-SCRN_Y
+    ld      [Level_CameraY],a
+    ld      [Level_CameraTargetY],a
+    
+    ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16
     ldh     [rLCDC],a
     ld      a,IEF_VBLANK
     ldh     [rIE],a
     ei
     
-LevelLoop:    
-    ld      a,[Level_CameraX]
-    ld      [Level_CameraXPrev],a
-    ld      b,a
-    ld      hl,Level_CameraX
-    ldh     a,[hHeldButtons]
-    bit     BIT_LEFT,a
-    call    nz,.left
-    ldh     a,[hHeldButtons]
-    bit     BIT_RIGHT,a
-    call    nz,.right
-    ld      hl,Level_CameraTargetY
-    ldh     a,[hHeldButtons]
-    bit     BIT_UP,a
-    call    nz,.up
-    ldh     a,[hHeldButtons]
-    bit     BIT_DOWN,a
-    call    nz,.down
+LevelLoop:
+    ; make camera follow player
+    ld      a,[Player_YPos]
+    sub     SCRN_Y/2+16
+    ld      [Level_CameraTargetY],a
     
-    ld      a,[Level_CameraX]
+    ld      a,[Player_XPos]
+    ld      l,a
+    ld      a,[Player_XPos+2]
+    ld      h,a
+    ld      bc,-(SCRN_X/2)
+    add     hl,bc
+    jr      c,:+
+    ld      hl,0
+:   ; TODO: right clamp
+    ld      a,l
+    ld      [Level_CameraTargetX],a
+    ld      a,h
+    ld      [Level_CameraX+1],a
+    
+
+
+    ld      a,[Level_CameraX]    
+    ld      b,a
+    ld      [Level_CameraXPrev],a
+
+    ld      a,[Level_CameraTargetX]
+    ld      [Level_CameraX],a
+    
     sub     b
     jr      z,:+
     jr      nc,.scrollright
 .scrollleft
     ld      a,-1
-    ld      [Level_ScrollAmount],a
+    ld      [Level_ScrollDir],a
     jr      :+
 .scrollright
     ld      a,1
-    ld      [Level_ScrollAmount],a
+    ld      [Level_ScrollDir],a
 :   ld      a,[Level_CameraY]
     ld      h,a
     ld      a,[Level_CameraSubY]
@@ -241,36 +265,30 @@ LevelLoop:
     ld      c,l
     pop     hl
     add     hl,bc
+    bit     7,h
+    jr      z,:+
+    ld      hl,0
     ld      a,h
-    ld      [Level_CameraY],a
+    jr      :++
+:   ld      a,h
+    cp      256-SCRN_Y
+    jr      c,:+
+    ld      a,256-SCRN_Y
+:   ld      [Level_CameraY],a
     ld      a,l
     ld      [Level_CameraSubY],a
     
-    ld      a,[Level_CameraX]
-    ldh     [rSCX],a
-    
-    ld      a,[Level_CameraY]
-    ldh     [rSCY],a
-    
-
-    
-    
     ; level redraw logic
-    ld      a,[Level_ScrollAmount]
+    ld      a,[Level_ScrollDir]
     ld      e,a
-    
-    
-    
     ld      a,[Level_CameraX]
-    inc     a
     and     $f0
     ld      b,a
     ld      a,[Level_CameraXPrev]
     inc     a
     and     $f0
     cp      b
-    jr      z,.skipredraw
-    
+    ;jr      z,.skipredraw
     ld      h,high(Level_Map)
     ld      a,[Level_CameraX]
     and     $f0
@@ -295,16 +313,20 @@ LevelLoop:
 :   ld      a,l
     ld      c,16
 :   ld      b,[hl]
-    push    bc
     call    DrawMetatile
-    pop     bc
     inc     l
     inc     a
     dec     c
     jr      nz,:-
 .skipredraw
+    call    ProcessPlayer
+    rst     WaitForVBlank    
+    call    DrawPlayer
+    ld      a,[Level_CameraX]
+    ldh     [rSCX],a
+    ld      a,[Level_CameraY]
+    ldh     [rSCY],a
     
-    rst     WaitForVBlank
     jp      LevelLoop
 .up
     dec     [hl]
@@ -403,3 +425,7 @@ Pal_TestTileset:    incbin  "Tilesets/TestTileset.pal"
 MUSIC_NONE: db "TEMP HACK REMOVE ME"
 
     include "Levels/testlevel.inc"
+
+; =============================================================================
+
+    include "Engine/Player.asm"

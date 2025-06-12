@@ -35,19 +35,17 @@ GetTileCoordinates:
     add     b
     ret
 
-; INPUT: a = coordinates (low nybble = X, high nybble = Y)
+; INPUT:     a = coordinates (low nybble = X, high nybble = Y)
+;            b = screen
 ; OUTPUT:   hl = pointer to height map
 ;            a = collision type
 ;            b = collision angle
 GetTileProperties:
-    ld      h,high(Level_Map)
-    ld      b,a
-    ld      a,[Level_CameraX+1]
-    add     b
     ld      l,a
-    jr      nc,:+
-    inc     h
-:   ld      a,bank(Level_Map)
+    ld      a,high(Level_Map)
+    add     b
+    ld      h,a
+    ld      a,bank(Level_Map)
     ldh     [rSVBK],a
     
     ld      de,Level_ColMapPtr
@@ -105,6 +103,7 @@ GetTileProperties:
 ; Destroys: BC, DE, HL
 DrawMetatile:
     push    af
+    push    bc
     swap    a
     push    hl
     ld      e,a
@@ -205,5 +204,6 @@ DrawMetatile:
     ld      a,[hl+]
     ld      [de],a
     pop     hl
+    pop     bc
     pop     af
     ret

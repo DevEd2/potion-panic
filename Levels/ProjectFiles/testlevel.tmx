@@ -25,7 +25,7 @@
 </data>
  </layer>
  <objectgroup id="2" name="Objects">
-  <object id="8" name="PlayerStart" x="16" y="208" width="16" height="16"/>
+  <object id="8" name="PlayerStart" x="16" y="192" width="32" height="32"/>
   <object id="9" name="LevelProperties" x="0" y="0" width="16" height="16">
    <properties>
     <property name="Music" value="MUSIC_NONE"/>
