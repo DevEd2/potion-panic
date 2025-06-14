@@ -170,8 +170,8 @@ if __name__ == "__main__":
 					exit(1)
 		elif obj[x]['name'] == "PlayerStart":
 			try:
-				px = int(obj[x]['x']) // 16
-				py = int(obj[x]['y']) // 16
+				px = (int(obj[x]['x']) + 16) // 16
+				py = (int(obj[x]['y']) + 16) // 16
 				ps = int(obj[x]['x']) // 256
 				pa = int(obj[x]['y']) // 256
 			except KeyError:

@@ -78,13 +78,12 @@ GM_Level:
     ld      b,a
     ; player start position
     ld      a,[hl]
-    and     $f0
-    add     16
+    and     $f0  
     ld      [Player_XPos],a
     ld      a,[hl+]
     swap    a
     and     $f0
-    add     16
+    sub     16
     ld      [Player_YPos],a
     ; music - TODO, skip for now
     ld      a,[hl+]
@@ -193,9 +192,18 @@ GM_Level:
     ei
     
 LevelLoop:
-    ; make camera follow player
+    if BUILD_DEBUG
+        ; toggle noclip flag
+        ldh     a,[hPressedButtons]
+        bit     BIT_SELECT,a
+        jr      z,:+       
+        ld      a,[Player_Flags]
+        xor     1 << BIT_PLAYER_NOCLIP
+        ld      [Player_Flags],a
+    endc
+:   ; make camera follow player
     ld      a,[Player_YPos]
-    sub     SCRN_Y/2+16
+    sub     SCRN_Y/2+8
     ld      [Level_CameraTargetY],a
     
     ld      a,[Player_XPos]

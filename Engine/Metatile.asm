@@ -40,7 +40,8 @@ GetTileCoordinates:
 ; OUTPUT:   hl = pointer to height map
 ;            a = collision type
 ;            b = collision angle
-GetTileProperties:
+;            c = tile ID
+GetTile:
     ld      l,a
     ld      a,high(Level_Map)
     add     b
@@ -48,53 +49,10 @@ GetTileProperties:
     ld      a,bank(Level_Map)
     ldh     [rSVBK],a
     
-    ld      de,Level_ColMapPtr
-    ld      a,[de]
-    inc     de
-    ld      c,a
-    ld      a,[de]
-    ld      d,a
-    ld      a,c
-    ld      a,e
-    add     [hl]
-    ld      e,a
-    jr      nc,:+
-    inc     d
-:   ld      a,[de]
-    push    af
-    
-    ld      de,Level_ColAnglePtr
-    ld      a,[de]
-    inc     de
-    ld      c,a
-    ld      a,[de]
-    ld      d,a
-    ld      a,c
-    ld      a,e
-    add     [hl]
-    ld      e,a
-    jr      nc,:+
-    inc     d
-:   ld      a,[de]
-    ld      b,a
-    
+    ld      a,[Level_ColMapBank]
+    bankswitch_to_a
+    ; get tile ID
     ld      a,[hl]
-    ld      l,a
-    ld      h,0
-    add     hl,hl   ; x2
-    add     hl,hl   ; x4
-    add     hl,hl   ; x8
-    add     hl,hl   ; x16
-    ld      de,Level_ColAnglePtr
-    ld      a,[de]
-    inc     de
-    ld      c,a
-    ld      a,[de]
-    ld      d,a
-    ld      a,c
-    add     hl,de
-    
-    pop     af
     ret
     
 ; Input:    A = Tile coordinates (upper nybble = X, lower nybble = Y)
