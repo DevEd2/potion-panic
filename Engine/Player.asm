@@ -5,7 +5,7 @@ def PLAYER_DECEL            = $060
 def PLAYER_WALK_SPEED       = $200
 def PLAYER_RUN_SPEED        = $300
 def PLAYER_JUMP_HEIGHT      = $300
-def PLAYER_GRAVITY          = $040
+def PLAYER_GRAVITY          = $028
 
 def PLAYER_WIDTH            = 6
 def PLAYER_HEIGHT           = 27
@@ -24,11 +24,11 @@ Player_Flags:   db      ; bit 0: direction player is facing (0 = right, 1 = left
                         ; bit 5:
                         ; bit 6:
                         ; bit 7: noclip
-Player_HorizColSensorTop:       db
-Player_HorizColSensorBottom:    db
-Player_VertColSensorLeft:       db
-Player_VertColSensorRight:      db
-Player_VertColSensorCenter:     db
+Player_HorizontalCollisionSensorTop:    db
+Player_HorizontalCollisionSensorBottom: db
+Player_VerticalCollisionSensorLeft:     db
+Player_VerticalCollisionSensorRight:    db
+Player_VerticalCollisionSensorCenter:   db
 Player_RAMEnd:
 
 def BIT_PLAYER_DIRECTION    = 0
@@ -56,16 +56,207 @@ InitPlayer:
     call    DecodeWLE
     ; hl = PlayerPalette
     ld      a,8
-    jp      LoadPal
+    call    LoadPal
+    ld      a,low(PLAYER_GRAVITY)
+    ld      [Player_Grav],a
+    xor     a   ; ld a,high(PLAYER_GRAVITY)
+    ld      [Player_Grav+1],a
+    ret
 
 ProcessPlayer:
     ld      a,[Player_Flags]
     bit     BIT_PLAYER_NOCLIP,a
+    push    af
     call    nz,Player_Noclip
-    
+    pop     af
+    jr      nz,.yesclip
+        
+    ; gravity
+    ld      hl,Player_YVel
+    ld      a,[hl+]
+    ld      b,[hl]
+    ld      c,a
+    ld      hl,Player_Grav
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,l
+    ld      [Player_YVel],a
+    ld      a,h
+    ld      [Player_YVel+1],a
+
+    ; velocity to position
+    ld      hl,Player_XVel
+    ld      a,[hl+]
+    ld      b,[hl]
+    ld      c,a
+    ld      hl,Player_XPos
+    ld      a,[hl+]
+    ld      l,[hl]
+    ld      h,a
+    add     hl,bc
+    ld      a,h
+    ld      [Player_XPos],a
+    ld      a,l
+    ld      [Player_XPos+1],a
+    jr      nc,.donex
+    ld      a,[Player_XPos+2]
+    bit     7,h
+    jr      nz,:+
+    inc     a
+    jr      :++
+:   dec     a
+    jr      :+
+:   ld      [Player_XPos+2],a
+.donex
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_AIRBORNE,[hl]
+    jr      z,.yesclip
+    ld      hl,Player_YVel
+    ld      a,[hl+]
+    ld      b,[hl]
+    ld      c,a
+    ld      hl,Player_YPos
+    ld      a,[hl+]
+    ld      l,[hl]
+    ld      h,a
+    add     hl,bc
+    ld      a,h
+    ld      [Player_YPos],a
+    ld      a,l
+    ld      [Player_YPos+1],a
+.yesclip
     call    Player_CheckCollisionHorizontal
     call    Player_CheckCollisionVertical
+    call    Player_CollisionResponseHorizontal
+    ;call    Player_CollisionResponseVertical
+    ;ret
+
+Player_CollisionResponseVertical:
+    pushbank
+    ld      a,[Level_ColMapBank]
+    bankswitch_to_a
+    
+    ld      a,[Player_VerticalCollisionSensorLeft]
+    ld      e,a
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    ld      hl,.colresponsetable
+    add     hl,bc
+    add     hl,bc
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    rst     CallHL
+    
+    ld      a,[Player_VerticalCollisionSensorCenter]
+    ld      e,a
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    ld      hl,.colresponsetable
+    add     hl,bc
+    add     hl,bc
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    rst     CallHL
+    
+    ld      a,[Player_VerticalCollisionSensorRight]
+    ld      e,a
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    ld      hl,.colresponsetable
+    add     hl,bc
+    add     hl,bc
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    rst     CallHL
+    
+    popbank
+    ret
+
+.colresponsetable
+    dw      .none
+    dw      .solid
+    dw      .topsolid
+    dw      .slope
+    dw      .slope_shallow
+    dw      .slope_steep
+    dw      .solid
+    dw      .none
+    dw      .none
+    dw      .none
+    dw      .none
+    dw      .none
+.none
+    ld      hl,Player_Flags
+    set     BIT_PLAYER_AIRBORNE,[hl]
+    ret
+.topsolid
+    ld      a,[Player_YVel+1]
+    bit     7,a
+    jr      nz,.none
+    ; fall through
+.solid
+    ld      hl,Player_YVel+1
+    bit     7,[hl]
+    jr      nz,.solidceiling
+.solidfloor
+    ld      a,[Player_YPos]
+    and     $f0
+    ld      [Player_YPos],a
+    ld      hl,Player_Flags
+    res     BIT_PLAYER_AIRBORNE,[hl]
+    jr      :+
+.solidceiling
+    ld      a,[Player_YPos]
+    and     $f0
+    add     16 + (32 - PLAYER_HEIGHT)
+    ld      [Player_YPos],a
+:   xor     a
+    ld      [Player_YVel],a
+    ld      [Player_YVel+1],a
+    ret
+.slope
+    call    .slope_shallow
     ; TODO
+    ret
+.slope_shallow
+    jr      .solid
+    ; TODO
+    ret
+.slope_steep
+    call    .slope_shallow
+    ; TODO
+    ret
+    
+Player_CollisionResponseHorizontal:
     ret
 
 Player_CheckCollisionVertical:
@@ -96,7 +287,7 @@ Player_CheckCollisionVertical:
     or      c
     ld      b,e
     call    GetTile
-    ld      [Player_VertColSensorLeft],a
+    ld      [Player_VerticalCollisionSensorLeft],a
     ; get right collision point
     ld      a,[Player_XPos+2]
     ld      e,a
@@ -108,7 +299,7 @@ Player_CheckCollisionVertical:
     or      c
     ld      b,e
     call    GetTile
-    ld      [Player_VertColSensorRight],a
+    ld      [Player_VerticalCollisionSensorRight],a
     ; get center collision point
     ld      a,[Player_XPos+2]
     ld      e,a
@@ -117,7 +308,7 @@ Player_CheckCollisionVertical:
     or      c
     ld      b,e
     call    GetTile
-    ld      [Player_VertColSensorCenter],a
+    ld      [Player_VerticalCollisionSensorCenter],a
     ret
 
 ; Check for collision using two sensors - one at player Y - 8 pixels, one at player Y + 8 pixels, both at (X + 6) * [direction]
@@ -150,7 +341,7 @@ Player_CheckCollisionHorizontal:
     or      b
     ld      b,e
     call    GetTile
-    ld      [Player_HorizColSensorTop],a
+    ld      [Player_HorizontalCollisionSensorTop],a
 .nocol1
     ; check bottom sensor
     ld      a,[Player_XPos+2]
@@ -178,10 +369,16 @@ Player_CheckCollisionHorizontal:
     or      b
     ld      b,e
     call    GetTile
-    ld      [Player_HorizColSensorBottom],a
+    ld      [Player_HorizontalCollisionSensorBottom],a
     ret
 
 Player_Noclip:
+    xor     a
+    ld      [Player_XVel],a
+    ld      [Player_XVel+1],a
+    ld      [Player_YVel],a
+    ld      [Player_YVel+1],a
+
     ld      e,2    
     ld      hl,hHeldButtons
     bit     BIT_B,[hl]
