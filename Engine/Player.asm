@@ -244,16 +244,22 @@ Player_CollisionResponseVertical:
     ld      [Player_YVel+1],a
     ret
 .slope
-    call    .slope_shallow
     ; TODO
+    ; 1. run "shallow slope" logic
+    ; 2. push player back slightly (1px per frame?)
     ret
 .slope_shallow
-    jr      .solid
     ; TODO
+    ; 1. get tile penetration depth (player "foot" Y position mod 15)
+    ; 2. get height of tile at player position (player X mod 15)
+    ; 3. if penetration depth > tile height, snap to tile height and unset airborne flag
     ret
 .slope_steep
-    call    .slope_shallow
     ; TODO
+    ; 1. get tile penetration depth (player "foot" Y position mod 15)
+    ; 2. get height of tile at player position (player X mod 15)
+    ; 3. push player back until penetration depth > height
+    ; 4. unset airborne flag (allow jumping off slope)
     ret
     
 Player_CollisionResponseHorizontal:
@@ -280,7 +286,7 @@ Player_CheckCollisionVertical:
     ld      a,[Player_XPos+2]
     ld      e,a
     ld      a,[Player_XPos]
-    sub     PLAYER_WIDTH
+    sub     PLAYER_WIDTH-1
     jr      nc,:+
     dec     e
 :   and     $f0
@@ -292,7 +298,7 @@ Player_CheckCollisionVertical:
     ld      a,[Player_XPos+2]
     ld      e,a
     ld      a,[Player_XPos]
-    add     PLAYER_WIDTH
+    add     PLAYER_WIDTH-1
     jr      nc,:+
     inc     e
 :   and     $f0

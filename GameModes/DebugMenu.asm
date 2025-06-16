@@ -26,7 +26,7 @@ GM_Debug:
     call    MemFill
     
     ; load font
-    ld      hl,Font
+    farload hl,Font
     ld      de,_VRAM
     ld      bc,Font.end-Font
     call    CopyTiles1BPP

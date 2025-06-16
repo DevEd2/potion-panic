@@ -22,7 +22,7 @@
 ; SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ; ================================================================
 
-section "DevSound X RAM defines",wramx[$de00]
+section "DevSound X RAM defines",wram0[$ce00]
 
 def sizeof_DSX_ChannelStruct = 0
 
@@ -1019,11 +1019,7 @@ DevSoundX_UpdateChannel\1:
     ld      l,a
     jp      hl
 .panic
-    push    af
-    ld      a,ERR_INV_MUS_COMMAND
-    ldh     [hErrType],a
-    pop     af
-    rst     Error
+    rst     $38
 .cmdtable
     dw      .instrument
     dw      .jump

@@ -50,8 +50,8 @@ Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 6 = ???
                             ; bit 7 = ???
 Level_Size:             db  ; 0-15
-                            
-section "Level routines",romx
+ 
+section "Level routines",rom0
 GM_Level:
     call    LCDOff
     call    ClearScreen
@@ -85,10 +85,16 @@ GM_Level:
     and     $f0
     sub     16
     ld      [Player_YPos],a
-    ; music - TODO, skip for now
+    ; music - TODO, skip and play placeholder music for now
     ld      a,[hl+]
     ld      a,[hl+]
     ld      a,[hl+]
+    push    hl
+    pushbank
+    ld      hl,Mus_EarthStage
+    farcall DSX_PlaySong
+    popbank
+    pop     hl
     ; tileset
     ld      a,[hl+]
     ld      [Level_BlockMapBank],a
@@ -328,6 +334,7 @@ LevelLoop:
     jr      nz,:-
 .skipredraw
     call    ProcessPlayer
+    farcall DSX_Update
     rst     WaitForVBlank    
     call    DrawPlayer
     ld      a,[Level_CameraX]

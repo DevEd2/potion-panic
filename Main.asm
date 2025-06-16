@@ -219,7 +219,12 @@ ProgramStart:
     ld      a,1
     ldh     [rKEY1],a
     stop
-        
+    
+    pushbank
+    ld      a,bank(DevSoundX)
+    call    DSX_Init
+    popbank
+    
     jp      GM_Debug
     
     jr      @
@@ -697,6 +702,10 @@ Pal_BSOD:
     rgb  0, 0, 0
     rgb  0, 0, 0
     rgb 31,31,31
+
+; =============================================================================
+
+include "Audio/DevSoundX.asm"
 
 ; =============================================================================
 
