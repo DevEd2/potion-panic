@@ -4,8 +4,10 @@ def PLAYER_ACCEL            = $080
 def PLAYER_DECEL            = $060
 def PLAYER_WALK_SPEED       = $200
 def PLAYER_RUN_SPEED        = $300
-def PLAYER_JUMP_HEIGHT      = $300
+def PLAYER_JUMP_HEIGHT      = $400
+def PLAYER_JUMP_HEIGHT_HIGH = $490
 def PLAYER_GRAVITY          = $028
+def PLAYER_COYOTE_TIME      = 15 ; coyote time in frames
 
 def PLAYER_WIDTH            = 6
 def PLAYER_HEIGHT           = 27
@@ -29,6 +31,7 @@ Player_HorizontalCollisionSensorBottom: db
 Player_VerticalCollisionSensorLeft:     db
 Player_VerticalCollisionSensorRight:    db
 Player_VerticalCollisionSensorCenter:   db
+Player_CoyoteTimer:                     db
 Player_RAMEnd:
 
 def BIT_PLAYER_DIRECTION    = 0
@@ -69,9 +72,119 @@ ProcessPlayer:
     push    af
     call    nz,Player_Noclip
     pop     af
-    jr      nz,.yesclip
-        
+    ret     nz  ; return if we're in noclip mode
+    
+    ; player controls
+    
+    ; check if player should crouch
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_AIRBORNE,[hl]
+    jr      nz,.skipcrouch
+    ldh     a,[hHeldButtons]
+    bit     BIT_DOWN,a
+    jr      z,.nocrouch
+    set     BIT_PLAYER_CROUCHING,[hl]
+    jr      .skipcrouch
+.nocrouch
+    ; check if we should be able to uncrouch
+    ld      a,[Player_YPos]
+    sub     8
+    and     $f0
+    swap    a
+    ld      c,a
+    ld      a,[Player_XPos+2]
+    ld      e,a
+    ld      a,[Player_XPos]
+    and     $f0
+    or      c
+    ld      b,e
+    call    GetTile
+    ld      e,a
+    ld      d,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,de
+    ld      a,[hl]
+    and     a
+    jr      nz,.skipcrouch
+    ld      hl,Player_Flags
+    res     BIT_PLAYER_CROUCHING,[hl]
+.skipcrouch
+    ; check if player should jump
+    ldh     a,[hPressedButtons]
+    bit     BIT_A,a
+    jr      z,.nojump
+    ld      a,[Player_CoyoteTimer]
+    and     a
+    jr      nz,:+   ; skip airborne check if "coyote time" is active
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_AIRBORNE,[hl]
+    jr      nz,.nojump
+    ldh     a,[hHeldButtons]
+    bit     BIT_UP,a
+    jr      z,:+
+    ld      a,low(-PLAYER_JUMP_HEIGHT_HIGH)
+    ld      [Player_YVel],a
+    ld      a,high(-PLAYER_JUMP_HEIGHT_HIGH)
+    ld      [Player_YVel+1],a
+    set     BIT_PLAYER_AIRBORNE,[hl]
+    jr      .donejump
+:   ld      a,low(-PLAYER_JUMP_HEIGHT)
+    ld      [Player_YVel],a
+    ld      a,high(-PLAYER_JUMP_HEIGHT)
+    ld      [Player_YVel+1],a
+    set     BIT_PLAYER_AIRBORNE,[hl]
+.donejump
+.nojump
+    ; check if player should release jump
+    ldh     a,[hReleasedButtons]
+    bit     BIT_A,a
+    jr      z,.norelease
+    ld      a,[Player_YVel+1]
+    bit     7,a
+    jr      z,.norelease
+    ld      hl,Player_YVel
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    srl     h
+    rr      l
+    set     7,h
+    ld      a,l
+    ld      [Player_YVel],a
+    ld      a,h
+    ld      [Player_YVel+1],a
+.norelease
+    ; left/right movement
+    ldh     a,[hHeldButtons]
+    bit     BIT_RIGHT,a
+    jr      nz,:+
+    ld      hl,Player_Flags
+    set     BIT_PLAYER_DIRECTION,[hl]
+    ld      a,[Player_XPos]
+    sub     2
+    ld      [Player_XPos],a
+    jr      nc,:+
+    ld      hl,Player_XPos+2
+    dec     [hl]
+:   ldh     a,[hHeldButtons]
+    bit     BIT_LEFT,a
+    jr      nz,:+
+    ld      hl,Player_Flags
+    res     BIT_PLAYER_DIRECTION,[hl]
+    ld      a,[Player_XPos]
+    add     2
+    ld      [Player_XPos],a
+    jr      nc,:+
+    ld      hl,Player_XPos+2
+    inc     [hl]
+:
     ; gravity
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_AIRBORNE,[hl]
+    jr      z,:+ ; prevent erroneous speed build up
     ld      hl,Player_YVel
     ld      a,[hl+]
     ld      b,[hl]
@@ -85,7 +198,7 @@ ProcessPlayer:
     ld      [Player_YVel],a
     ld      a,h
     ld      [Player_YVel+1],a
-
+:
     ; velocity to position
     ld      hl,Player_XVel
     ld      a,[hl+]
@@ -112,7 +225,7 @@ ProcessPlayer:
 .donex
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
-    jr      z,.yesclip
+    jr      z,:+
     ld      hl,Player_YVel
     ld      a,[hl+]
     ld      b,[hl]
@@ -126,12 +239,48 @@ ProcessPlayer:
     ld      [Player_YPos],a
     ld      a,l
     ld      [Player_YPos+1],a
-.yesclip
-    call    Player_CheckCollisionHorizontal
+:   call    Player_CheckCollisionHorizontal
     call    Player_CheckCollisionVertical
     call    Player_CollisionResponseHorizontal
-    ;call    Player_CollisionResponseVertical
-    ;ret
+    call    Player_CollisionResponseVertical
+    ; coyote time
+    ld      a,[Player_YPos]
+    add     24
+    and     $f0
+    swap    a
+    ld      c,a
+    ld      a,[Player_XPos+2]
+    ld      b,a
+    ld      a,[Player_XPos]
+    and     $f0
+    or      c
+    call    GetTile
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    and     a
+    jr      z,.coyote 
+    ; TODO: Check for any other collision types that count as non-solid
+    ret
+.coyote
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_AIRBORNE,[hl]
+    jr      nz,:+ ; skip ahead if player is already airborne
+    ; init time
+    ld      a,PLAYER_COYOTE_TIME
+    ld      [Player_CoyoteTimer],a
+:   set     BIT_PLAYER_AIRBORNE,[hl]    ; set airborne flag
+    ld      a,[Player_CoyoteTimer]
+    and     a
+    ret     z ; if coyote timer = 0, bail out
+    dec     a
+    ld      [Player_CoyoteTimer],a ; set new coyote timer
+    ret
 
 Player_CollisionResponseVertical:
     pushbank
@@ -215,8 +364,8 @@ Player_CollisionResponseVertical:
     dw      .none
     dw      .none
 .none
-    ld      hl,Player_Flags
-    set     BIT_PLAYER_AIRBORNE,[hl]
+    ;ld      hl,Player_Flags
+    ;set     BIT_PLAYER_AIRBORNE,[hl]
     ret
 .topsolid
     ld      a,[Player_YVel+1]
@@ -233,6 +382,10 @@ Player_CollisionResponseVertical:
     ld      [Player_YPos],a
     ld      hl,Player_Flags
     res     BIT_PLAYER_AIRBORNE,[hl]
+    xor     a
+    ld      [Player_CoyoteTimer],a
+    ld      [Player_YVel],a
+    ld      [Player_YVel+1],a
     jr      :+
 .solidceiling
     ld      a,[Player_YPos]
@@ -263,20 +416,111 @@ Player_CollisionResponseVertical:
     ret
     
 Player_CollisionResponseHorizontal:
+    ld      a,[Player_HorizontalCollisionSensorTop]
+    ld      e,a
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    ld      hl,.colresponsetable2
+    add     hl,bc
+    add     hl,bc
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    rst     CallHL
+    
+    
+    ld      a,[Player_HorizontalCollisionSensorBottom]
+    ld      e,a
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    ld      hl,.colresponsetable2
+    add     hl,bc
+    add     hl,bc
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    rst     CallHL
+    ret
+.colresponsetable2
+    dw      .none           ; blank
+    dw      .solid          ; solid
+    dw      .none           ; top solid
+    dw      .slope          ; normal slope
+    dw      .slope          ; shallow slope
+    dw      .slope          ; steep slope
+    dw      .solid          ; breakable
+    dw      .none           ; collectable
+    dw      .none           ; big collectable TL
+    dw      .none           ; big collectable TR
+    dw      .none           ; big collectable BL
+    dw      .none           ; big collectable BR
+.none
+    ret
+.solid
+    ld      a,[Player_XPos]
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_DIRECTION,[hl]
+    jr      z,.right
+.left
+    ld      c,a
+    ld      a,[Player_XPos+2]
+    ld      b,a
+    ld      a,c
+    and     $f0
+    add     PLAYER_WIDTH
+    jr      nc,:+
+    inc     b
+:   ld      [Player_XPos],a
+    ld      a,b
+    ld      [Player_XPos+2],a
+    jr      .donelr
+.right
+    ld      c,a
+    ld      a,[Player_XPos+2]
+    ld      b,a
+    ld      a,c
+    and     $f0
+    add     15-PLAYER_WIDTH
+    jr      nc,:+
+    dec     b
+:   ld      [Player_XPos],a
+    ld      a,b
+    ld      [Player_XPos+2],a
+.donelr
+    ret
+.slope
+    ; TODO
     ret
 
 Player_CheckCollisionVertical:
     ld      a,[Player_YVel+1]
     bit     7,a ; is player moving up?
     ld      a,[Player_YPos]
-    jr      z,.goingup
+    jr      z,.goingdown
     ; fall through
-.goingdown
-    ; TODO: check if player is crouching
+.goingup
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_CROUCHING,[hl]
+    jr      nz,:+
     add     16-PLAYER_HEIGHT
     jr      :+
-    ret
-.goingup
+.goingdown
     add     15
     ; fall through
 :   and     $f0
@@ -286,7 +530,7 @@ Player_CheckCollisionVertical:
     ld      a,[Player_XPos+2]
     ld      e,a
     ld      a,[Player_XPos]
-    sub     PLAYER_WIDTH-1
+    sub     PLAYER_WIDTH-2
     jr      nc,:+
     dec     e
 :   and     $f0
@@ -298,7 +542,7 @@ Player_CheckCollisionVertical:
     ld      a,[Player_XPos+2]
     ld      e,a
     ld      a,[Player_XPos]
-    add     PLAYER_WIDTH-1
+    add     PLAYER_WIDTH-2
     jr      nc,:+
     inc     e
 :   and     $f0
@@ -340,9 +584,16 @@ Player_CheckCollisionHorizontal:
     inc     e
 :   and     $f0
     ld      b,a
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_CROUCHING,a
     ld      a,[Player_YPos]
+    jr      z,.nocrouch
+.crouch
+    add     8
+    jr      :+
+.nocrouch
     sub     8
-    and     $f0
+:   and     $f0
     swap    a
     or      b
     ld      b,e
@@ -444,7 +695,8 @@ DrawPlayer:
     ld      hl,.sprite
     ld      de,OAMBuffer
     ld      b,(.sprite_end-.sprite)/4
-:   ; y position
+.loop
+    ; y position
     ld      a,[hl+]
     ld      c,a
     ld      a,[Player_YPos]
@@ -470,14 +722,20 @@ DrawPlayer:
     inc     e
     ; sprite
     ld      a,[hl+]
-    ld      [de],a
+    ld      c,a
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_CROUCHING,a
+    ld      a,c
+    jr      z,:+
+    add     16
+:   ld      [de],a
     inc     e
     ; attribute
     ld      a,[hl+]
     ld      [de],a
     inc     e
     dec     b
-    jr      nz,:-
+    jr      nz,.loop
     
     ret
 .sprite

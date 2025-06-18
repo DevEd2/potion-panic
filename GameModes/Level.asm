@@ -1,7 +1,3 @@
-; KNOWN ISSUES:
-; - Changing scroll direction results in "ghost tiles"
-; - One tile near top right corner does not update properly
-
 section "Level map",wramx
 def LEVEL_MAX_SCREENS = 16
 def LEVEL_ROW_SIZE = 16
@@ -39,7 +35,7 @@ Level_CameraOffsetY:    db
 Level_CameraMaxX:       dw
 Level_CameraMaxY:       db
 Level_CameraXPrev:      db
-Level_ScrollDir:     db
+Level_ScrollDir:        db
 
 Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 1 = ???
@@ -55,6 +51,10 @@ section "Level routines",rom0
 GM_Level:
     call    LCDOff
     call    ClearScreen
+    
+    ; HACK
+    xor     a
+    ldh     [hPressedButtons],a
     
     ; clear level map
     ld      a,bank(Level_Map)
