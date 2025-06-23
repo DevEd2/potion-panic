@@ -90,10 +90,14 @@ GM_Level:
     ld      a,[hl+]
     ld      a,[hl+]
     push    hl
+    push    bc
+    push    de
     pushbank
-    ld      hl,Mus_EarthStage
-    farcall DSX_PlaySong
+    ld      a,bank(Mus_LostInTranslation)-1
+    call    GBM_LoadModule
     popbank
+    pop     de
+    pop     bc
     pop     hl
     ; tileset
     ld      a,[hl+]
@@ -113,11 +117,13 @@ GM_Level:
     ; palette
     pushbank
     ld      a,[hl+]
-    bankswitch_to_a
+    ld      e,a
     ld      a,[hl+]
     push    hl
     ld      h,[hl]
     ld      l,a
+    ld      a,e
+    bankswitch_to_a
     xor     a
     call    LoadPal
     ld      a,1
@@ -334,7 +340,9 @@ LevelLoop:
     jr      nz,:-
 .skipredraw
     call    ProcessPlayer
-    farcall DSX_Update
+    pushbank
+    call    GBM_Update
+    popbank
     rst     WaitForVBlank    
     call    DrawPlayer
     ld      a,[Level_CameraX]

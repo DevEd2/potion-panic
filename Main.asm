@@ -220,10 +220,7 @@ ProgramStart:
     ldh     [rKEY1],a
     stop
     
-    pushbank
-    ld      a,bank(DevSoundX)
-    call    DSX_Init
-    popbank
+    call    GBM_Stop
     
     jp      GM_Debug
     
@@ -694,6 +691,10 @@ include "GameModes/Level.asm"
 
 ; =============================================================================
 
+include "Audio/Audio.asm"
+
+; =============================================================================
+
 Font:   incbin  "GFX/font.1bpp"
 .end
 
@@ -702,10 +703,6 @@ Pal_BSOD:
     rgb  0, 0, 0
     rgb  0, 0, 0
     rgb 31,31,31
-
-; =============================================================================
-
-include "Audio/DevSoundX.asm"
 
 ; =============================================================================
 

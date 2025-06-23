@@ -3,14 +3,18 @@ PROJECTNAME=gbcompo25
 PYTHON=python3
 
 LEVELFILES:=$(shell find -iname "*.json")
+MODULEFILES:=$(shell find -iname "*.xm")
 
-all: *.asm Engine/*.asm GameModes/*.asm Audio/*.asm levels
+all: *.asm Engine/*.asm GameModes/*.asm Audio/*.asm levels modules
 	rgbasm -o $(PROJECTNAME).obj -p 255 Main.asm
 	rgblink -p 255 -o $(PROJECTNAME).gbc -n $(PROJECTNAME).sym $(PROJECTNAME).obj
 	rgbfix -v -p 255 $(PROJECTNAME).gbc
 
 levels: $(LEVELFILES)
 	cd Levels && $(PYTHON) ../Tools/convertmap.py -c $(subst Levels/,,$<)
+
+modules: $(MODULEFILES)
+	cd Audio/Modules && $(PYTHON) ../../Tools/xmconv.py $(subst Audio/Modules/,,$<) $(subst Audio/Modules/,,$<).gbm
 
 clean:
 	find . -type f -name "*.gbc" -delete
@@ -20,5 +24,6 @@ clean:
 	find . -type f -wholename "./Levels/ObjectLayouts*.inc" -delete
 	find . -type f -wholename "./Levels/*.bin" -delete
 	find . -type f -wholename "./Levels/*.bin.wle" -delete
+	find . -type f -wholename "./Audio/Modules/*.gbm" -delete
 
 .PHONY: all
