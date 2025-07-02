@@ -682,6 +682,7 @@ include "Engine/Canvas.asm"
 include "Engine/PerFade.asm"
 include "Engine/Metatile.asm"
 include "Engine/WLE_Decode.asm"
+include "Engine/Object.asm"
 
 ; =============================================================================
 

@@ -1,4 +1,4 @@
-section "Level map",wramx
+section "Level map",wramx,bank[1]
 def LEVEL_MAX_SCREENS = 16
 def LEVEL_ROW_SIZE = 16
 def LEVEL_COLUMN_SIZE = 16
@@ -197,6 +197,12 @@ GM_Level:
     ld      [Level_CameraY],a
     ld      [Level_CameraTargetY],a
     
+    ; create test object
+    call    DeleteAllObjects
+    lb      bc,OBJID_Test,0
+    lb      de,$12,$34
+    call    CreateObject
+    
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16
     ldh     [rLCDC],a
     ld      a,IEF_VBLANK
@@ -340,6 +346,8 @@ LevelLoop:
     jr      nz,:-
 .skipredraw
     call    ProcessPlayer
+    call    ProcessObjects
+    call    DrawObjects
     pushbank
     call    GBM_Update
     popbank
