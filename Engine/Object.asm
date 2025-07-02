@@ -11,9 +11,19 @@ def OBJ_Y           rw  ; object Y pos (unsigned 8.8)
 def OBJ_SCREEN      rb  ; object screen - object will only be "active" if this is + or - 1 from the screen the player is in
 def OBJ_VX          rw  ; object X velocity (signed 8.8)
 def OBJ_VY          rw  ; object Y velocity (signed 8.8)
-def OBJ_VRAM        rb  ; object VRAM tile ID start
-def OBJ_VRAM_SIZE   rb  ; object VRAM size (in tiles)
+def OBJ_HIT_WIDTH   rb  ; object hitbox width
+def OBJ_HIT_HEIGHT  rb  ; object hitbox height
 assert _RS <= 16, "Object struct too large! Max size = $10, got {_RS}"
+
+rsreset
+def OBJB_VISIBLE    rb
+def OBJB_XFLIP      rb
+def OBJB_YFLIP      rb
+; TODO: Any additional flags needed?
+
+def OBJF_VISIBLE    equ 1 << OBJB_VISIBLE
+def OBJF_XFLIP      equ 1 << OBJB_XFLIP
+def OBJF_YFLIP      equ 1 << OBJB_YFLIP
 
 rsreset
 def OBJID_NONE rb
@@ -28,8 +38,10 @@ section "Object routine include - \1",romx
 Object_\1:  include  "Objects/\1.asm"
 endm
 
-section "Dynamic object RAM",wramx,bank[2]
+section "Object RAM",wramx,bank[2]
 ObjRAM:     ds  256*16
+
+; ================================================================
 
 section "Object routines",rom0
 
@@ -38,8 +50,8 @@ section "Object routines",rom0
 ;           c = screen
 ;           d = X position
 ;           e = Y position
-; OUTPUT:   none
-; DESTROYS: 
+; OUTPUT:   carry if no slots are free
+; DESTROYS: af -- -- hl
 CreateObject:
     ld      hl,ObjList + OBJ_ID
 :   ld      a,[hl]
@@ -78,12 +90,10 @@ CreateObject:
     ; object Y velocity
     ld      [hl+],a
     ld      [hl+],a
-    ; object VRAM allocation (TODO)
-    ld      [hl+],a
-    ld      [hl+],a
     ret
 
-; Marks all object slots as free.
+; Deletes every object by setting their ID to 0 (used to indicate a slot is free).
+; Note that this *only* clears object IDs; each object is expected to properly initialize itself.
 ; INPUT:    none
 ; OUTPUT:   none
 ; DESTROYS: af b- de hl
@@ -97,6 +107,7 @@ DeleteAllObjects:
     jr      nz,:-
     ret
 
+; Call once per frame to tick objects.
 ProcessObjects:
     ld      hl,ObjList
 .loop
@@ -114,7 +125,7 @@ ProcessObjects:
     ld      c,a
     ld      b,0
     push    hl
-    ld      hl,ObjRoutinePointers
+    ld      hl,ObjPointers
     add     hl,bc
     add     hl,bc
     add     hl,bc
@@ -124,7 +135,7 @@ ProcessObjects:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    inc     de
+    inc     e
     ld      a,[de]
     ld      c,a
     ld      b,0
@@ -198,10 +209,6 @@ ProcessObjects:
     jr      nc,.loop
     ret
 
-DrawObjects:
-    ; TODO: Everything
-    ret
+; ================================================================
 
-section fragment "Object pointer table",rom0
-ObjRoutinePointers::
-    objdef Test
+    include "Objects/Pointers.asm"

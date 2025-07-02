@@ -347,7 +347,6 @@ LevelLoop:
 .skipredraw
     call    ProcessPlayer
     call    ProcessObjects
-    call    DrawObjects
     pushbank
     call    GBM_Update
     popbank

@@ -1974,7 +1974,6 @@ GBM_NoteDelay3:     ds  1
 GBM_NoteDelay4:     ds  1
 
 GBM_LastWave:       ds  1
-GBM_WaveBuffer:     ds  16
 
 GBM_EnableTimer:    ds  1
 GBM_TMA:            ds  1

@@ -10,6 +10,24 @@ Obj_Test_Init:
     ld      a,1
     ld      [de],a
     ; fall through
-
 Obj_Test_Main:
+    dec     e
+    ; object RAM test
+    ; preserve current WRAM bank
+    ldh     a,[rSVBK]
+    push    af
+    ; load ObjRAM WRAM bank
+    ld      a,bank(ObjRAM)
+    ldh     [rSVBK],a
+    ; get pointer to object's memory
+    ld      a,e
+    swap    a
+    or      high(ObjRAM)
+    ld      h,a
+    ld      l,0
+    ; now that we have our pointer, we can do stuff
+    inc     [hl]
+    ; we're done here now, so restore the WRAM bank
+    pop     af
+    ldh     [rSVBK],a
     ret
