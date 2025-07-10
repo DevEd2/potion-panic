@@ -1,6 +1,6 @@
 section "Object system RAM",wram0,align[8]
 ObjList:
-    ds  16 * 16
+    ds  32 * 16
 
 rsreset
 def OBJ_ID          rb  ; object ID (if zero, slot is free)
@@ -39,7 +39,7 @@ Object_\1:  include  "Objects/\1.asm"
 endm
 
 section "Object RAM",wramx,bank[2]
-ObjRAM:     ds  256*16
+ObjRAM:     ds  128*32
 
 ; ================================================================
 
@@ -59,9 +59,15 @@ CreateObject:
     jr      z,.gotslot
     ld      a,l
     add     $10
-    ret     c   ; return if all slots are free
     ld      l,a
-    jr      :-
+    jr      nc,:-
+    ld      a,h
+    inc     a
+    ld      h,a
+    cp      2
+    jr      nz,:-
+    scf
+    ret
 .gotslot
     ; object ID
     ld      a,b
@@ -100,7 +106,7 @@ CreateObject:
 DeleteAllObjects:
     ld      hl,ObjList + OBJ_ID
     ld      de,$10
-    ld      b,16
+    ld      b,32
 :   ld      [hl],0
     add     hl,de
     dec     b
@@ -127,7 +133,7 @@ ProcessObjects:
     push    hl
     ld      hl,ObjPointers
     add     hl,bc
-    add     hl,bc
+    add     hl,bc   
     add     hl,bc
     pushbank
     ld      a,[hl+]
@@ -207,6 +213,11 @@ ProcessObjects:
     add     $10
     ld      l,a
     jr      nc,.loop
+    ld      a,h
+    inc     a
+    ld      h,a
+    cp      high(ObjList)+2
+    jr      nz,.loop
     ret
 
 ; ================================================================

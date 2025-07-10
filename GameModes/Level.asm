@@ -199,9 +199,9 @@ GM_Level:
     
     ; create test object
     call    DeleteAllObjects
-    lb      bc,OBJID_Test,0
-    lb      de,$12,$34
-    call    CreateObject
+    ;lb      bc,OBJID_Test,0
+    ;lb      de,$12,$34
+    ;call    CreateObject
     
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16
     ldh     [rLCDC],a
@@ -233,13 +233,14 @@ LevelLoop:
     jr      c,:+
     ld      hl,0
 :   ; TODO: right clamp
+    ld      a,[Level_CameraMaxX]
+    cp      l
+    jr      c,:+
     ld      a,l
-    ld      [Level_CameraTargetX],a
+:   ld      [Level_CameraTargetX],a
     ld      a,h
     ld      [Level_CameraX+1],a
     
-
-
     ld      a,[Level_CameraX]    
     ld      b,a
     ld      [Level_CameraXPrev],a

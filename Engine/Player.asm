@@ -2,10 +2,10 @@ section "Player RAM",wram0
 
 def PLAYER_ACCEL            = $080
 def PLAYER_DECEL            = $060
-def PLAYER_WALK_SPEED       = $200
-def PLAYER_RUN_SPEED        = $300
+def PLAYER_WALK_SPEED       = $100
+def PLAYER_RUN_SPEED        = $150
 def PLAYER_JUMP_HEIGHT      = $400
-def PLAYER_JUMP_HEIGHT_HIGH = $490
+def PLAYER_JUMP_HEIGHT_HIGH = $400 ;$490
 def PLAYER_GRAVITY          = $028
 def PLAYER_COYOTE_TIME      = 15 ; coyote time in frames
 
@@ -56,7 +56,8 @@ InitPlayer:
     ldh     [rVBK],a
     farload hl,PlayerTiles
     ld      de,_VRAM
-    call    DecodeWLE
+    assert  PlayerTiles.end-PlayerTiles==256
+    call    MemCopySmall
     ; hl = PlayerPalette
     ld      a,8
     call    LoadPal
@@ -77,40 +78,40 @@ ProcessPlayer:
     ; player controls
     
     ; check if player should crouch
-    ld      hl,Player_Flags
-    bit     BIT_PLAYER_AIRBORNE,[hl]
-    jr      nz,.skipcrouch
-    ldh     a,[hHeldButtons]
-    bit     BIT_DOWN,a
-    jr      z,.nocrouch
-    set     BIT_PLAYER_CROUCHING,[hl]
-    jr      .skipcrouch
-.nocrouch
-    ; check if we should be able to uncrouch
-    ld      a,[Player_YPos]
-    sub     8
-    and     $f0
-    swap    a
-    ld      c,a
-    ld      a,[Player_XPos+2]
-    ld      e,a
-    ld      a,[Player_XPos]
-    and     $f0
-    or      c
-    ld      b,e
-    call    GetTile
-    ld      e,a
-    ld      d,0
-    ld      hl,Level_ColMapPtr
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    add     hl,de
-    ld      a,[hl]
-    and     a
-    jr      nz,.skipcrouch
-    ld      hl,Player_Flags
-    res     BIT_PLAYER_CROUCHING,[hl]
+;    ld      hl,Player_Flags
+;    bit     BIT_PLAYER_AIRBORNE,[hl]
+;    jr      nz,.skipcrouch
+;    ldh     a,[hHeldButtons]
+;    bit     BIT_DOWN,a
+;    jr      z,.nocrouch
+;    set     BIT_PLAYER_CROUCHING,[hl]
+;    jr      .skipcrouch
+;.nocrouch
+;    ; check if we should be able to uncrouch
+;    ld      a,[Player_YPos]
+;    sub     8
+;    and     $f0
+;    swap    a
+;    ld      c,a
+;    ld      a,[Player_XPos+2]
+;    ld      e,a
+;    ld      a,[Player_XPos]
+;    and     $f0
+;    or      c
+;    ld      b,e
+;    call    GetTile
+;    ld      e,a
+;    ld      d,0
+;    ld      hl,Level_ColMapPtr
+;    ld      a,[hl+]
+;    ld      h,[hl]
+;    ld      l,a
+;    add     hl,de
+;    ld      a,[hl]
+;    and     a
+;    jr      nz,.skipcrouch
+;    ld      hl,Player_Flags
+;    res     BIT_PLAYER_CROUCHING,[hl]
 .skipcrouch
     ; check if player should jump
     ldh     a,[hPressedButtons]
@@ -843,5 +844,6 @@ DrawPlayer:
 
 section "Player GFX",romx
 
-PlayerTiles:    incbin  "GFX/player_placeholder.2bpp.wle"
-PlayerPalette:  incbin  "GFX/player_placeholder.pal"
+PlayerTiles:    incbin  "GFX/Player/player_idle1.png.2bpp"
+.end
+PlayerPalette:  incbin  "GFX/player.pal"

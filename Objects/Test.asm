@@ -20,11 +20,14 @@ Obj_Test_Main:
     ld      a,bank(ObjRAM)
     ldh     [rSVBK],a
     ; get pointer to object's memory
-    ld      a,e
-    swap    a
-    or      high(ObjRAM)
-    ld      h,a
-    ld      l,0
+    ld      l,e     ; object slot x16
+    ld      h,0
+    add     hl,hl   ; x32
+    add     hl,hl   ; x64
+    add     hl,hl   ; x128
+    ld      a,low(ObjRAM)
+    add     h
+    ld      h,a    
     ; now that we have our pointer, we can do stuff
     inc     [hl]
     ; we're done here now, so restore the WRAM bank
