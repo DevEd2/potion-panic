@@ -1,9 +1,8 @@
 section "Player RAM",wram0
 
-def PLAYER_ACCEL            = $080
-def PLAYER_DECEL            = $060
-def PLAYER_WALK_SPEED       = $100
-def PLAYER_RUN_SPEED        = $150
+def PLAYER_ACCEL            = $040
+def PLAYER_DECEL            = $020
+def PLAYER_WALK_SPEED       = $120
 def PLAYER_JUMP_HEIGHT      = $400
 def PLAYER_JUMP_HEIGHT_HIGH = $400 ;$490
 def PLAYER_GRAVITY          = $028
@@ -32,6 +31,9 @@ Player_VerticalCollisionSensorLeft:     db
 Player_VerticalCollisionSensorRight:    db
 Player_VerticalCollisionSensorCenter:   db
 Player_CoyoteTimer:                     db
+Player_AnimFrame:                       db
+Player_AnimTimer:                       db
+Player_AnimPointer:                     dw
 Player_RAMEnd:
 
 def BIT_PLAYER_DIRECTION    = 0
@@ -42,6 +44,15 @@ def BIT_PLAYER_UNUSED4      = 4
 def BIT_PLAYER_UNUSED5      = 5
 def BIT_PLAYER_UNUSED6      = 6
 def BIT_PLAYER_NOCLIP       = 7
+
+macro player_set_animation
+    ld      a,low(Player_Anim_\1)
+    ld      [Player_AnimPointer],a
+    ld      a,high(Player_Anim_\1)
+    ld      [Player_AnimPointer+1],a
+    ld      a,1
+    ld      [Player_AnimTimer],a
+endm
 
 section "Player routines",rom0
 
@@ -54,17 +65,19 @@ InitPlayer:
     ; load player GFX
     ld      a,1
     ldh     [rVBK],a
-    farload hl,PlayerTiles
+    farload hl,PlayerPlaceholderTiles
     ld      de,_VRAM
-    assert  PlayerTiles.end-PlayerTiles==256
+    ; B = 0 here, which means we copy 256 bytes (16 tiles)
     call    MemCopySmall
-    ; hl = PlayerPalette
+    ;ld      hl,PlayerPalette
     ld      a,8
     call    LoadPal
     ld      a,low(PLAYER_GRAVITY)
     ld      [Player_Grav],a
     xor     a   ; ld a,high(PLAYER_GRAVITY)
     ld      [Player_Grav+1],a
+    
+    player_set_animation Idle
     ret
 
 ProcessPlayer:
@@ -158,30 +171,106 @@ ProcessPlayer:
     ld      a,h
     ld      [Player_YVel+1],a
 .norelease
+    ; left/right animation
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_AIRBORNE,[hl]
+    jr      nz,.skipwalkanim
+    ; check if left/right were just pressed
+    ldh     a,[hPressedButtons]
+    and     BTN_LEFT | BTN_RIGHT
+    jr      z,:+
+    player_set_animation Walk
+    jr      .skipwalkanim
+    ; check if left or right were just released
+:   ldh     a,[hReleasedButtons]
+    and     BTN_LEFT | BTN_RIGHT
+    jr      z,.skipwalkanim
+    player_set_animation Idle
+    ; fall through
+.skipwalkanim
     ; left/right movement
+.checkright
     ldh     a,[hHeldButtons]
     bit     BIT_RIGHT,a
-    jr      nz,:+
-    ld      hl,Player_Flags
-    set     BIT_PLAYER_DIRECTION,[hl]
-    ld      a,[Player_XPos]
-    sub     2
-    ld      [Player_XPos],a
-    jr      nc,:+
-    ld      hl,Player_XPos+2
-    dec     [hl]
-:   ldh     a,[hHeldButtons]
-    bit     BIT_LEFT,a
-    jr      nz,:+
+    jr      z,.checkleft
     ld      hl,Player_Flags
     res     BIT_PLAYER_DIRECTION,[hl]
-    ld      a,[Player_XPos]
-    add     2
-    ld      [Player_XPos],a
-    jr      nc,:+
-    ld      hl,Player_XPos+2
-    inc     [hl]
-:
+    ld      hl,Player_XVel
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      bc,PLAYER_ACCEL
+    add     hl,bc
+    ld      d,h
+    ld      e,l
+    ld      bc,PLAYER_WALK_SPEED
+    call    Math_Compare16
+    jr      nc,.nocapright
+    ld      hl,PLAYER_WALK_SPEED
+.nocapright
+    ld      a,l
+    ld      [Player_XVel],a
+    ld      a,h
+    ld      [Player_XVel+1],a
+    jr      .nodecel
+    
+.checkleft
+    ldh     a,[hHeldButtons]
+    bit     BIT_LEFT,a
+    jr      z,.decel
+    ld      hl,Player_Flags
+    set     BIT_PLAYER_DIRECTION,[hl]
+    ld      hl,Player_XVel
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      bc,-PLAYER_ACCEL
+    add     hl,bc
+    ld      d,h
+    ld      e,l
+    ld      bc,-PLAYER_WALK_SPEED
+    call    Math_Compare16
+    jr      c,.nocapleft
+    ld      hl,-PLAYER_WALK_SPEED
+.nocapleft
+    ld      a,l
+    ld      [Player_XVel],a
+    ld      a,h
+    ld      [Player_XVel+1],a
+    jr      .nodecel
+    
+.decel
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_DIRECTION,[hl]
+    jr      nz,.decelleft
+.decelright
+    ld      hl,Player_XVel
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      bc,-PLAYER_DECEL
+    add     hl,bc
+    bit     7,h
+    jr      z,.donedecel
+    ld      hl,0
+    jr      .donedecel
+.decelleft
+    ld      hl,Player_XVel
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      bc,PLAYER_DECEL
+    add     hl,bc
+    bit     7,h
+    jr      nz,.donedecel
+    ld      hl,0
+.donedecel
+    ld      a,l
+    ld      [Player_XVel],a
+    ld      a,h
+    ld      [Player_XVel+1],a
+    ; fall through
+.nodecel    
     ; gravity
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
@@ -214,15 +303,15 @@ ProcessPlayer:
     ld      [Player_XPos],a
     ld      a,l
     ld      [Player_XPos+1],a
-    jr      nc,.donex
-    ld      a,[Player_XPos+2]
-    bit     7,h
-    jr      nz,:+
-    inc     a
-    jr      :++
-:   dec     a
-    jr      :+
-:   ld      [Player_XPos+2],a
+;    jr      nc,.donex
+;    ld      a,[Player_XPos+2]
+;    bit     7,h
+;    jr      nz,:+
+;    inc     a
+;    jr      :++
+;:   dec     a
+;    jr      :+
+;:   ld      [Player_XPos+2],a
 .donex
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
@@ -271,7 +360,7 @@ ProcessPlayer:
     
     ld      a,[Player_VerticalCollisionSensorCenter]
     and     a
-    ret     z
+    jr      z,.animateplayer
     ;ld      l,a
     ;ld      h,0
     ;add     hl,hl   ; x2
@@ -296,7 +385,7 @@ ProcessPlayer:
     and     $f0
     ;sub     b
     ld      [Player_YPos],a
-    ret
+    jr      .animateplayer
 .coyote
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
@@ -307,9 +396,37 @@ ProcessPlayer:
 :   set     BIT_PLAYER_AIRBORNE,[hl]    ; set airborne flag
     ld      a,[Player_CoyoteTimer]
     and     a
-    ret     z ; if coyote timer = 0, bail out
+    jr      z,.animateplayer ; if coyote timer = 0, bail out
     dec     a
     ld      [Player_CoyoteTimer],a ; set new coyote timer
+    ; animate player
+.animateplayer
+    ld      a,[Player_AnimTimer]
+    dec     a
+    ld      [Player_AnimTimer],a
+    ret     nz
+    ld      hl,Player_AnimPointer
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl+]
+    cp      $ff
+    jr      z,.animjump
+.getframe
+    ld      [Player_AnimTimer],a
+    ld      a,[hl+]
+    ld      [Player_AnimFrame],a
+    jr      :+
+.animjump
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl+]
+    jr      .getframe
+:   ld      a,l
+    ld      [Player_AnimPointer],a
+    ld      a,h
+    ld      [Player_AnimPointer+1],a
     ret
 
 Player_CollisionResponseVertical:
@@ -413,7 +530,20 @@ Player_CollisionResponseVertical:
     and     $f0
     ld      [Player_YPos],a
     ld      hl,Player_Flags
-    res     BIT_PLAYER_AIRBORNE,[hl]
+    bit     BIT_PLAYER_AIRBORNE,[hl]
+    jr      nz,:+
+    ; play walk or run animation based on whether player is moving
+    ld      a,[Player_XVel]
+    ld      b,a
+    ld      a,[Player_XVel+1]
+    or      b
+    jr      z,.fidle
+.fwalk
+    player_set_animation Walk
+    jr      :+
+.fidle
+    player_set_animation Idle
+:   res     BIT_PLAYER_AIRBORNE,[hl]
     xor     a
     ld      [Player_CoyoteTimer],a
     ld      [Player_YVel],a
@@ -785,8 +915,39 @@ Player_Noclip:
     ret
 
 DrawPlayer:
+    ; copy GFX
+    ld      a,1
+    ldh     [rVBK],a
+    farload bc,PlayerTiles
+    ld      a,[Player_AnimFrame]
+    ld      l,a
+    ld      h,0
+    add     hl,hl   ; x2
+    add     hl,hl   ; x4
+    add     hl,hl   ; x8
+    add     hl,hl   ; x16
+    add     hl,hl   ; x32
+    add     hl,hl   ; x64
+    add     hl,hl   ; x128
+    add     hl,hl   ; x256
+    add     hl,bc
+    ld      a,h
+    ldh     [rHDMA1],a
+    ld      a,l
+    ldh     [rHDMA2],a
+    ld      a,high(_VRAM)
+    ldh     [rHDMA3],a
+    ld      a,low(_VRAM)
+    ldh     [rHDMA4],a
+    ld      a,$0f
+    ldh     [rHDMA5],a
+    ; put player metasprite in OAM
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_DIRECTION,[hl]
     ld      hl,.sprite
-    ld      de,OAMBuffer
+    jr      z,:+
+    ld      hl,.spritef
+:   ld      de,OAMBuffer
     ld      b,(.sprite_end-.sprite)/4
 .loop
     ; y position
@@ -815,13 +976,7 @@ DrawPlayer:
     inc     e
     ; sprite
     ld      a,[hl+]
-    ld      c,a
-    ld      a,[Player_Flags]
-    bit     BIT_PLAYER_CROUCHING,a
-    ld      a,c
-    jr      z,:+
-    add     16
-:   ld      [de],a
+    ld      [de],a
     inc     e
     ; attribute
     ld      a,[hl+]
@@ -841,9 +996,58 @@ DrawPlayer:
     db   0+16, 8 + 0,12, 8
     db   0+16, 8 + 8,14, 8
 .sprite_end
+.spritef
+    db -16+16, 8 -16, 6, 8 | OAMF_XFLIP
+    db -16+16, 8 - 8, 4, 8 | OAMF_XFLIP
+    db -16+16, 8 + 0, 2, 8 | OAMF_XFLIP
+    db -16+16, 8 + 8, 0, 8 | OAMF_XFLIP
+    db   0+16, 8 -16,14, 8 | OAMF_XFLIP
+    db   0+16, 8 - 8,12, 8 | OAMF_XFLIP
+    db   0+16, 8 + 0,10, 8 | OAMF_XFLIP
+    db   0+16, 8 + 8, 8, 8 | OAMF_XFLIP
 
-section "Player GFX",romx
+Player_Anim_Idle:
+    db  16,frame_idle1
+    db  16,frame_idle2
+    db  16,frame_idle1
+    db  8,frame_idle2
+    db  8,frame_idle3
+    db  $ff
+    dw  Player_Anim_Idle
 
-PlayerTiles:    incbin  "GFX/Player/player_idle1.png.2bpp"
-.end
+Player_Anim_Walk:
+    db  5,frame_walk1
+    db  6,frame_walk2
+    db  5,frame_walk3
+    db  6,frame_walk4
+    db  5,frame_walk5
+    db  6,frame_walk6
+    db  5,frame_walk7
+    db  6,frame_walk8
+    db  $ff
+    dw  Player_Anim_Walk
+
+section "Player GFX",romx,align[8]
+
+rsreset
+macro animframe
+def frame_\1 rb
+    incbin "GFX/Player/player_\1.png.2bpp"
+endm
+
+PlayerTiles:
+    animframe  idle1
+    animframe  idle2
+    animframe  idle3
+    animframe  walk1
+    animframe  walk2
+    animframe  walk3
+    animframe  walk4
+    animframe  walk5
+    animframe  walk6
+    animframe  walk7
+    animframe  walk8
+    
+PlayerPlaceholderTiles:
+    incbin  "GFX/Player/placeholder.png.2bpp"
 PlayerPalette:  incbin  "GFX/player.pal"

@@ -306,46 +306,46 @@ LevelLoop:
     ld      [Level_CameraSubY],a
     
     ; level redraw logic
-    ld      a,[Level_ScrollDir]
-    ld      e,a
-    ld      a,[Level_CameraX]
-    and     $f0
-    ld      b,a
-    ld      a,[Level_CameraXPrev]
-    inc     a
-    and     $f0
-    cp      b
-    ;jr      z,.skipredraw
-    ld      h,high(Level_Map)
-    ld      a,[Level_CameraX]
-    and     $f0
-    add     $b0
-    ld      l,a
-    jr      nc,:+
-    inc     h
-    
-:   ld      a,[Level_CameraX+1]
-    add     h
-    ld      h,a
-    
-    bit     7,e
-    jr      z,:+
-    dec     h
-    ld      a,l
-    add     $40
-    ld      l,a
-    jr      nc,:+
-    inc     h
-    
-:   ld      a,l
-    ld      c,16
-:   ld      b,[hl]
-    call    DrawMetatile
-    inc     l
-    inc     a
-    dec     c
-    jr      nz,:-
-.skipredraw
+;    ld      a,[Level_ScrollDir]
+;    ld      e,a
+;    ld      a,[Level_CameraX]
+;    and     $f0
+;    ld      b,a
+;    ld      a,[Level_CameraXPrev]
+;    inc     a
+;    and     $f0
+;    cp      b
+;    ;jr      z,.skipredraw
+;    ld      h,high(Level_Map)
+;    ld      a,[Level_CameraX]
+;    and     $f0
+;    add     $b0
+;    ld      l,a
+;    jr      nc,:+
+;    inc     h
+;    
+;:   ld      a,[Level_CameraX+1]
+;    add     h
+;    ld      h,a
+;    
+;    bit     7,e
+;    jr      z,:+
+;    dec     h
+;    ld      a,l
+;    add     $40
+;    ld      l,a
+;    jr      nc,:+
+;    inc     h
+;    
+;:   ld      a,l
+;    ld      c,16
+;:   ld      b,[hl]
+;    call    DrawMetatile
+;    inc     l
+;    inc     a
+;    dec     c
+;    jr      nz,:-
+;.skipredraw
     call    ProcessPlayer
     call    ProcessObjects
     pushbank
