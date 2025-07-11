@@ -83,7 +83,7 @@ GM_Level:
     ld      a,[hl+]
     swap    a
     and     $f0
-    sub     16
+    ;sub     16
     ld      [Player_YPos],a
     ; music - TODO, skip and play placeholder music for now
     ld      a,[hl+]

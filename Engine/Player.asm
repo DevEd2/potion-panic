@@ -1017,13 +1017,13 @@ Player_Anim_Idle:
 
 Player_Anim_Walk:
     db  5,frame_walk1
-    db  6,frame_walk2
+    db  5,frame_walk2
     db  5,frame_walk3
-    db  6,frame_walk4
+    db  5,frame_walk4
     db  5,frame_walk5
-    db  6,frame_walk6
+    db  5,frame_walk6
     db  5,frame_walk7
-    db  6,frame_walk8
+    db  5,frame_walk8
     db  $ff
     dw  Player_Anim_Walk
 
