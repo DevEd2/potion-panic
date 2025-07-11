@@ -34,6 +34,7 @@ Player_CoyoteTimer:                     db
 Player_AnimFrame:                       db
 Player_AnimTimer:                       db
 Player_AnimPointer:                     dw
+Player_AnimCurrent:                     dw
 Player_RAMEnd:
 
 def BIT_PLAYER_DIRECTION    = 0
@@ -46,12 +47,23 @@ def BIT_PLAYER_UNUSED6      = 6
 def BIT_PLAYER_NOCLIP       = 7
 
 macro player_set_animation
+    ;push    af
+    ld      a,[Player_AnimCurrent]
+    ld      c,a
+    ld      a,[Player_AnimCurrent+1]
+    ld      b,a
+    ld      de,Player_Anim_\1
+    call    Math_Compare16
+    jr      z,:+
     ld      a,low(Player_Anim_\1)
     ld      [Player_AnimPointer],a
+    ld      [Player_AnimCurrent],a
     ld      a,high(Player_Anim_\1)
     ld      [Player_AnimPointer+1],a
+    ld      [Player_AnimCurrent+1],a
     ld      a,1
     ld      [Player_AnimTimer],a
+:   
 endm
 
 section "Player routines",rom0
@@ -136,20 +148,21 @@ ProcessPlayer:
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
     jr      nz,.nojump
-    ldh     a,[hHeldButtons]
-    bit     BIT_UP,a
-    jr      z,:+
-    ld      a,low(-PLAYER_JUMP_HEIGHT_HIGH)
-    ld      [Player_YVel],a
-    ld      a,high(-PLAYER_JUMP_HEIGHT_HIGH)
-    ld      [Player_YVel+1],a
-    set     BIT_PLAYER_AIRBORNE,[hl]
-    jr      .donejump
+    ;ldh     a,[hHeldButtons]
+    ;bit     BIT_UP,a
+    ;jr      z,:+
+    ;ld      a,low(-PLAYER_JUMP_HEIGHT_HIGH)
+    ;ld      [Player_YVel],a
+    ;ld      a,high(-PLAYER_JUMP_HEIGHT_HIGH)
+    ;ld      [Player_YVel+1],a
+    ;set     BIT_PLAYER_AIRBORNE,[hl]
+    ;jr      .donejump
 :   ld      a,low(-PLAYER_JUMP_HEIGHT)
     ld      [Player_YVel],a
     ld      a,high(-PLAYER_JUMP_HEIGHT)
     ld      [Player_YVel+1],a
     set     BIT_PLAYER_AIRBORNE,[hl]
+    player_set_animation Jump
 .donejump
 .nojump
     ; check if player should release jump
@@ -171,23 +184,6 @@ ProcessPlayer:
     ld      a,h
     ld      [Player_YVel+1],a
 .norelease
-    ; left/right animation
-    ld      hl,Player_Flags
-    bit     BIT_PLAYER_AIRBORNE,[hl]
-    jr      nz,.skipwalkanim
-    ; check if left/right were just pressed
-    ldh     a,[hPressedButtons]
-    and     BTN_LEFT | BTN_RIGHT
-    jr      z,:+
-    player_set_animation Walk
-    jr      .skipwalkanim
-    ; check if left or right were just released
-:   ldh     a,[hReleasedButtons]
-    and     BTN_LEFT | BTN_RIGHT
-    jr      z,.skipwalkanim
-    player_set_animation Idle
-    ; fall through
-.skipwalkanim
     ; left/right movement
 .checkright
     ldh     a,[hHeldButtons]
@@ -237,8 +233,7 @@ ProcessPlayer:
     ld      [Player_XVel],a
     ld      a,h
     ld      [Player_XVel+1],a
-    jr      .nodecel
-    
+    jr      .nodecel    
 .decel
     ld      hl,Player_Flags
     bit     BIT_PLAYER_DIRECTION,[hl]
@@ -271,6 +266,21 @@ ProcessPlayer:
     ld      [Player_XVel+1],a
     ; fall through
 .nodecel    
+    ; do walk/idle animation
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_AIRBORNE,[hl]
+    jr      nz,:+
+    ld      a,[Player_XVel]
+    ld      b,a
+    ld      a,[Player_XVel+1]
+    or      b
+    jr      z,.idle
+    player_set_animation Walk
+    jr      :+
+.idle
+    player_set_animation Idle
+:
+    
     ; gravity
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
@@ -288,6 +298,9 @@ ProcessPlayer:
     ld      [Player_YVel],a
     ld      a,h
     ld      [Player_YVel+1],a
+    bit     7,h
+    jr      nz,:+
+    player_set_animation Fall
 :
     ; velocity to position
     ld      hl,Player_XVel
@@ -1027,6 +1040,23 @@ Player_Anim_Walk:
     db  $ff
     dw  Player_Anim_Walk
 
+Player_Anim_Jump:
+    db  1,frame_jump
+    db  $ff
+    dw  Player_Anim_Jump
+
+Player_Anim_Fall:
+    db  4,frame_fall1
+    db  4,frame_fall2
+    db  $ff
+    dw  Player_Anim_Fall
+    
+Player_Anim_FallFast:
+    db  3,frame_fall3
+    db  3,frame_fall4
+    db  $ff
+    dw  Player_Anim_FallFast
+
 section "Player GFX",romx,align[8]
 
 rsreset
@@ -1036,17 +1066,22 @@ def frame_\1 rb
 endm
 
 PlayerTiles:
-    animframe  idle1
-    animframe  idle2
-    animframe  idle3
-    animframe  walk1
-    animframe  walk2
-    animframe  walk3
-    animframe  walk4
-    animframe  walk5
-    animframe  walk6
-    animframe  walk7
-    animframe  walk8
+    animframe   idle1
+    animframe   idle2
+    animframe   idle3
+    animframe   walk1
+    animframe   walk2
+    animframe   walk3
+    animframe   walk4
+    animframe   walk5
+    animframe   walk6
+    animframe   walk7
+    animframe   walk8
+    animframe   jump
+    animframe   fall1
+    animframe   fall2
+    animframe   fall3
+    animframe   fall4
     
 PlayerPlaceholderTiles:
     incbin  "GFX/Player/placeholder.png.2bpp"
