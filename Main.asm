@@ -635,6 +635,7 @@ Int_Dummy:
 IntV_Default:
     push    bc
     push    de
+    ; do OAM DMA
     call    hOAMDMA
     ; get input
     ld      a,[hHeldButtons]
@@ -671,6 +672,11 @@ IntV_Default:
     ld      [hReleasedButtons],a    ; store buttons released this frame
     ld      a,P1F_5|P1F_4
     ld      [rP1],a
+    ; clear OAM
+    ld      hl,OAMBuffer
+    ld      b,40*4
+    xor     a
+    call    MemFillSmall
     pop     de
     pop     bc
     ret

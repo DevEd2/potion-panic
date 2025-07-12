@@ -991,6 +991,7 @@ DrawPlayer:
     ldh     [rVBK],a
     farload bc,PlayerTiles
     ld      a,[Player_AnimFrame]
+    ld      e,a
     ld      l,a
     ld      h,0
     add     hl,hl   ; x2
@@ -1013,14 +1014,21 @@ DrawPlayer:
     ld      a,$0f
     ldh     [rHDMA5],a
     ; put player metasprite in OAM
+    ld      hl,Player_SpriteMasks
+    ld      d,0
+    add     hl,de
+    ld      c,[hl]
     ld      hl,Player_Flags
     bit     BIT_PLAYER_DIRECTION,[hl]
-    ld      hl,.sprite32
+    ld      hl,.sprite
     jr      z,:+
-    ld      hl,.sprite32flip
+    ld      hl,.spriteflip
 :   ld      de,OAMBuffer
-    ld      b,(.sprite32_end-.sprite32)/4
+    ld      b,(.sprite_end-.sprite)/4
 .loop
+    rr      c
+    jr      nc,.next
+    push    bc
     ; y position
     ld      a,[hl+]
     ld      c,a
@@ -1053,11 +1061,18 @@ DrawPlayer:
     ld      a,[hl+]
     ld      [de],a
     inc     e
-    dec     b
+    pop     bc
+:   dec     b
     jr      nz,.loop
-    
     ret
-.sprite32
+.next
+    push    bc
+    ld      bc,4
+    add     hl,bc
+    pop     bc
+    jr      :-
+    
+.sprite
     db -16+16, 8 -16, 0, 8
     db -16+16, 8 - 8, 2, 8
     db -16+16, 8 + 0, 4, 8
@@ -1066,28 +1081,16 @@ DrawPlayer:
     db   0+16, 8 - 8,10, 8
     db   0+16, 8 + 0,12, 8
     db   0+16, 8 + 8,14, 8
-.sprite32_end
-.sprite32flip
-    db -16+16, 8 -16, 6, 8 | OAMF_XFLIP
+.sprite_end
+.spriteflip
+    db -16+16, 8 + 8, 0, 8 | OAMF_XFLIP
+    db -16+16, 8 + 0, 2, 8 | OAMF_XFLIP
     db -16+16, 8 - 8, 4, 8 | OAMF_XFLIP
-    db -16+16, 8 + 0, 2, 8 | OAMF_XFLIP
-    db -16+16, 8 + 8, 0, 8 | OAMF_XFLIP
-    db   0+16, 8 -16,14, 8 | OAMF_XFLIP
-    db   0+16, 8 - 8,12, 8 | OAMF_XFLIP
-    db   0+16, 8 + 0,10, 8 | OAMF_XFLIP
+    db -16+16, 8 -16, 6, 8 | OAMF_XFLIP
     db   0+16, 8 + 8, 8, 8 | OAMF_XFLIP
-
-.sprite16
-    db -16+16, 8 + 0, 4, 8
-    db -16+16, 8 + 8, 6, 8
-    db   0+16, 8 -16, 8, 8
-    db   0+16, 8 - 8,10, 8
-.sprite16_end
-.sprite16flip    
-    db -16+16, 8 + 0, 2, 8 | OAMF_XFLIP
-    db -16+16, 8 + 8, 0, 8 | OAMF_XFLIP
-    db   0+16, 8 -16,14, 8 | OAMF_XFLIP
+    db   0+16, 8 + 0,10, 8 | OAMF_XFLIP
     db   0+16, 8 - 8,12, 8 | OAMF_XFLIP
+    db   0+16, 8 -16,14, 8 | OAMF_XFLIP
 
 Player_Anim_Idle:
     db  16,frame_idle1
@@ -1140,33 +1143,40 @@ Player_Anim_WandRight:
 
 section "Player GFX",romx,align[8]
 
-rsreset
-macro animframe
-def frame_\1 rb
-    incbin "GFX/Player/player_\1.png.2bpp"
-endm
-
-PlayerTiles:
-    animframe   idle1
-    animframe   idle2
-    animframe   idle3
-    animframe   walk1
-    animframe   walk2
-    animframe   walk3
-    animframe   walk4
-    animframe   walk5
-    animframe   walk6
-    animframe   walk7
-    animframe   walk8
-    animframe   jump
-    animframe   fall0
-    animframe   fall1
-    animframe   fall2
-    animframe   fall3
-    animframe   fall4
-    animframe   wand_right
-    animframe   wand_left
-    
 PlayerPlaceholderTiles:
     incbin  "GFX/Player/placeholder.png.2bpp"
 PlayerPalette:  incbin  "GFX/player.pal"
+
+rsreset
+macro animframe
+def frame_\1 rb
+section fragment "Player tiles",romx,align[8]
+    incbin "GFX/Player/player_\1.png.2bpp"
+section fragment "Player sprite masks",rom0
+    db  \2
+endm
+
+section fragment "Player sprite masks",rom0
+Player_SpriteMasks:
+
+section fragment "Player tiles",romx
+PlayerTiles:
+    animframe   idle1,%01100110
+    animframe   idle2,%01100110
+    animframe   idle3,%01100110
+    animframe   walk1,%01100110
+    animframe   walk2,%01100110
+    animframe   walk3,%01100110
+    animframe   walk4,%01100110
+    animframe   walk5,%01100110
+    animframe   walk6,%01100110
+    animframe   walk7,%01100110
+    animframe   walk8,%01100110
+    animframe   jump,%01100110
+    animframe   fall0,%01100110
+    animframe   fall1,%01100110
+    animframe   fall2,%01100110
+    animframe   fall3,%01100110
+    animframe   fall4,%01100110
+    animframe   wand_right,%11101110
+    animframe   wand_left,%11101110

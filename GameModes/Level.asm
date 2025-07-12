@@ -351,7 +351,7 @@ LevelLoop:
     pushbank
     call    GBM_Update
     popbank
-    rst     WaitForVBlank    
+    rst     WaitForVBlank
     call    DrawPlayer
     ld      a,[Level_CameraX]
     ldh     [rSCX],a
@@ -359,28 +359,6 @@ LevelLoop:
     ldh     [rSCY],a
     
     jp      LevelLoop
-.up
-    dec     [hl]
-    ret
-.down
-    inc     [hl]
-    ret
-.left
-    ld      a,[hl]
-    sub     1   ; apparently dec doesn't affect carry so I *have* to do this
-    ld      [hl],a
-    ret     nc
-    inc     hl
-    dec     [hl]
-    ret
-.right
-    ld      a,[hl]
-    add     1   ; apparently inc doesn't affect carry so I *have* to do this
-    ld      [hl],a
-    ret     nc
-    inc     hl
-    inc     [hl]
-    ret
     
 LoadTileset:
     ; load GFX
