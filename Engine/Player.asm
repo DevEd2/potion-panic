@@ -7,6 +7,7 @@ def PLAYER_JUMP_HEIGHT      = $400
 def PLAYER_JUMP_HEIGHT_HIGH = $400 ;$490
 def PLAYER_GRAVITY          = $028
 def PLAYER_COYOTE_TIME      = 15 ; coyote time in frames
+def PLAYER_WAND_TIME        = 15 ; wand time in frames
 
 def PLAYER_WIDTH            = 6
 def PLAYER_HEIGHT           = 27
@@ -35,12 +36,14 @@ Player_AnimFrame:                       db
 Player_AnimTimer:                       db
 Player_AnimPointer:                     dw
 Player_AnimCurrent:                     dw
+Player_AnimFlag:                        db
+Player_WandTimer:                       db
 Player_RAMEnd:
 
 def BIT_PLAYER_DIRECTION    = 0
 def BIT_PLAYER_AIRBORNE     = 1
 def BIT_PLAYER_CROUCHING    = 2 
-def BIT_PLAYER_UNUSED3      = 3
+def BIT_PLAYER_WAND         = 3
 def BIT_PLAYER_UNUSED4      = 4
 def BIT_PLAYER_UNUSED5      = 5
 def BIT_PLAYER_UNUSED6      = 6
@@ -93,12 +96,27 @@ InitPlayer:
     ret
 
 ProcessPlayer:
-    ld      a,[Player_Flags]
-    bit     BIT_PLAYER_NOCLIP,a
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_NOCLIP,[hl]
     push    af
     call    nz,Player_Noclip
     pop     af
     ret     nz  ; return if we're in noclip mode
+    
+:   ; check if player has wand out
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_WAND,[hl]
+    push    af
+    call    nz,Player_Wand
+    pop     af
+    jr      z,:+
+    ; cut vertical velocity
+    xor     a
+    ld      [Player_YVel],a
+    ld      [Player_YVel+1],a
+    ; TODO: create projectile
+    jp      .animateplayer
+:   res     BIT_PLAYER_WAND,[hl]
     
     ; player controls
     
@@ -137,7 +155,20 @@ ProcessPlayer:
 ;    jr      nz,.skipcrouch
 ;    ld      hl,Player_Flags
 ;    res     BIT_PLAYER_CROUCHING,[hl]
-.skipcrouch
+;.skipcrouch
+    ; wand fire check
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_WAND,[hl]
+    jr      nz,.nowand
+    ldh     a,[hPressedButtons]
+    bit     BIT_B,a
+    jr      z,.nowand
+    set     BIT_PLAYER_WAND,[hl]
+    ld      a,PLAYER_WAND_TIME
+    ld      [Player_WandTimer],a
+    call    Player_Wand
+    jp      .skipcontrols
+.nowand
     ; check if player should jump
     ldh     a,[hPressedButtons]
     bit     BIT_A,a
@@ -236,6 +267,7 @@ ProcessPlayer:
     jr      .nodecel    
 .decel
     ld      hl,Player_Flags
+.decel2
     bit     BIT_PLAYER_DIRECTION,[hl]
     jr      nz,.decelleft
 .decelright
@@ -280,6 +312,7 @@ ProcessPlayer:
 .idle
     player_set_animation Idle
 :
+.skipcontrols
     
     ; gravity
     ld      hl,Player_Flags
@@ -299,6 +332,9 @@ ProcessPlayer:
     ld      a,h
     ld      [Player_YVel+1],a
     bit     7,h
+    jr      nz,:+
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_WAND,a
     jr      nz,:+
     player_set_animation Fall
 :
@@ -422,9 +458,12 @@ ProcessPlayer:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
+.getbyte
     ld      a,[hl+]
     cp      $ff
     jr      z,.animjump
+    cp      $fe
+    jr      z,.animflag
 .getframe
     ld      [Player_AnimTimer],a
     ld      a,[hl+]
@@ -434,13 +473,16 @@ ProcessPlayer:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    ld      a,[hl+]
-    jr      .getframe
+    jr      .getbyte
 :   ld      a,l
     ld      [Player_AnimPointer],a
     ld      a,h
     ld      [Player_AnimPointer+1],a
     ret
+.animflag
+    ld      a,[hl+]
+    ld      [Player_AnimFlag],a
+    jr      .getbyte
 
 Player_CollisionResponseVertical:
     pushbank
@@ -927,6 +969,22 @@ Player_Noclip:
 :   pop     hl
     ret
 
+Player_Wand:
+    bit     BIT_PLAYER_DIRECTION,[hl]
+    jr      z,.right
+.left
+    player_set_animation WandLeft
+    jr      .next
+.right
+    player_set_animation WandRight
+.next
+    ld      a,[Player_WandTimer]
+    dec     a
+    ld      [Player_WandTimer],a
+    ret     nz
+    res     BIT_PLAYER_WAND,[hl]
+    ret
+
 DrawPlayer:
     ; copy GFX
     ld      a,1
@@ -957,11 +1015,11 @@ DrawPlayer:
     ; put player metasprite in OAM
     ld      hl,Player_Flags
     bit     BIT_PLAYER_DIRECTION,[hl]
-    ld      hl,.sprite
+    ld      hl,.sprite32
     jr      z,:+
-    ld      hl,.spritef
+    ld      hl,.sprite32flip
 :   ld      de,OAMBuffer
-    ld      b,(.sprite_end-.sprite)/4
+    ld      b,(.sprite32_end-.sprite32)/4
 .loop
     ; y position
     ld      a,[hl+]
@@ -999,7 +1057,7 @@ DrawPlayer:
     jr      nz,.loop
     
     ret
-.sprite
+.sprite32
     db -16+16, 8 -16, 0, 8
     db -16+16, 8 - 8, 2, 8
     db -16+16, 8 + 0, 4, 8
@@ -1008,8 +1066,8 @@ DrawPlayer:
     db   0+16, 8 - 8,10, 8
     db   0+16, 8 + 0,12, 8
     db   0+16, 8 + 8,14, 8
-.sprite_end
-.spritef
+.sprite32_end
+.sprite32flip
     db -16+16, 8 -16, 6, 8 | OAMF_XFLIP
     db -16+16, 8 - 8, 4, 8 | OAMF_XFLIP
     db -16+16, 8 + 0, 2, 8 | OAMF_XFLIP
@@ -1018,6 +1076,18 @@ DrawPlayer:
     db   0+16, 8 - 8,12, 8 | OAMF_XFLIP
     db   0+16, 8 + 0,10, 8 | OAMF_XFLIP
     db   0+16, 8 + 8, 8, 8 | OAMF_XFLIP
+
+.sprite16
+    db -16+16, 8 + 0, 4, 8
+    db -16+16, 8 + 8, 6, 8
+    db   0+16, 8 -16, 8, 8
+    db   0+16, 8 - 8,10, 8
+.sprite16_end
+.sprite16flip    
+    db -16+16, 8 + 0, 2, 8 | OAMF_XFLIP
+    db -16+16, 8 + 8, 0, 8 | OAMF_XFLIP
+    db   0+16, 8 -16,14, 8 | OAMF_XFLIP
+    db   0+16, 8 - 8,12, 8 | OAMF_XFLIP
 
 Player_Anim_Idle:
     db  16,frame_idle1
@@ -1046,16 +1116,27 @@ Player_Anim_Jump:
     dw  Player_Anim_Jump
 
 Player_Anim_Fall:
-    db  4,frame_fall1
+    db  4,frame_fall0
+:   db  4,frame_fall1
     db  4,frame_fall2
     db  $ff
-    dw  Player_Anim_Fall
+    dw  :-
     
 Player_Anim_FallFast:
     db  3,frame_fall3
     db  3,frame_fall4
     db  $ff
     dw  Player_Anim_FallFast
+
+Player_Anim_WandLeft:
+    db  24,frame_wand_left
+    db  $ff
+    dw  Player_Anim_WandLeft
+    
+Player_Anim_WandRight:
+    db  24,frame_wand_right
+    db  $ff
+    dw  Player_Anim_WandRight
 
 section "Player GFX",romx,align[8]
 
@@ -1078,10 +1159,13 @@ PlayerTiles:
     animframe   walk7
     animframe   walk8
     animframe   jump
+    animframe   fall0
     animframe   fall1
     animframe   fall2
     animframe   fall3
     animframe   fall4
+    animframe   wand_right
+    animframe   wand_left
     
 PlayerPlaceholderTiles:
     incbin  "GFX/Player/placeholder.png.2bpp"
