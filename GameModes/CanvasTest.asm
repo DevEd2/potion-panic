@@ -50,10 +50,10 @@ GM_CanvasTest:
     ld      a,1
     ldh     [rVBK],a
     
-    
     ;lb      hl,0,0
     ;lb      de,128,128
     ;call    DrawLine
     
 CanvasTestLoop:
-    jp      CanvasTestLoop
+    halt
+    jr      CanvasTestLoop

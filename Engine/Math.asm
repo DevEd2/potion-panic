@@ -89,10 +89,10 @@ Math_Div16:
     jr      nz,.loop
     ret
 .error
-    ;push    af
-    ;ld      a,ERR_DIV_ZERO
-    ;ldh     [hErrType],a
-    ;pop     af
+    push    af
+    ld      a,ERR_DIV_ZERO
+    ldh     [hErrType],a
+    pop     af
     rst     Error
 endc
 

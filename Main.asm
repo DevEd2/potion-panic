@@ -94,7 +94,7 @@ WaitForSTAT: jp _WaitForSTAT
 section "Reset $10",rom0[$10]
 CallHL:
     bit     7,h
-    jr      nz,@+1 ; conditional RST $38
+    jr      nz,CallHL_Error
     jp      hl
 
 section "Reset $18",rom0[$18]
@@ -111,8 +111,7 @@ Reset30: ret
 
 section "Reset $38",rom0[$38]
 Error:
-    ld      b,b
-    jr      @
+    jp  ErrorScreen
     
 ; =============================================================================
 
@@ -131,6 +130,15 @@ IRQ_Serial: reti
 section "Joypad interrupt vector",rom0[$60]
 IRQ_Joypad: reti
 
+; =============================================================================
+
+CallHL_Error:
+    push    af
+    ld      a,ERR_BAD_JUMPTABLE
+    ldh     [hErrType],a
+    pop     af
+    jp      ErrorScreen
+    
 ; =============================================================================
 
 section "ROM header",rom0[$100]
@@ -209,7 +217,7 @@ ProgramStart:
     
     ldh     a,[hIsGBC]
     cp      $11
-    jr      nz,@
+    jr      nz,@ ; TODO: Lockout screen
     
     ; enable double speed mode
     xor     a
@@ -698,18 +706,16 @@ include "GameModes/Level.asm"
 
 ; =============================================================================
 
+include "Engine/ErrorHandler.asm"
+
+; =============================================================================
+
 include "Audio/Audio.asm"
 
 ; =============================================================================
 
 Font:   incbin  "GFX/font.1bpp"
 .end
-
-Pal_BSOD:
-    rgb  0, 0,31
-    rgb  0, 0, 0
-    rgb  0, 0, 0
-    rgb 31,31,31
 
 ; =============================================================================
 
