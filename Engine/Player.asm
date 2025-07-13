@@ -9,8 +9,8 @@ def PLAYER_GRAVITY          = $028
 def PLAYER_COYOTE_TIME      = 15 ; coyote time in frames
 def PLAYER_WAND_TIME        = 15 ; wand time in frames
 
-def PLAYER_WIDTH            = 6
-def PLAYER_HEIGHT           = 27
+def PLAYER_WIDTH            = 5
+def PLAYER_HEIGHT           = 24
 
 Player_RAMStart:
 Player_XPos:    ds  3   ; x position (Q16.8)
@@ -38,16 +38,21 @@ Player_AnimPointer:                     dw
 Player_AnimCurrent:                     dw
 Player_AnimFlag:                        db
 Player_WandTimer:                       db
+Player_Projectiles: ds  8*8
 Player_RAMEnd:
 
-def BIT_PLAYER_DIRECTION    = 0
-def BIT_PLAYER_AIRBORNE     = 1
-def BIT_PLAYER_CROUCHING    = 2 
-def BIT_PLAYER_WAND         = 3
-def BIT_PLAYER_UNUSED4      = 4
-def BIT_PLAYER_UNUSED5      = 5
-def BIT_PLAYER_UNUSED6      = 6
-def BIT_PLAYER_NOCLIP       = 7
+rsreset
+def PROJECTILE_PX rw
+def PROJECTILE_VX rw
+def PROJECTILE_PY rw
+def PROJECTILE_VY rw
+
+rsreset
+def BIT_PLAYER_DIRECTION    rb
+def BIT_PLAYER_AIRBORNE     rb
+def BIT_PLAYER_CROUCHING    rb
+def BIT_PLAYER_WAND         rb
+def BIT_PLAYER_NOCLIP       rb
 
 macro player_set_animation
     ;push    af
@@ -1064,6 +1069,8 @@ DrawPlayer:
     pop     bc
 :   dec     b
     jr      nz,.loop
+    ld      a,e
+    ldh     [hOAMPos],a
     ret
 .next
     push    bc
@@ -1140,6 +1147,37 @@ Player_Anim_WandRight:
     db  24,frame_wand_right
     db  $ff
     dw  Player_Anim_WandRight
+
+; ========
+Player_ProcessProjectiles:
+    ld      hl,Player_Projectiles
+    ld      b,8
+:   ; can't have an anonymous label and rept on the same line smh my head
+    rept 2
+        push    hl
+        ld      a,[hl+]
+        ld      c,a
+        ld      a,[hl+]
+        ld      b,a
+        ld      a,[hl+]
+        ld      h,[hl]
+        ld      l,a
+        add     hl,bc
+        ld      d,h
+        ld      e,l
+        pop     hl
+        ld      a,e
+        ld      [hl+],a
+        ld      a,d
+        ld      [hl+],a
+        ld      de,4
+        add     hl,de
+    endr
+    dec     b
+    jr      nz,:-
+    
+    
+    ret
 
 section "Player GFX",romx,align[8]
 

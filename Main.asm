@@ -720,6 +720,7 @@ section "System variables",hram[$ff80]
 
 hOAMDMA:        	ds SIZEOF_OAMDMA
 def hOAMPage        equ hOAMDMA + 1
+hOAMPos:            db
 hROMB0:         	db
 
 hHeldButtons:   	db

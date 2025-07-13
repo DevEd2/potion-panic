@@ -1,6 +1,6 @@
 ; ================================================================
-; General purpose math library
-; Copyright (c) 2023 DevEd
+; DevMath general-purpose math library
+; Copyright (c) 2023-2025 DevEd
 ;
 ; Permission is hereby granted, free of charge, to any person obtaining
 ; a copy of this software and associated documentation files (the
@@ -66,6 +66,7 @@ endc
 
 if INC_DIV
 ; Divide a 16-bit number by an 8-bit number.
+; Adapted from https://learn.cemetech.net/index.php/Z80:Math_Routines#HL_Div_C
 ; INPUT:    hl = dividend
 ;            b = divisor
 ; OUTPUT:   hl = result
@@ -97,11 +98,42 @@ endc
 
 if INC_POW
 ; Raise a number to the second power.
-; INPUT:    hl = number
-; OUTPUT:   hl = result
-; DESTROYS: ?? ?? ?? ??
+; Adapted from https://learn.cemetech.net/index.php/Z80:Math_Routines#L_Squared_(fast)
+; INPUT:    L = number
+; OUTPUT:   A = result
+; DESTROYS: AF -C -- H-
 Math_Square:
-    ; TODO
+    ld      h,l
+    ; first iteration
+    sla     l
+    rr      h
+    sbc     a
+    or      l
+    ; second iteration
+    ld      c,a
+    rr      h
+    sbc     a
+    xor     l
+    and     $f8
+    add     c
+    ; third iteration
+    ld      c,a
+    sla     l
+    rr      h
+    sbc     a
+    xor     l
+    and     $e0
+    add     c
+    ; fourth iteration
+    ld      c,a
+    ld      a,l
+    add     a
+    rrc     h
+    xor     h
+    and     $80
+    xor     c
+    cpl
+    inc     a
     ret
 endc
 
@@ -123,43 +155,30 @@ endc
 
 if INC_SINCOS
 ; Calculate the sine and cosine of an 8-bit angle (0 = 0 deg, 256 = 360 deg)
+; Speed optimization by Stephane Hockenhull
 ; INPUT:     a = angle
 ; OUTPUT:   hl = sine (Q7.8)
 ;           de = cosine (Q7.8)
 ; DESTROYS: af bc de hl
-Math_SinCos:   
+Math_SinCos::
     ld      c,a
     ld      b,0
-    ld      hl,Math_SineTable
-    call    Math_LUT16
-    push    hl
-    ld      hl,Math_CosineTable
-    call    Math_LUT16
-    ld      d,h
-    ld      e,l
-    pop     hl
-    ret
+    ld      hl,Math_SinCosTable
+    add     hl,bc
+    add     hl,bc
+    sub     $40
+    ld      c, a
+    ld      a,[hl+]
+    ld      d,[hl]
+    ld      e,a
+    ld      hl,Math_SinCosTable
+    add     hl,bc
+    add     hl,bc
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ret    
 endc
-
-; Just calculate the sine of an 8-bit angle
-; INPUT:     a = angle
-; OUTPUT:   hl = sine (Q7.8)
-; DESTROYS:
-Math_Sine:
-    ld      c,a
-    ld      b,0
-    ld      hl,Math_SineTable
-    jp      Math_LUT16
-
-; Just calculate the cosine of an 8-bit angle
-; INPUT:     a = angle
-; OUTPUT:   hl = sine (Q7.8)
-; DESTROYS:
-Math_Cosine:
-    ld      c,a
-    ld      b,0
-    ld      hl,Math_CosineTable
-    jp      Math_LUT16
 
 if INC_HEX2BCD
 Math_Hex2BCD8:
@@ -251,10 +270,13 @@ Math_ATan2:
 endc
 
 if INC_RAND
+; RNG routines based on work by Zeda and Runer112 - https://pastebin.com/5UWFemuu
+; They have been modified for use on Game Boy.
 
-def RNG_SEED_1  = 31416
-def RNG_SEED_2  = 52197
+def RNG_SEED_1  = 9999
+def RNG_SEED_2  = 987
 
+; Original routines used self-modifying code, which isn't viable on Game Boy
 Math_InitRandSeed:
     ld      hl,Math_RNGSeed1
     ld      a,low(RNG_SEED_1)
@@ -268,7 +290,10 @@ Math_InitRandSeed:
     ret
 
 ; Returns a random number in HL.
-; adapted from https://learn.cemetech.net/index.php/Z80:Math_Routines#rand.3B_very_fast
+; INPUT:    none
+; OUTPUT:   hl = result (16-bit)
+;            a = result (8-bit)
+; DESTROYS: af, bc
 Math_Random:
     push    af
     ld      hl,Math_RNGSeed1
@@ -315,45 +340,24 @@ Math_RandRange:
     pop     af
     ld      hl,0
     ld      b,h
-    add     a
-    jr      nc,:+  
+:   add     a
+    jr      nc,:+
     ld      h,d
     ld      l,e
-:   add     hl,hl
-    rla
-    jr      nc,:+
-    add     hl,de
-    adc     b
-:   add     hl,hl
-    rla
-    jr      nc,:+
-    add     hl,de
-    adc     b
-:   add     hl,hl
-    rla
-    jr      nc,:+
-    add     hl,de
-    adc     b
-:   add     hl,hl
-    rla
-    jr      nc,:+
-    add     hl,de
-    adc     b
-:   add     hl,hl
-    rla
-    jr      nc,:+
-    add     hl,de
-    adc     b
-:   add     hl,hl
-    rla
-    jr      nc,:+
-    add     hl,de
-    adc     b
-:   add     hl,hl
+:   ; can't have an anonymous label and a rept on the same line smh my head
+    rept    6
+        add     hl,hl
+        rla
+        jr      nc,:+
+        add     hl,de
+        adc     b
+:   ; can't have an anonymous label and an endr on the same line smh my head
+    endr
+    add     hl,hl
     rla
     ret     nc
     add     hl,de
-    adc     a,b
+    adc     b
     ret
 endc
 
@@ -374,20 +378,20 @@ Math_Compare16:
 ; Negate a 16-bit number in HL.
 ; INPUT:    hl = num
 ; OUTPUT:   hl = -num
-; DESTROYS: af -- de hl
+; DESTROYS: af, hl
 Math_Neg16:
-    ld      a,l
-    cpl
+    xor     a
+    sub     l
     ld      l,a
-    ld      a,h
-    cpl
+    sbc     a
+    sub     h
     ld      h,a
-    inc     hl
     ret
 
 ; Get the absolute value of a signed 8-bit number.
-; INPUT:     a = number
-; OUTPUT:    a = result
+; INPUT:    a = number
+; OUTPUT:   a = result
+; DESTROYS: f
 Math_Abs8:
     bit     7,a
     ret     z
@@ -398,6 +402,7 @@ Math_Abs8:
 ; Get the absolute value of a Q7.8 number.
 ; INPUT:    hl = number
 ; OUTPUT:   hl = result
+; DESTROYS: af, hl
 Math_Abs16:
     bit     7,h
     ret     z
@@ -416,7 +421,7 @@ Math_LUT8:
 ; INPUT:    hl = LUT pointer
 ;           bc = offset
 ; OUTPUT:   hl = result
-; DESTROYS: af -- -- hl
+; DESTROYS: af, hl
 Math_LUT16:
     add     hl,bc
     add     hl,bc
@@ -425,18 +430,29 @@ Math_LUT16:
     ld      l,a
     ret
 
+; Returns carry if given point H,L is withing a rectangle BC,DE
+; Adapted from https://learn.cemetech.net/index.php/Z80:Miscellaneous_Routines#Hotspot
+; INPUT:    bc = top left corner X,Y
+;           de = bottom right corner X,Y
+;           hl = point X,Y
+; OUTPUT:   Carry if point is within rectangle
+; DESTROYS: a
+Math_IsPointInRectangle:
+    ld      a,h
+    cp      b
+    ccf
+    ret     nc
+    cp      d
+    ret     nc
+    ld      a,l
+    cp      c
+    ccf
+    ret     nc
+    cp      e
+    ret
+
 if INC_SINCOS
-Math_SineTable:
-    dw      $0000,$0006,$000c,$0012,$0019,$001f,$0025,$002b
-    dw      $0031,$0038,$003e,$0044,$004a,$0050,$0056,$005c
-    dw      $0061,$0067,$006d,$0073,$0078,$007e,$0083,$0088
-    dw      $008e,$0093,$0098,$009d,$00a2,$00a7,$00ab,$00b0
-    dw      $00b5,$00b9,$00bd,$00c1,$00c5,$00c9,$00cd,$00d1
-    dw      $00d4,$00d8,$00db,$00de,$00e1,$00e4,$00e7,$00ea
-    dw      $00ec,$00ee,$00f1,$00f3,$00f4,$00f6,$00f8,$00f9
-    dw      $00fb,$00fc,$00fd,$00fe,$00fe,$00ff,$00ff,$00ff
-    ; continues through Math_CosineTable
-Math_CosineTable:
+Math_SinCosTable:
     dw      $0100,$00ff,$00ff,$00ff,$00fe,$00fe,$00fd,$00fc
     dw      $00fb,$00f9,$00f8,$00f6,$00f4,$00f3,$00f1,$00ee
     dw      $00ec,$00ea,$00e7,$00e4,$00e1,$00de,$00db,$00d8
@@ -461,7 +477,6 @@ Math_CosineTable:
     dw      $ff72,$ff78,$ff7d,$ff82,$ff88,$ff8d,$ff93,$ff99
     dw      $ff9f,$ffa4,$ffaa,$ffb0,$ffb6,$ffbc,$ffc2,$ffc8
     dw      $ffcf,$ffd5,$ffdb,$ffe1,$ffe7,$ffee,$fff4,$fffa
-    ; Math_SineTable ends here
     dw      $0000,$0006,$000c,$0012,$0019,$001f,$0025,$002b
     dw      $0031,$0038,$003e,$0044,$004a,$0050,$0056,$005c
     dw      $0061,$0067,$006d,$0073,$0078,$007e,$0083,$0088
@@ -470,7 +485,6 @@ Math_CosineTable:
     dw      $00d4,$00d8,$00db,$00de,$00e1,$00e4,$00e7,$00ea
     dw      $00ec,$00ee,$00f1,$00f3,$00f4,$00f6,$00f8,$00f9
     dw      $00fb,$00fc,$00fd,$00fe,$00fe,$00ff,$00ff,$00ff
-    
 endc
 
 if INC_SQRT
