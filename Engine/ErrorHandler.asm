@@ -102,8 +102,8 @@ ErrorScreen:
     call    PrintString
     ld      de,_SCRN0+$cc
     call    PrintString
-    ; ld      de,_SCRN0+$e1
-    ; call    PrintString
+    ld      de,_SCRN0+$e1
+    call    PrintString
     ld      de,_SCRN0+$ec
     call    PrintString
     
@@ -164,12 +164,10 @@ ErrorScreen:
     ldh     a,[rIE]
     call    PrintHex
     
-    ;ld      de,$98e4
-    ;ld      hl,hSTATPointer+1
-    ;ld      a,[hl-]
-    ;call    PrintHex
-    ;ld      a,[hl]
-    ;call    PrintHex
+    ld      de,$98e4
+    ld      hl,hROMB0
+    ld      a,[hl]
+    call    PrintHex
     ld      de,$98ef
     ldh     a,[hIsGBC]
     call    PrintHex
@@ -276,7 +274,7 @@ str_DE:                 db  "DE=",0
 str_HL:                 db  "HL=",0
 str_SP:                 db  "SP=",0
 str_IE:                 db  "IE=",0
-;str_RP:                 db  "RP=",0
+str_RB:                 db  "RB=",0
 str_Console:            db  "GB=",0
 str_StackTrace:         db  "STACK TRACE:",0
 
