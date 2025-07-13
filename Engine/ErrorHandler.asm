@@ -53,11 +53,13 @@ ErrorScreen:
     ld      e,0
     call    MemFill
     
+    ld      a,bank(Font)
+    ld      [rROMB0],a
     ld      hl,Font
     ld      de,_VRAM
     ld      bc,Font.end-Font
     call    CopyTiles1BPP
-    
+        
     ld      hl,Font
     ld      de,_VRAM+$800
     ld      bc,Font.end-Font

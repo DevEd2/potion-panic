@@ -179,12 +179,12 @@ for i in range(inum):
                     procdsamp[j] = sampdata[loopstart + j]
 
             # TPDF dither
-            random.seed(-3662269746218189933)
+            #random.seed(-3662269746218189933)
             for j in range(32):
                 val = procdsamp[j] / bound
                 ev = int(val*16)
                 er = val*16 - ev
-                if er > random.triangular(): ev += 1
+                #if er > random.triangular(): ev += 1
                 procdsamp[j] = min(ev, 15)
         waves.append(procdsamp)
         fin.seek(fpos)
