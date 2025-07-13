@@ -12,6 +12,24 @@ def PLAYER_WAND_TIME        = 15 ; wand time in frames
 def PLAYER_WIDTH            = 5
 def PLAYER_HEIGHT           = 24
 
+def SIZEOF_PROJECTILE = 10
+def MAX_PROJECTILES = 4
+
+rsreset
+def PROJECTILE_SPR rb
+def PROJECTILE_TTL rb
+def PROJECTILE_PX  rw
+def PROJECTILE_VX  rw
+def PROJECTILE_PY  rw
+def PROJECTILE_VY  rw
+
+rsreset
+def BIT_PLAYER_DIRECTION    rb
+def BIT_PLAYER_AIRBORNE     rb
+def BIT_PLAYER_CROUCHING    rb
+def BIT_PLAYER_WAND         rb
+def BIT_PLAYER_NOCLIP       rb
+
 Player_RAMStart:
 Player_XPos:    ds  3   ; x position (Q16.8)
 Player_YPos:    ds  2   ; y position (Q8.8)
@@ -38,21 +56,8 @@ Player_AnimPointer:                     dw
 Player_AnimCurrent:                     dw
 Player_AnimFlag:                        db
 Player_WandTimer:                       db
-Player_Projectiles: ds  8*8
+Player_Projectiles: ds  MAX_PROJECTILES * SIZEOF_PROJECTILE
 Player_RAMEnd:
-
-rsreset
-def PROJECTILE_PX rw
-def PROJECTILE_VX rw
-def PROJECTILE_PY rw
-def PROJECTILE_VY rw
-
-rsreset
-def BIT_PLAYER_DIRECTION    rb
-def BIT_PLAYER_AIRBORNE     rb
-def BIT_PLAYER_CROUCHING    rb
-def BIT_PLAYER_WAND         rb
-def BIT_PLAYER_NOCLIP       rb
 
 macro player_set_animation
     ;push    af
@@ -89,9 +94,18 @@ InitPlayer:
     ld      de,_VRAM
     ; B = 0 here, which means we copy 256 bytes (16 tiles)
     call    MemCopySmall
-    ;ld      hl,PlayerPalette
+    ; ld      hl,PlayerStarTiles
+    ; ld      de,$8100
+    call    DecodeWLE
+    ld      hl,PlayerPalette
     ld      a,8
     call    LoadPal
+    ; ld      hl,PlayerStarPalette
+    ld      a,9
+    call    LoadPal
+    ; ld      hl,BorisPalette
+    ; ld      a,10
+    ; call    LoadPal
     ld      a,low(PLAYER_GRAVITY)
     ld      [Player_Grav],a
     xor     a   ; ld a,high(PLAYER_GRAVITY)
@@ -108,6 +122,22 @@ ProcessPlayer:
     pop     af
     ret     nz  ; return if we're in noclip mode
     
+    
+    ; wand fire check
+    ;ld      hl,Player_Flags
+    ;bit     BIT_PLAYER_WAND,[hl]
+    ;jr      nz,.nowand
+    ldh     a,[hPressedButtons]
+    bit     BIT_B,a
+    jr      z,.nowand
+    set     BIT_PLAYER_WAND,[hl]
+    ld      a,PLAYER_WAND_TIME
+    ld      [Player_WandTimer],a
+    call    Player_MakeStarProjectile
+    call    Player_Wand
+    jp      .skipcontrols
+.nowand
+    
 :   ; check if player has wand out
     ld      hl,Player_Flags
     bit     BIT_PLAYER_WAND,[hl]
@@ -115,13 +145,14 @@ ProcessPlayer:
     call    nz,Player_Wand
     pop     af
     jr      z,:+
-    ; cut vertical velocity
+    ; cut horizontal and vertical velocity
     xor     a
+    ld      [Player_XVel],a
     ld      [Player_YVel],a
+    ld      [Player_XVel+1],a
     ld      [Player_YVel+1],a
-    ; TODO: create projectile
     jp      .animateplayer
-:   res     BIT_PLAYER_WAND,[hl]
+:   ;res     BIT_PLAYER_WAND,[hl]
     
     ; player controls
     
@@ -161,19 +192,6 @@ ProcessPlayer:
 ;    ld      hl,Player_Flags
 ;    res     BIT_PLAYER_CROUCHING,[hl]
 ;.skipcrouch
-    ; wand fire check
-    ld      hl,Player_Flags
-    bit     BIT_PLAYER_WAND,[hl]
-    jr      nz,.nowand
-    ldh     a,[hPressedButtons]
-    bit     BIT_B,a
-    jr      z,.nowand
-    set     BIT_PLAYER_WAND,[hl]
-    ld      a,PLAYER_WAND_TIME
-    ld      [Player_WandTimer],a
-    call    Player_Wand
-    jp      .skipcontrols
-.nowand
     ; check if player should jump
     ldh     a,[hPressedButtons]
     bit     BIT_A,a
@@ -951,8 +969,6 @@ Player_Noclip:
     ret
 .left
     push    hl
-    ld      hl,Player_Flags
-    set     BIT_PLAYER_DIRECTION,[hl]
     ld      a,[Player_XPos]
     sub     e
     ld      [Player_XPos],a
@@ -963,8 +979,6 @@ Player_Noclip:
     ret
 .right
     push    hl
-    ld      hl,Player_Flags
-    res     BIT_PLAYER_DIRECTION,[hl]
     ld      a,[Player_XPos]
     add     e
     ld      [Player_XPos],a
@@ -1149,11 +1163,93 @@ Player_Anim_WandRight:
     dw  Player_Anim_WandRight
 
 ; ========
+
+Player_MakeStarProjectile:
+    call    Player_FindFreeProjectileSlot
+    ret     c
+    ; sprite
+    ld      a,$10
+    ld      [hl+],a
+    ; TTL
+    ld      a,32
+    ld      [hl+],a
+    ; X pos
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_DIRECTION,a
+    ld      a,[Player_XPos]
+    jr      z,.right
+.left
+    sub     14
+    jr      :+
+.right
+    add     14
+:   ld      [hl],0
+    inc     hl
+    ld      [hl+],a
+    ; X velocity
+    xor     a
+    ld      [hl+],a
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_DIRECTION,a
+    ld      a,4
+    jr      z,:+
+    cpl
+    inc     a
+:   ld      [hl+],a
+    ; Y pos
+    xor     a
+    ld      [hl+],a
+    ld      a,[Player_YPos]
+    inc     a
+    ld      [hl+],a
+    ; Y velocity
+    xor     a
+    ld      [hl+],a
+    ld      [hl+],a    
+    ret
+
+Player_FindFreeProjectileSlot:
+    ld      hl,Player_Projectiles
+    ld      b,MAX_PROJECTILES
+    ld      de,SIZEOF_PROJECTILE
+:   ld      a,[hl]
+    and     a
+    jr      z,:+
+    add     hl,de
+    dec     b
+    jr      nz,:-
+    scf ; if we're here, we're out of free projectile slots
+    ret
+:   and     a
+    ret
+    
 Player_ProcessProjectiles:
     ld      hl,Player_Projectiles
-    ld      b,8
+    ld      b,MAX_PROJECTILES
+.loop
+    ; sprite
+    ld      a,[hl]
+    and     a
+    jr      z,.delete2
+    ldh     a,[hGlobalTick]
+    and     $f
+    add     a
+    add     $10
+    ld      [hl+],a
+;    inc     hl
+    ; TTL
+    ld      a,[hl]
+    cp      -1
+    jr      z,:+
+    dec     a
+    jr      z,.delete
+    ld      [hl+],a
+    jr      :++
+:   inc     hl
 :   ; can't have an anonymous label and rept on the same line smh my head
+    push    bc
     rept 2
+        ; speed to position
         push    hl
         ld      a,[hl+]
         ld      c,a
@@ -1170,20 +1266,102 @@ Player_ProcessProjectiles:
         ld      [hl+],a
         ld      a,d
         ld      [hl+],a
-        ld      de,4
-        add     hl,de
+        inc     hl
+        inc     hl
+    endr
+    pop     bc
+    dec     b
+    jr      nz,.loop
+    ; TODO: Delete projectile if it touches a solid block
+    ; TODO: Delete projectile and do damage if it touches an enemy
+    ret
+.delete
+    dec     hl
+.delete2
+    xor     a
+    rept    SIZEOF_PROJECTILE
+        ld      [hl+],a
     endr
     dec     b
-    jr      nz,:-
-    
-    
+    jr      nz,.loop
     ret
+.startable
+    db  $10,$10,$12,$12,$14,$14,$12,$12
+
+Player_DrawProjectiles:
+    ld      a,[hOAMPos]
+    ld      e,a
+    ld      d,0
+    ld      hl,OAMBuffer
+    add     hl,de
+    ld      d,h
+    ld      e,l
+    ld      hl,Player_Projectiles
+    ld      b,MAX_PROJECTILES
+:   ld      a,[hl+] ; sprite
+    and     a
+    jr      z,.next
+    ld      c,a
+    inc     hl      ; TTL
+    inc     hl      ; x pos low
+    ld      a,[hl+] ; x pos high
+    push    af
+    inc     hl      ; x velocity low
+    inc     hl      ; x velocity high
+    inc     hl      ; y pos low
+    ld      a,[hl+] ; y pos high
+    inc     hl      ; y velocity low
+    inc     hl      ; y velocity high
+    push    bc
+    ld      b,a
+    ld      a,[Level_CameraY]
+    cpl
+    inc     a
+    add     b
+    add     8
+    ld      [de],a
+    inc     e
+    pop     bc
+    pop     af
+    push    bc
+    ld      b,a
+    ld      a,[Level_CameraX]
+    cpl
+    inc     a
+    add     b
+    add     4
+    ld      [de],a
+    inc     e
+    ld      a,c
+    ld      [de],a
+    inc     e
+    ld      a,1 | %00001000
+    ld      [de],a
+    inc     e
+    pop     bc
+    dec     b
+    jr      nz,:-
+    ld      a,e
+    ldh     [hOAMPos],a
+    ret
+.next
+    push    bc
+    ld      bc,9
+    add     hl,bc
+    pop     bc
+    dec     b
+    jr      nz,:-
+    ld      a,e
+    ldh     [hOAMPos],a
+    ret
+    
 
 section "Player GFX",romx,align[8]
 
-PlayerPlaceholderTiles:
-    incbin  "GFX/Player/placeholder.png.2bpp"
-PlayerPalette:  incbin  "GFX/player.pal"
+PlayerPlaceholderTiles: incbin  "GFX/Player/placeholder.png.2bpp"
+PlayerStarTiles:        incbin  "GFX/star.2bpp.wle"
+PlayerPalette:          incbin  "GFX/player.pal"
+PlayerStarPalette:      incbin  "GFX/star.pal"
 
 rsreset
 macro animframe

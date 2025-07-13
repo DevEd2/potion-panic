@@ -134,7 +134,7 @@ IRQ_Joypad: reti
 
 CallHL_Error:
     push    af
-    ld      a,ERR_BAD_JUMPTABLE
+    ld      a,ERR_JP_HL_OUTSIDE_ROM
     ldh     [hErrType],a
     pop     af
     jp      ErrorScreen
@@ -202,6 +202,7 @@ ProgramStart:
     ld      hl,OAMBuffer
     ld      b,40*4
     xor     a
+    ldh     [hOAMPos],a
     call    MemFillSmall
     
     ; copy OAM DMA routine
@@ -685,6 +686,8 @@ IntV_Default:
     ld      b,40*4
     xor     a
     call    MemFillSmall
+    ld      hl,hGlobalTick
+    inc     [hl]
     pop     de
     pop     bc
     ret
@@ -732,6 +735,8 @@ hROMB0:         	db
 hHeldButtons:   	db
 hPressedButtons:    db
 hReleasedButtons:	db
+
+hGlobalTick:        db
 
 hVBlankFlag:    	db
 hSTATFlag:      	db

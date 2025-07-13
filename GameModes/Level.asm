@@ -347,12 +347,14 @@ LevelLoop:
 ;    jr      nz,:-
 ;.skipredraw
     call    ProcessPlayer
+    call    Player_ProcessProjectiles
     call    ProcessObjects
     pushbank
     call    GBM_Update
     popbank
     rst     WaitForVBlank
     call    DrawPlayer
+    call    Player_DrawProjectiles
     ld      a,[Level_CameraX]
     ldh     [rSCX],a
     ld      a,[Level_CameraY]

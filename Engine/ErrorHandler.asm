@@ -235,7 +235,6 @@ ErrorScreen:
     jr      nz,:-
     
     ld      sp,$fffe
-    ei
     
     ; GBC palette
     ld      hl,Pal_DebugMenu
@@ -279,23 +278,23 @@ str_Console:            db  "GB=",0
 str_StackTrace:         db  "STACK TRACE:",0
 
 rsreset
-def ERR_TRAP            rb
-def ERR_DIV_ZERO        rb
-def ERR_BAD_JUMPTABLE   rb
+def ERR_TRAP                rb
+def ERR_DIV_ZERO            rb
+def ERR_JP_HL_OUTSIDE_ROM   rb
 
 ErrorStringPointers:
 ErrorStrings:
     dw      .trap
     dw      .divbyzero
-    dw      .badjumptable
+    dw      .jphloutsiderom
 def NUM_ERROR_STRINGS = (@ - ErrorStringPointers) / 2
     
 .trap ;  ####################
     db  "RST $38 TRAP",0
 .divbyzero
     db  "DIVISION BY ZERO",0
-.badjumptable
-    db  "BAD JUMPTABLE OFFSET",0
+.jphloutsiderom
+    db  "JP HL OUTSIDE ROM",0
 .unknown
     db  "UNKNOWN ERROR",0
     ;    ####################
