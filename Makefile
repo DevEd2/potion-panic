@@ -25,7 +25,7 @@ clean:
 	find . -type f -name "*.sym" -delete
 	find . -type f -name "*.obj" -delete
 	find . -type f -wholename "./Levels/*.inc" -delete
-	find . -type f -wholename "./Levels/ObjectLayouts*.inc" -delete
+	find . -type f -wholename "./Levels/ObjectLayouts/*.inc" -delete
 	find . -type f -wholename "./Levels/*.bin" -delete
 	find . -type f -wholename "./Levels/*.bin.wle" -delete
 	find . -type f -wholename "./Audio/Modules/*.gbm" -delete
