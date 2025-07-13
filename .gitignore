@@ -85,4 +85,10 @@ Temporary Items
 
 # compiled music files
 *.xm.gbm
-
+# converted sprite files
+*.png.2bpp
+# converted levels
+Levels/*.bin
+Levels/*.bin.wle
+Levels/*.inc
+Levels/ObjectLayouts/*.inc
