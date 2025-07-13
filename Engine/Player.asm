@@ -1230,7 +1230,7 @@ Player_ProcessProjectiles:
     ; sprite
     ld      a,[hl]
     and     a
-    jr      z,.delete2
+    jp      z,.delete2
     ldh     a,[hGlobalTick]
     and     $f
     add     a
@@ -1269,11 +1269,61 @@ Player_ProcessProjectiles:
         inc     hl
         inc     hl
     endr
+    ; delete projectile if it touches a solid block
+    push    hl
+    ld      a,l
+    sub     SIZEOF_PROJECTILE - (PROJECTILE_PX + 1)
+    ld      l,a
+    jr      nc,:+
+    dec     h
+:   ld      a,[hl]
+    ld      d,a
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_DIRECTION,a
+    ld      a,d
+    jr      z,:+
+    sub     16
+:   and     $f0
+    swap    a
+    ld      e,a
+    ld      a,l
+    add     (PROJECTILE_PY + 1) - (PROJECTILE_PX + 1)
+    ld      l,a
+    jr      nc,:+
+    inc     h
+:   ld      a,[hl]
+    add     8
+    and     $f0
+    or      e
+    ld      l,a
+    ld      h,high(Level_Map)
+    ld      a,bank(Level_Map)
+    bankswitch_to_a
+    ldh     [rSVBK],a
+    ld      a,[hl]
+    ld      e,a
+    ld      d,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,de
+    ld      a,[hl]
+    and     a
+    pop     hl
+    jr      nz,.nolevelcollision
+    push    hl
+    dec     hl
+    xor     a
+    rept    SIZEOF_PROJECTILE
+        ld      [hl-],a
+    endr
+    pop     hl
+.nolevelcollision
+    ; TODO: Delete projectile if it touches an enemy
     pop     bc
     dec     b
-    jr      nz,.loop
-    ; TODO: Delete projectile if it touches a solid block
-    ; TODO: Delete projectile and do damage if it touches an enemy
+    jp      nz,.loop
     ret
 .delete
     dec     hl
@@ -1283,7 +1333,7 @@ Player_ProcessProjectiles:
         ld      [hl+],a
     endr
     dec     b
-    jr      nz,.loop
+    jp      nz,.loop
     ret
 .startable
     db  $10,$10,$12,$12,$14,$14,$12,$12
