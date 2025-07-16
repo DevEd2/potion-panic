@@ -19,10 +19,10 @@ Level_BlockMapBank:     db
 Level_BlockMapPtr:      dw
 Level_ColMapBank:       db
 Level_ColMapPtr:        dw
-Level_ColHeightBank:    db
-Level_ColHeightPtr:     dw
-Level_ColAnglePtr:      db
-Level_ColAngleBank:     db
+;Level_ColHeightBank:    db
+;Level_ColHeightPtr:     dw
+;Level_ColAnglePtr:      db
+;Level_ColAngleBank:     db
 
 Level_CameraX:          dw
 Level_CameraY:          db
@@ -78,7 +78,8 @@ GM_Level:
     ld      b,a
     ; player start position
     ld      a,[hl]
-    and     $f0  
+    and     $f0
+    sub     16
     ld      [Player_XPos],a
     ld      a,[hl+]
     swap    a
@@ -140,11 +141,15 @@ GM_Level:
     call    LoadPal
     ld      a,7
     call    LoadPal
-    call    CopyPalettes
-    call    UpdatePalettes
     pop     hl
     inc     hl
     popbank
+    ; object set
+    ld      a,1
+    ldh     [rVBK],a
+    ld      a,[hl+]
+    call    Level_LoadObjectGFXSet
+    
     ; actual level layout
     ld      a,[hl+]
     push    hl
@@ -199,9 +204,12 @@ GM_Level:
     
     ; create test object
     call    DeleteAllObjects
-    ;lb      bc,OBJID_Test,0
-    ;lb      de,$12,$34
-    ;call    CreateObject
+    lb      bc,OBJID_Frog,0
+    lb      de,128,240
+    call    CreateObject
+    
+    call    CopyPalettes
+    call    UpdatePalettes
     
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16
     ldh     [rLCDC],a
@@ -399,21 +407,133 @@ LoadTileset:
     ld      a,[hl+]
     ld      [Level_ColMapPtr+1],a
     ; set collision height pointer
-    ld      a,[hROMB0]
-    ld      [Level_ColHeightBank],a
-    ld      a,[hl+]
-    ld      [Level_ColHeightPtr],a
-    ld      a,[hl+]
-    ld      [Level_ColHeightPtr+1],a
+    ; ld      a,[hROMB0]
+    ; ld      [Level_ColHeightBank],a
+    ; ld      a,[hl+]
+    ; ld      [Level_ColHeightPtr],a
+    ; ld      a,[hl+]
+    ; ld      [Level_ColHeightPtr+1],a
     ; set collision height pointer
-    ld      a,[hROMB0]
-    ld      [Level_ColAngleBank],a
-    ld      a,[hl+]
-    ld      [Level_ColAnglePtr],a
-    ld      a,[hl+]
-    ld      [Level_ColAnglePtr+1],a
+    ; ld      a,[hROMB0]
+    ; ld      [Level_ColAngleBank],a
+    ; ld      a,[hl+]
+    ; ld      [Level_ColAnglePtr],a
+    ; ld      a,[hl+]
+    ; ld      [Level_ColAnglePtr+1],a
     
     ret
+
+; =============================================================================
+
+macro gfxdef
+    db      bank(ObjGFX_\1)
+    db      OBJID_\1
+    db      \2
+    dw      ObjGFX_\1
+endm
+
+macro paldef
+    for n,\3
+        db      bank(ObjPal_\2)
+        db      \1 + n
+        dw      ObjPal_\2 + (n * (2 * 4))
+    endr
+endm
+
+; INPUT:    a = object graphics set ID
+; OUTPUT:   none
+; DESTROYS:
+Level_LoadObjectGFXSet:
+    push    hl
+    push    af
+    ; load object tile data set
+    ld      l,a
+    ld      h,0
+    ld      b,h
+    ld      c,l
+    add     hl,hl   ; x2
+    add     hl,hl   ; x4
+    add     hl,bc   ; x5
+    ld      bc,Level_ObjectGFXSetPointers
+    add     hl,bc
+:   ; bank
+    ld      a,[hl+]
+    and     a
+    jr      z,:+    ; bank=0 marks end of list
+    bankswitch_to_a
+    ; VRAM address
+    ld      a,[hl+]
+    ld      e,a
+    ld      a,[hl+]
+    push    hl
+    ld      b,a
+    ld      l,e
+    ld      h,0
+    ld      de,ObjectGFXPositions
+    add     hl,de
+    ld      [hl],b
+    pop     hl
+    push    hl
+    ld      l,a
+    ld      h,0
+    add     hl,hl   ; x2
+    add     hl,hl   ; x4
+    add     hl,hl   ; x8
+    add     hl,hl   ; x16
+    ld      de,_VRAM
+    add     hl,de
+    ld      d,h
+    ld      e,l
+    ; tile data pointer
+    pop     hl
+    ld      a,[hl+]
+    push    hl
+    ld      h,[hl]
+    ld      l,a
+    call    DecodeWLE
+    pop     hl
+    inc     hl
+    jr      :-
+:   pop     af
+    ; load object palette set
+    ld      l,a
+    ld      h,0
+    add     hl,hl   ; x2
+    add     hl,hl   ; x4
+    ld      bc,Level_ObjectPaletteSetPointers
+    add     hl,bc
+:   ; bank
+    ld      a,[hl+]
+    and     a
+    jr      z,:+    ; bank=0 marks end of list
+    bankswitch_to_a
+    ; palette number
+    ld      a,[hl+]
+    ld      c,a
+    ; palette data pointer
+    ld      a,[hl+]
+    push    hl
+    ld      h,[hl]
+    ld      l,a
+    ld      a,c
+    add     8
+    call    LoadPal
+    pop     hl
+    inc     hl
+    jr      :-
+:   pop     hl
+    ret
+    
+Level_ObjectGFXSetPointers:
+    gfxdef  Frog,$30
+    db      0
+    
+Level_ObjectPaletteSetPointers:
+    paldef  2,Frog,2
+    db      0
+
+    
+; =============================================================================
 
 section "Test tileset",romx
 Tileset_Test:
@@ -421,14 +541,14 @@ Tileset_Test:
     dw  0               ; special case: if this is set to 0, second tileset load is skipped
     dw  .blocks
     dw  .colmap
-    dw  .colheights
-    dw  .colangles
+;    dw  .colheights
+;    dw  .colangles
 
 .tiles          incbin "Tilesets/TestTileset.2bpp.wle"
 .blocks         incbin "Tilesets/TestTileset.blk"
 .colmap         incbin "Tilesets/TestTileset_Collision.bin"
-.colheights     incbin "Tilesets/TestTileset_CollisionHeights.bin"
-.colangles      incbin "Tilesets/TestTileset_CollisionAngles.bin"
+;.colheights     incbin "Tilesets/TestTileset_CollisionHeights.bin"
+;.colangles      incbin "Tilesets/TestTileset_CollisionAngles.bin"
 
 Pal_TestTileset:    incbin  "Tilesets/TestTileset.pal"
 
@@ -437,6 +557,9 @@ MUSIC_NONE: db "TEMP HACK REMOVE ME"
 
     include "Levels/testlevel.inc"
 
+
 ; =============================================================================
 
+
     include "Engine/Player.asm"
+

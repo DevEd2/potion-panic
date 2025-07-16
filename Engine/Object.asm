@@ -1,13 +1,26 @@
 section "Object system RAM",wram0,align[8]
-ObjList:
-    ds  32 * 16
+def MAX_OBJECTS = 16
+
+ObjList:    ds  MAX_OBJECTS * 16
+ObjRAM:     ds  MAX_OBJECTS * 16
+
+section "Object system HRAM",hram
+hObjGFXPos:         dw
+hObjPtr:            dw
+hObjRAMPtr:         dw
+
+section fragment "Object GFX positions",wram0
+ObjectGFXPositions::
+GFXPos_Null:    db
 
 rsreset
 def OBJ_ID          rb  ; object ID (if zero, slot is free)
 def OBJ_STATE       rb  ; object state - if 0, object is uninitialized
 def OBJ_FLAGS       rb  ; object flags
-def OBJ_X           rw  ; object X pos (unsigned 8.8)
-def OBJ_Y           rw  ; object Y pos (unsigned 8.8)
+def OBJ_XSUB        rb  ; object X subpixel
+def OBJ_X           rb  ; object X position
+def OBJ_YSUB        rb  ; object Y subpixel
+def OBJ_Y           rb  ; object Y position
 def OBJ_SCREEN      rb  ; object screen - object will only be "active" if this is + or - 1 from the screen the player is in
 def OBJ_VX          rw  ; object X velocity (signed 8.8)
 def OBJ_VY          rw  ; object Y velocity (signed 8.8)
@@ -30,16 +43,38 @@ def OBJID_NONE rb
 
 macro objdef
 def OBJID_\1 rb
+section fragment "Object GFX positions",wram0
+GFXPos_\1: db
 section fragment "Object pointer table",rom0
 ObjPointer_\1:
-    db  bank(Object_\1)
-    dw  Object_\1
+    db bank(Object_\1)
+    dw Object_\1
 section "Object routine include - \1",romx
 Object_\1:  include  "Objects/\1.asm"
 endm
 
-section "Object RAM",wramx,bank[2]
-ObjRAM:     ds  128*32
+; LoaD OBJect Pointer + offset into HL
+macro ldobjp
+    ld      hl,hObjPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    if \1 != 0
+        add     \1
+    endc
+    ld      l,a
+endm
+
+; LoaD OBJect Ram Pointer + offset into HL
+macro ldobjrp
+    ld      hl,hObjRAMPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    if \1 != 0
+        add     \1
+    endc
+    ld      l,a
+endm
+
 
 ; ================================================================
 
@@ -61,11 +96,6 @@ CreateObject:
     add     $10
     ld      l,a
     jr      nc,:-
-    ld      a,h
-    inc     a
-    ld      h,a
-    cp      2
-    jr      nz,:-
     scf
     ret
 .gotslot
@@ -120,20 +150,26 @@ ProcessObjects:
     ld      a,[hl]
     and     a
     jr      z,.next
-    ; TODO: Check if object should be "active" (i.e. camera is close enough to it
     
-    ; jump to object-specific processing routines
-    ; NOTE 1: A is expected to contain current object slot's object ID
-    ; NOTE 2: HL is expected to point to current object list entry index 0 (OBJ_ID)
+    ; set object RAM pointers
+    ld      a,l
+    ldh     [hObjPtr],a
+    ldh     [hObjRAMPtr],a
+    ld      a,h
+    ldh     [hObjPtr+1],a
+    inc     a
+    ldh     [hObjRAMPtr+1],a
     ld      d,h
     ld      e,l
+    ; jump to object-specific processing routines
+    ld      a,[hl]
     dec     a
     ld      c,a
     ld      b,0
     push    hl
     ld      hl,ObjPointers
     add     hl,bc
-    add     hl,bc   
+    add     hl,bc
     add     hl,bc
     pushbank
     ld      a,[hl+]
@@ -213,11 +249,6 @@ ProcessObjects:
     add     $10
     ld      l,a
     jr      nc,.loop
-    ld      a,h
-    inc     a
-    ld      h,a
-    cp      high(ObjList)+2
-    jr      nz,.loop
     ret
 
 ; ================================================================

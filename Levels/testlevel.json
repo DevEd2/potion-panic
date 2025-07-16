@@ -67,6 +67,11 @@
                          "value":"MUSIC_NONE"
                         }, 
                         {
+                         "name":"Objset",
+                         "type":"string",
+                         "value":"0"
+                        }, 
+                        {
                          "name":"Palette",
                          "type":"string",
                          "value":"Pal_TestTileset"

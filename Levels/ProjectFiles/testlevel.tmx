@@ -30,6 +30,7 @@
   <object id="15" name="LevelProperties" x="0" y="0" width="16" height="16">
    <properties>
     <property name="Music" value="MUSIC_NONE"/>
+    <property name="Objset" value="0"/>
     <property name="Palette" value="Pal_TestTileset"/>
     <property name="Tileset" value="Tileset_Test"/>
    </properties>

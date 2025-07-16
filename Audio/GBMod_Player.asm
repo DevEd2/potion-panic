@@ -149,10 +149,11 @@ GBMod_Update:
     and     a
     jr      z,:+    ; skip ahead if timer is disabled
     ldh     a,[rKEY1]
-    cp      $ff
+    cp      $ff     ; if KEY1=FF, we're on a non-color console
     jr      z,:+
-    bit     7,a
+    bit     7,a     ; if bit 7 of KEY1 is set, double speed mode is on
     jr      z,:+
+    ; adjust for double speed + timer by skipping update every other timer int
     ld      hl,GBM_OddTick
     inc     [hl]
     bit     0,[hl]
@@ -161,11 +162,13 @@ GBMod_Update:
     
     ; anything that needs to be updated on a per-frame basis should be put here
     ld      e,0
-    call    GBMod_DoModulation ; pulse 1 vibrato
+    call    GBMod_DoModulation ; pulse 1 vibrato + tremolo
     inc     e
-    call    GBMod_DoModulation ; pulse 2 vibrato
+    call    GBMod_DoModulation ; pulse 2 vibrato + tremolo
     inc     e
     call    GBMod_DoModulation ; wave vibrato
+    ; inc     e
+    ; call    GBMod_DoModulation ; noise tremolo
 
     ld      a,[GBM_TickTimer]
     dec     a

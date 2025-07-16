@@ -97,6 +97,10 @@ InitPlayer:
     ; ld      hl,PlayerStarTiles
     ; ld      de,$8100
     call    DecodeWLE
+    ld      a,e
+    ldh     [hObjGFXPos],a
+    ld      a,d
+    ldh     [hObjGFXPos+1],a
     ld      hl,PlayerPalette
     ld      a,8
     call    LoadPal
@@ -1277,13 +1281,7 @@ Player_ProcessProjectiles:
     jr      nc,:+
     dec     h
 :   ld      a,[hl]
-    ld      d,a
-    ld      a,[Player_Flags]
-    bit     BIT_PLAYER_DIRECTION,a
-    ld      a,d
-    jr      z,:+
-    sub     16
-:   and     $f0
+    and     $f0
     swap    a
     ld      e,a
     ld      a,l

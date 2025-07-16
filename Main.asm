@@ -530,7 +530,6 @@ LCDOff:
     ret
 
 ; WARNING: Assumes LCD is off!
-; TODO: Clear palettes as well
 ClearScreen:
     ld      a,1
     ldh     [rVBK],a
@@ -545,10 +544,16 @@ ClearScreen:
     pop     bc
     pop     hl
     call    MemFill
-    ld      b,OAMBuffer.end-OAMBuffer
     ld      hl,OAMBuffer
+    ld      b,OAMBuffer.end-OAMBuffer
     call    MemFillSmall
-    ret
+    ; clear palettes
+    ld      hl,sys_BGPalettes
+    ld      b,(sys_ObjPalettes-sys_BGPalettes)*2
+    dec     a
+    call    MemFillSmall
+    call    CopyPalettes
+    jp      UpdatePalettes
 
 _OAMDMA: ; copied to HRAM on boot
     ld      a,high(OAMBuffer)
