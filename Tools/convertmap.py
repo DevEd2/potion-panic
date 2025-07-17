@@ -172,10 +172,6 @@ if __name__ == "__main__":
 					elif obj[x]['properties'][q]['name'] == "Objset":
 						objset = obj[x]['properties'][q]['value']
 						r += 1
-				print(tileset)
-				print(music)
-				print(palette)
-				print(objset)
 				if r != 4:
 					print("ERROR: Some level properties weren't set! (Ensure LevelProperties object has the Tileset, Music, Palette, and Objset tags set)")
 					exit(1)
