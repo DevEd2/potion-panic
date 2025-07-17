@@ -1,16 +1,17 @@
 section "Player RAM",wram0
 
-def PLAYER_ACCEL            = $040
-def PLAYER_DECEL            = $020
-def PLAYER_WALK_SPEED       = $120
-def PLAYER_JUMP_HEIGHT      = $400
-def PLAYER_JUMP_HEIGHT_HIGH = $400 ;$490
-def PLAYER_GRAVITY          = $028
-def PLAYER_COYOTE_TIME      = 15 ; coyote time in frames
-def PLAYER_WAND_TIME        = 15 ; wand time in frames
+def PLAYER_ACCEL                = $040
+def PLAYER_DECEL                = $020
+def PLAYER_WALK_SPEED           = $120
+def PLAYER_JUMP_HEIGHT          = $400
+; def PLAYER_JUMP_HEIGHT_HIGH     = $490
+def PLAYER_GRAVITY              = $028
+def PLAYER_TERMINAL_VELOCITY    = $800
+def PLAYER_COYOTE_TIME          = 15 ; coyote time in frames
+def PLAYER_WAND_TIME            = 15 ; wand time in frames
 
-def PLAYER_WIDTH            = 5
-def PLAYER_HEIGHT           = 24
+def PLAYER_WIDTH                = 5 ; player hitbox width relative to center
+def PLAYER_HEIGHT               = 24 ; player hitbox height relative from bottom
 
 def SIZEOF_PROJECTILE = 10
 def MAX_PROJECTILES = 4
@@ -28,22 +29,18 @@ def BIT_PLAYER_DIRECTION    rb
 def BIT_PLAYER_AIRBORNE     rb
 def BIT_PLAYER_CROUCHING    rb
 def BIT_PLAYER_WAND         rb
+if BUILD_DEBUG
 def BIT_PLAYER_NOCLIP       rb
+endc
 
 Player_RAMStart:
-Player_XPos:    ds  3   ; x position (Q16.8)
+Player_XPos:    ds  2   ; x position (Q16.8)
 Player_YPos:    ds  2   ; y position (Q8.8)
 Player_XVel:    ds  2   ; added to xpos each frame
 Player_YVel:    ds  2   ; added to ypos each frame
 Player_Grav:    ds  2   ; added to yvel each frame
-Player_Flags:   db      ; bit 0: direction player is facing (0 = right, 1 = left)
-                        ; bit 1: whether player is airborne (set) or grounded (unset)
-                        ; bit 2: whether player is standing (unset) or crouching/crawling (set)
-                        ; bit 3:
-                        ; bit 4:
-                        ; bit 5:
-                        ; bit 6:
-                        ; bit 7: noclip
+Player_Flags:   db
+
 Player_HorizontalCollisionSensorTop:    db
 Player_HorizontalCollisionSensorBottom: db
 Player_VerticalCollisionSensorLeft:     db
@@ -119,13 +116,11 @@ InitPlayer:
     ret
 
 ProcessPlayer:
-    ld      hl,Player_Flags
-    bit     BIT_PLAYER_NOCLIP,[hl]
-    push    af
-    call    nz,Player_Noclip
-    pop     af
-    ret     nz  ; return if we're in noclip mode
-    
+    if BUILD_DEBUG
+        ld      hl,Player_Flags
+        bit     BIT_PLAYER_NOCLIP,[hl]
+        jp      nz,Player_Noclip
+    endc
     
     ; wand fire check
     ;ld      hl,Player_Flags
@@ -415,8 +410,8 @@ ProcessPlayer:
     and     $f0
     swap    a
     ld      c,a
-    ld      a,[Player_XPos+2]
-    ld      b,a
+    ; ld      a,[Player_XPos+2]
+    ; ld      b,a
     ld      a,[Player_XPos]
     and     $f0
     or      c
@@ -784,29 +779,29 @@ Player_CollisionResponseHorizontal:
     jr      z,.right
 .left
     ld      c,a
-    ld      a,[Player_XPos+2]
-    ld      b,a
+    ; ld      a,[Player_XPos+2]
+    ; ld      b,a
     ld      a,c
     and     $f0
     add     PLAYER_WIDTH
-    jr      nc,:+
-    inc     b
+    ; jr      nc,:+
+    ; inc     b
 :   ld      [Player_XPos],a
-    ld      a,b
-    ld      [Player_XPos+2],a
+    ; ld      a,b
+    ; ld      [Player_XPos+2],a
     jr      .donelr
 .right
     ld      c,a
-    ld      a,[Player_XPos+2]
-    ld      b,a
+    ; ld      a,[Player_XPos+2]
+    ; ld      b,a
     ld      a,c
     and     $f0
     add     15-PLAYER_WIDTH
-    jr      nc,:+
-    dec     b
+    ; jr      nc,:+
+    ; dec     b
 :   ld      [Player_XPos],a
-    ld      a,b
-    ld      [Player_XPos+2],a
+    ; ld      a,b
+    ; ld      [Player_XPos+2],a
 .donelr
     ret
 .slope
@@ -832,36 +827,36 @@ Player_CheckCollisionVertical:
     swap    a
     ld      c,a
     ; get left collision point
-    ld      a,[Player_XPos+2]
-    ld      e,a
+    ; ld      a,[Player_XPos+2]
+    ; ld      e,a
     ld      a,[Player_XPos]
     sub     PLAYER_WIDTH-2
-    jr      nc,:+
-    dec     e
+    ; jr      nc,:+
+    ; dec     e
 :   and     $f0
     or      c
-    ld      b,e
+    ; ld      b,e
     call    GetTile
     ld      [Player_VerticalCollisionSensorLeft],a
     ; get right collision point
-    ld      a,[Player_XPos+2]
-    ld      e,a
+    ; ld      a,[Player_XPos+2]
+    ; ld      e,a
     ld      a,[Player_XPos]
     add     PLAYER_WIDTH-2
-    jr      nc,:+
-    inc     e
+    ; jr      nc,:+
+    ; inc     e
 :   and     $f0
     or      c
-    ld      b,e
+    ; ld      b,e
     call    GetTile
     ld      [Player_VerticalCollisionSensorRight],a
     ; get center collision point
-    ld      a,[Player_XPos+2]
-    ld      e,a
+    ; ld      a,[Player_XPos+2]
+    ; ld      e,a
     ld      a,[Player_XPos]
     and     $f0
     or      c
-    ld      b,e
+    ; ld      b,e
     call    GetTile
     ld      [Player_VerticalCollisionSensorCenter],a
     ret
@@ -871,57 +866,57 @@ Player_CheckCollisionVertical:
 Player_CheckCollisionHorizontal:
     ld      d,0
     ; check top sensor
-    ld      a,[Player_XPos+2]
-    ld      e,a
+    ; ld      a,[Player_XPos+2]
+    ; ld      e,a
     ld      hl,Player_Flags
     bit     BIT_PLAYER_DIRECTION,[hl]
     jr      z,.ur
 .ul
     ld      a,[Player_XPos]
     sub     PLAYER_WIDTH
-    jr      nc,:+
-    dec     e
+    ; jr      nc,:+
+    ; dec     e
     jr      :+
 .ur
     ld      a,[Player_XPos]
     add     PLAYER_WIDTH
-    jr      nc,:+
-    inc     e
+    ; jr      nc,:+
+    ; inc     e
 :   and     $f0
     ld      b,a
-    ld      a,[Player_Flags]
-    bit     BIT_PLAYER_CROUCHING,a
+    ; ld      a,[Player_Flags]
+    ; bit     BIT_PLAYER_CROUCHING,a
     ld      a,[Player_YPos]
-    jr      z,.nocrouch
-.crouch
-    add     8
-    jr      :+
-.nocrouch
+    ; jr      z,.nocrouch
+; .crouch
+    ; add     8
+    ; jr      :+
+; .nocrouch
     sub     8
 :   and     $f0
     swap    a
     or      b
-    ld      b,e
+    ; ld      b,e
     call    GetTile
     ld      [Player_HorizontalCollisionSensorTop],a
 .nocol1
     ; check bottom sensor
-    ld      a,[Player_XPos+2]
-    ld      e,a
+    ; ld      a,[Player_XPos+2]
+    ; ld      e,a
     ld      hl,Player_Flags
     bit     BIT_PLAYER_DIRECTION,[hl]
     jr      z,.br
 .bl
     ld      a,[Player_XPos]
     sub     PLAYER_WIDTH
-    jr      nc,:+
-    dec     e
+    ; jr      nc,:+
+    ; dec     e
     jr      :+
 .br
     ld      a,[Player_XPos]
     add     PLAYER_WIDTH
-    jr      nc,:+
-    inc     e
+    ; jr      nc,:+
+    ; inc     e
 :   and     $f0
     ld      b,a
     ld      a,[Player_YPos]
@@ -929,11 +924,12 @@ Player_CheckCollisionHorizontal:
     and     $f0
     swap    a
     or      b
-    ld      b,e
+    ; ld      b,e
     call    GetTile
     ld      [Player_HorizontalCollisionSensorBottom],a
     ret
 
+if BUILD_DEBUG
 Player_Noclip:
     xor     a
     ld      [Player_XVel],a
@@ -945,7 +941,7 @@ Player_Noclip:
     ld      hl,hHeldButtons
     bit     BIT_B,[hl]
     jr      z,:+
-    ld      e,8
+    ld      e,4
 :   bit     BIT_UP,[hl]
     call    nz,.up
     bit     BIT_DOWN,[hl]
@@ -956,41 +952,36 @@ Player_Noclip:
     call    nz,.right
     ret
 .up
-    ld      a,-1
-    ld      [Player_YVel],a
-    ld      [Player_YVel+1],a
     ld      a,[Player_YPos]
     sub     e
     ld      [Player_YPos],a
     ret
 .down
-    xor     a
-    ld      [Player_YVel],a
-    ld      [Player_YVel+1],a
     ld      a,[Player_YPos]
     add     e
     ld      [Player_YPos],a
     ret
 .left
-    push    hl
+    ; push    hl
     ld      a,[Player_XPos]
     sub     e
     ld      [Player_XPos],a
-    jr      nc,:+
-    ld      hl,Player_XPos+2
-    dec     [hl]
-:   pop     hl
+    ; jr      nc,:+
+    ; ld      hl,Player_XPos+2
+    ; dec     [hl]
+:   ; pop     hl
     ret
 .right
-    push    hl
+    ; push    hl
     ld      a,[Player_XPos]
     add     e
     ld      [Player_XPos],a
-    jr      nc,:+
-    ld      hl,Player_XPos+2
-    inc     [hl]
-:   pop     hl
+    ; jr      nc,:+
+    ; ld      hl,Player_XPos+2
+    ; inc     [hl]
+:   ; pop     hl
     ret
+endc
 
 Player_Wand:
     bit     BIT_PLAYER_DIRECTION,[hl]

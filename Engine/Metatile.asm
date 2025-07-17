@@ -44,7 +44,7 @@ GetTileCoordinates:
 GetTile:
     ld      l,a
     ld      a,high(Level_Map)
-    add     b
+    ; add     b
     ld      h,a
     ld      a,bank(Level_Map)
     ldh     [rSVBK],a

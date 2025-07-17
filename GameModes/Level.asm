@@ -231,16 +231,16 @@ LevelLoop:
     ld      a,[Player_YPos]
     sub     SCRN_Y/2+8
     ld      [Level_CameraTargetY],a
-    
+    ; left clamp
     ld      a,[Player_XPos]
     ld      l,a
-    ld      a,[Player_XPos+2]
-    ld      h,a
+    ; ld      a,[Player_XPos+2]
+    ld      h,0
     ld      bc,-(SCRN_X/2)
     add     hl,bc
     jr      c,:+
     ld      hl,0
-:   ; TODO: right clamp
+:   ; right clamp
     ld      a,[Level_CameraMaxX]
     cp      l
     jr      c,:+
