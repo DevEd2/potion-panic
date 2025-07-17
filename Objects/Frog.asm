@@ -3,6 +3,9 @@ def FROG_IDLE_TIME_MAX = 240
 def FROG_CROAK_TIME_MIN = 30
 def FROG_CROAK_TIME_MAX = 90
 
+def FROG_HIT_WIDTH      = 6
+def FROG_HIT_HEIGHT     = 6
+
 rsreset
 def FROG_STATE_INIT     rb
 def FROG_STATE_IDLE     rb
@@ -32,7 +35,33 @@ Obj_Frog_RoutinePointers:
 Obj_Frog_Init:
     ldobjp  OBJ_STATE
     ld      a,FROG_STATE_IDLE
-    ld      [hl],a
+    ld      [hl+],a ; object state
+    xor     a
+    ld      [hl+],a ; flags
+    ld      [hl+],a ; x subpixel
+    inc     l       ; x position
+    ld      [hl+],a ; y subpixel
+    inc     l       ; y position
+    ld      [hl+],a ; x velocity low
+    ld      [hl+],a ; x velocity high
+    ld      [hl+],a ; y velocity low
+    ld      [hl+],a ; y velocity high
+    ld      a,FROG_HIT_WIDTH
+    ld      [hl+],a ; object hitbox width (from center)
+    ld      a,FROG_HIT_HEIGHT
+    ld      [hl+],a ; object hitbox height (from bottom center)
+    
+    ldobjrp Frog_IdleTimer
+    ld      a,(FROG_IDLE_TIME_MAX - FROG_IDLE_TIME_MIN)
+    call    Math_RandRange
+    add     FROG_IDLE_TIME_MIN
+    ld      [hl+],a ; Frog_IdleTimer
+    xor     a
+    ld      [hl+],a ; Frog_StateTimer
+    ld      [hl+],a ; Frog_AnimSpeed
+    ld      [hl+],a ; Frog_AnimTimer
+    ld      [hl+],a ; Frog_Frame
+    ld      [hl+],a ; Frog_ToungeLength
     ; fall through
 
 Obj_Frog_Idle:

@@ -329,8 +329,9 @@ Math_Random:
 ; Returns a random number from 0 to a given 8-bit integer.
 ; INPUT:    a = range + 1
 ; OUTPUT:   a = result
-; DESTROYS: bc, hl
+; DESTROYS: bc
 Math_RandRange:
+    push    hl
     push    af
     call    Math_Random
     push    hl
@@ -355,9 +356,10 @@ Math_RandRange:
     endr
     add     hl,hl
     rla
-    ret     nc
+    jr      nc,:+
     add     hl,de
     adc     b
+:   pop     hl
     ret
 endc
 

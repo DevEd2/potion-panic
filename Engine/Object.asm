@@ -21,7 +21,7 @@ def OBJ_XSUB        rb  ; object X subpixel
 def OBJ_X           rb  ; object X position
 def OBJ_YSUB        rb  ; object Y subpixel
 def OBJ_Y           rb  ; object Y position
-def OBJ_SCREEN      rb  ; object screen - object will only be "active" if this is + or - 1 from the screen the player is in
+; def OBJ_SCREEN      rb  ; object screen - object will only be "active" if this is + or - 1 from the screen the player is in
 def OBJ_VX          rw  ; object X velocity (signed 8.8)
 def OBJ_VY          rw  ; object Y velocity (signed 8.8)
 def OBJ_HIT_WIDTH   rb  ; object hitbox width
