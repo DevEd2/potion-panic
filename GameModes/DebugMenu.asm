@@ -142,10 +142,11 @@ DebugLoop:
 
 
 Debug_JumpTable_Main:
-    dw  .dummy   ; start game
-    dw  GM_Level
+    dw  GM_Level        ; start game
+    dw  .dummy          ; level select
+    dw  .dummy          ; sound test
     dw  GM_CanvasTest   ; canvas test
-def DEBUG_MAIN_MENU_NUM_ITEMS = (@-Debug_JumpTable_Main)/2
+def DEBUG_MAIN_MENU_NUM_ITEMS = ((@-Debug_JumpTable_Main)/2)
 .dummy
     ret
 
@@ -213,14 +214,16 @@ PURGE _YEAR
 Debug_String_RGBDSVersion1: db  "RGBDS VERSION:",-1
 Debug_String_RGBDSVersion2: db  strupr("{__RGBDS_VERSION__}"),-1
 
-Debug_String_Header1:       db  "=GAME NAME HERE=",-1
+Debug_String_Header1:       db  "=POTION PANIC=",-1
 
 Debug_String_StartGame:     db  "START GAME",-1
-Debug_String_TestLevel:     db  "TEST LEVEL",-1
+Debug_String_LevelSelect:   db  "LEVEL SELECT",-1
+Debug_String_SoundTest:     db  "SOUND TEST",-1
 Debug_String_CanvasTest:    db  "CANVAS TEST",-1
 
 Debug_MainMenuItemText:
     dw  Debug_String_StartGame
-    dw  Debug_String_TestLevel
+    dw  Debug_String_LevelSelect
+    dw  Debug_String_SoundTest
     dw  Debug_String_CanvasTest
     dw  0

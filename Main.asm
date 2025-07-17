@@ -146,7 +146,7 @@ Header_EntryPoint:
     jr  ProgramStart                                    ;
     ds  2,0                                             ; padding
 Header_NintendoLogo:    ds  48,0                        ; handled by rgbfix
-Header_Title:           db  "UNTITLED"                  ; must be 15 chars or less!
+Header_Title:           db  "POTION PANIC"              ; must be 15 chars or less!
                         ds  (Header_Title + 15) - @,0   ; padding
 Header_GBCSupport:      db  CART_COMPATIBLE_GBC         ;
 Header_NewLicenseCode:  dw  0                           ; not needed
