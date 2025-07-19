@@ -405,6 +405,14 @@ ProcessPlayer:
     call    Player_CollisionResponseHorizontal
     call    Player_CollisionResponseVertical
     ; coyote time
+    ld      a,[Player_YVel]
+    and     a
+    jr      z,:+
+    bit     7,h
+    jr      z,.animateplayer    ; skip if player isn't falling
+:   ld      a,[Player_YVel+1]
+    or      b
+    jr      nz,.animateplayer
     ld      a,[Player_YPos]
     add     16
     and     $f0
@@ -426,9 +434,7 @@ ProcessPlayer:
     ld      a,[hl]
     and     a
     jr      z,.coyote
-    ; TODO: Check for any other collision types that count as non-solid
     ; snap to floor
-    
     ld      a,[Player_VerticalCollisionSensorCenter]
     and     a
     jr      z,.animateplayer

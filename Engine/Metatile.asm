@@ -6,17 +6,6 @@
 def COLLISION_NONE              rb ; no collision
 def COLLISION_SOLID             rb ; solid to player and enemies
 def COLLISION_TOPSOLID          rb ; solid to player and enemies only on top
-def COLLISION_SLOPE_SHALLOW     rb ; shallow slope
-def COLLISION_SLOPE_L           rb ; slope left
-def COLLISION_SLOPE_R           rb ; slope right
-def COLLISION_SLOPE_STEEP_LEFT  rb ; steep slope left
-def COLLISION_SLOPE_STEEP_RIGHT rb ; steep slope right
-def COLLISION_BREAKABLE         rb ; breakable
-def COLLISION_COLLECT           rb ; disappears when touched; optionally can set a flag/increment a variable based on ID
-def COLLISION_COLLECT_BIG_TL    rb ; same as COLLISION_COLLECT but also clears specific adjacent tiles
-def COLLISION_COLLECT_BIG_TR    rb ; same as COLLISION_COLLECT but also clears specific adjacent tiles
-def COLLISION_COLLECT_BIG_BL    rb ; same as COLLISION_COLLECT but also clears specific adjacent tiles
-def COLLISION_COLLECT_BIG_BR    rb ; same as COLLISION_COLLECT but also clears specific adjacent tiles
 ; add more as needed
 
 section "Metatile routines",rom0
