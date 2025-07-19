@@ -1,0 +1,134 @@
+{ "compressionlevel":-1,
+ "height":16,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 7,
+            54, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5,
+            6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 21,
+            22, 1, 1, 1, 1, 1, 23, 24, 1, 1, 1, 1, 1, 1, 1, 37,
+            38, 1, 1, 1, 1, 1, 15, 16, 1, 1, 1, 1, 1, 1, 1, 53,
+            54, 1, 1, 1, 1, 1, 31, 32, 1, 1, 1, 1, 39, 40, 41, 5,
+            6, 1, 1, 1, 1, 1, 47, 48, 1, 1, 1, 1, 1, 1, 1, 21,
+            22, 1, 1, 1, 1, 1, 63, 64, 1, 1, 1, 1, 1, 1, 1, 37,
+            38, 44, 45, 46, 1, 1, 31, 32, 1, 1, 39, 40, 40, 40, 41, 53,
+            54, 1, 1, 1, 1, 1, 47, 48, 1, 1, 1, 1, 1, 1, 1, 5,
+            6, 1, 1, 1, 1, 1, 63, 64, 1, 1, 1, 1, 1, 1, 1, 21,
+            38, 1, 1, 1, 39, 40, 23, 24, 45, 46, 1, 1, 1, 1, 1, 37,
+            54, 1, 1, 1, 1, 1, 31, 32, 1, 1, 1, 1, 1, 1, 1, 53,
+            3, 4, 1, 1, 1, 1, 47, 48, 1, 1, 1, 1, 1, 1, 2, 3,
+            20, 20, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 18, 19,
+            36, 36, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 34, 34, 34, 19],
+         "height":16,
+         "id":1,
+         "name":"Tile Layer 1",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":16,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":2,
+         "name":"Objects",
+         "objects":[
+                {
+                 "height":16,
+                 "id":12,
+                 "name":"Test",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":32,
+                 "y":112
+                }, 
+                {
+                 "height":32,
+                 "id":14,
+                 "name":"PlayerStart",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":32,
+                 "y":192
+                }, 
+                {
+                 "height":16,
+                 "id":15,
+                 "name":"LevelProperties",
+                 "properties":[
+                        {
+                         "name":"Music",
+                         "type":"string",
+                         "value":"MUSIC_NONE"
+                        }, 
+                        {
+                         "name":"Objset",
+                         "type":"string",
+                         "value":"0"
+                        }, 
+                        {
+                         "name":"Palette",
+                         "type":"string",
+                         "value":"Pal_DarkForest"
+                        }, 
+                        {
+                         "name":"Tileset",
+                         "type":"string",
+                         "value":"Tileset_DarkForest"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":0,
+                 "y":0
+                }, 
+                {
+                 "height":16,
+                 "id":16,
+                 "name":"Test",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":192,
+                 "y":208
+                }, 
+                {
+                 "height":16,
+                 "id":17,
+                 "name":"Test",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":224,
+                 "y":112
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":7,
+ "nextobjectid":18,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tiledversion":"1.11.2",
+ "tileheight":16,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "source":"ProjectFiles\/DarkForest.tsx"
+        }],
+ "tilewidth":16,
+ "type":"map",
+ "version":"1.10",
+ "width":16
+}

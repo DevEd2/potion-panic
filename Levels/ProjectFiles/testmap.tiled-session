@@ -7,16 +7,19 @@
     "expandedProjectPaths": [
     ],
     "fileStates": {
+        "DarkForest.tsx": {
+            "scaleInEditor": 1
+        },
         "TestTileset.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 3
         },
         "testlevel.tmx": {
             "scale": 2,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 1596.75,
-                "y": 218.25
+                "x": 124.75,
+                "y": 144.25
             }
         }
     },
@@ -34,6 +37,7 @@
     ],
     "project": "testmap.tiled-project",
     "recentFiles": [
+        "DarkForest.tsx",
         "TestTileset.tsx",
         "testlevel.tmx"
     ],

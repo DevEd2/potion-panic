@@ -70,7 +70,7 @@ GM_Level:
     ldh     [rVBK],a
 
     ; load test level - TEMP HACK, remove later
-    farload hl,Map_testlevel
+    farload hl,Map_DarkForest1
     ; level size
     ld      a,[hl+]
     ld      [Level_Size],a
@@ -79,7 +79,6 @@ GM_Level:
     ; player start position
     ld      a,[hl]
     and     $f0
-    sub     16
     ld      [Player_XPos],a
     ld      a,[hl+]
     swap    a
@@ -535,6 +534,35 @@ Level_ObjectPaletteSetPointers:
     
 ; =============================================================================
 
+section "Dark forest tileset",romx
+Tileset_DarkForest:
+    dw  .tiles
+    dw  0
+    dw  .blocks
+    dw  .colmap
+
+.tiles          incbin  "Tilesets/DarkForest.2bpp.wle"
+.blocks         incbin  "Tilesets/DarkForest.blk"
+.colmap
+    db  0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0
+    db  0,1,1,1,1,1,2,2,0,0,0,0,0,0,0,0
+    db  0,1,1,1,1,1,2,2,2,2,2,2,2,2,0,0
+    db  0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    db  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+Pal_DarkForest:     incbin  "Tilesets/DarkForest.pal"
+
 section "Test tileset",romx
 Tileset_Test:
     dw  .tiles
@@ -556,6 +584,7 @@ Pal_TestTileset:    incbin  "Tilesets/TestTileset.pal"
 MUSIC_NONE: db "TEMP HACK REMOVE ME"
 
     include "Levels/testlevel.inc"
+    include "Levels/DarkForest1.inc"
 
 
 ; =============================================================================

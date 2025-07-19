@@ -10,7 +10,7 @@ rsreset
 def FROG_STATE_INIT     rb
 def FROG_STATE_IDLE     rb
 def FROG_STATE_HOP      rb
-def FROG_STATE_TOUNGE   rb
+def FROG_STATE_TONGUE   rb
 def FROG_STATE_DEFEAT   rb
 
 rsreset
@@ -19,7 +19,7 @@ def Frog_StateTimer     rb
 def Frog_AnimSpeed      rb
 def Frog_AnimTimer      rb
 def Frog_Frame          rb
-def Frog_ToungeLength   rb
+def Frog_TongueLength   rb
 assert _RS <= 16, "Object uses too much RAM! (Max size = $10, got {_RS})"
 
 Obj_Frog:
@@ -29,7 +29,7 @@ Obj_Frog_RoutinePointers:
     dw  Obj_Frog_Init
     dw  Obj_Frog_Idle
     dw  Obj_Frog_Hop
-    dw  Obj_Frog_Tounge
+    dw  Obj_Frog_Tongue
     dw  Obj_Frog_Defeat
 
 Obj_Frog_Init:
@@ -62,18 +62,26 @@ Obj_Frog_Init:
     ld      [hl+],a ; Frog_AnimSpeed
     ld      [hl+],a ; Frog_AnimTimer
     ld      [hl+],a ; Frog_Frame
-    ld      [hl+],a ; Frog_ToungeLength
+    ld      [hl+],a ; Frog_TongueLength
     ; fall through
 
 Obj_Frog_Idle:
-    ; TODO
+    ;ldobjrp Frog_IdleTimer
+    ;dec     [hl]
+    ;jr      nz,:+
+    ;ldobjp  OBJ_STATE
+    ;call    Math_Random
+    ;and     1
+    ;add     FROG_STATE_TONGUE
+
+    ret
     jr      Obj_Frog_Draw
 
 Obj_Frog_Hop:
     ; TODO
     ret
 
-Obj_Frog_Tounge:
+Obj_Frog_Tongue:
     ; TODO
     ret
 
@@ -158,11 +166,19 @@ Obj_Frog_Draw:
     ldh     [hOAMPos],a
     ret
 
+rsreset
+def FROG_F_IDLE         rb
+def FROG_F_IDLE_CROAK   rb
+def FROG_F_IDLE_BLINK   rb
+def FROG_F_IDLE_TONGUE  rb
+def FROG_F_PREHOP       rb
+def FROG_F_HOP          rb
+
 Obj_Frog_Frames:
     dw      SprDef_Frog_Idle
     dw      SprDef_Frog_IdleCroak
     dw      SprDef_Frog_IdleBlink
-    dw      SprDef_Frog_P
+    dw      SprDef_Frog_Tongue
     dw      SprDef_Frog_PreHop
     dw      SprDef_Frog_Hop
 
@@ -241,7 +257,7 @@ SprDef_Frog_IdleBlink:
     db  6                           ; righttile ID
     db  2 | OAMF_BANK1 | OBJF_XFLIP ; rightattributes
 
-SprDef_Frog_P:
+SprDef_Frog_Tongue:
     dw  .left,.right
 .left
     ; sprite 1

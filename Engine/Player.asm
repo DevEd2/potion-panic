@@ -406,7 +406,7 @@ ProcessPlayer:
     call    Player_CollisionResponseVertical
     ; coyote time
     ld      a,[Player_YPos]
-    add     24
+    add     16
     and     $f0
     swap    a
     ld      c,a
@@ -578,17 +578,6 @@ Player_CollisionResponseVertical:
     dw      .none
     dw      .solid
     dw      .topsolid
-    dw      .slope_shallow
-    dw      .slope_l
-    dw      .slope_r
-    dw      .slope_steep_l
-    dw      .slope_steep_r
-    dw      .solid
-    dw      .none
-    dw      .none
-    dw      .none
-    dw      .none
-    dw      .none
 .none
     ;ld      hl,Player_Flags
     ;set     BIT_PLAYER_AIRBORNE,[hl]
@@ -634,85 +623,6 @@ Player_CollisionResponseVertical:
 :   xor     a
     ld      [Player_YVel],a
     ld      [Player_YVel+1],a
-    ret
-.slope_shallow
-    ; TODO
-    ; 1. get tile penetration depth (player "foot" Y position mod 15)
-    ; 2. get height of tile at player position (player X mod 15)
-    ; 3. if penetration depth > tile height, snap to tile height and unset airborne flag
-    ; ld      a,[Player_YPos]
-    ; add     15
-    ; ld      d,a
-    ; and     15
-    ; ld      e,a
-    ; ld      a,[Player_XPos]
-    ; and     15
-    ; ld      c,a
-    ; ld      b,0
-    ; ld      a,[Player_VerticalCollisionSensorCenter]
-    ; and     a
-    ; ret     z
-    ; ld      l,a
-    ; ld      h,0
-    ; add     hl,hl ; x2
-    ; add     hl,hl ; x4
-    ; add     hl,hl ; x8
-    ; add     hl,hl ; x16
-    ; add     hl,bc
-    ; ld      b,h
-    ; ld      c,l
-    ; ld      hl,Level_ColHeightPtr
-    ; ld      a,[hl+]
-    ; ld      h,[hl]
-    ; ld      l,a
-    ; add     hl,bc
-    ; ld      a,[hl]
-    ; xor     $f
-    ; inc     a
-    ; cp      e
-    ; jr      nc,.slope_floorcheck
-    ; ld      a,[Player_YPos]
-    ; and     $f0
-    ; add     16
-    ; sub     [hl]
-    ; ld      [Player_YPos],a
-    ; xor     a
-    ; ld      [Player_YVel],a
-    ; ld      [Player_YVel+1],a
-    ; ld      [Player_CoyoteTimer],a
-    ; ld      hl,Player_Flags
-    ; res     BIT_PLAYER_AIRBORNE,[hl]
-    ; ret
-; .slope_floorcheck
-    ; ld      a,[Player_Flags]
-    ; bit     BIT_PLAYER_AIRBORNE,a
-    ; ret     nz
-    ; ld      a,[Player_YPos]
-    ; and     $f0
-    ; add     16
-    ; sub     [hl]
-    ; ld      [Player_YPos],a
-    ; ret
-    ret
-.slope_l
-    ; TODO
-    ; 1. run "shallow slope" logic
-    ; 2. push player back slightly (1px per frame?)
-    ret
-.slope_r
-    ; TODO
-    ; See slope_l
-    ret
-.slope_steep_l
-    ; TODO
-    ; 1. get tile penetration depth (player "foot" Y position mod 15)
-    ; 2. get height of tile at player position (player X mod 15)
-    ; 3. push player back until penetration depth > height
-    ; 4. unset airborne flag (allow jumping off slope)
-    ret
-.slope_steep_r
-    ; TODO
-    ; see slope_steep_l
     ret
     
 Player_CollisionResponseHorizontal:
@@ -761,15 +671,6 @@ Player_CollisionResponseHorizontal:
     dw      .none           ; blank
     dw      .solid          ; solid
     dw      .none           ; top solid
-    dw      .slope          ; normal slope
-    dw      .slope          ; shallow slope
-    dw      .slope          ; steep slope
-    dw      .solid          ; breakable
-    dw      .none           ; collectable
-    dw      .none           ; big collectable TL
-    dw      .none           ; big collectable TR
-    dw      .none           ; big collectable BL
-    dw      .none           ; big collectable BR
 .none
     ret
 .solid
@@ -804,9 +705,6 @@ Player_CollisionResponseHorizontal:
     ; ld      [Player_XPos+2],a
 .donelr
     ret
-.slope
-    ; TODO
-    ret
 
 Player_CheckCollisionVertical:
     ld      a,[Player_YVel+1]
@@ -815,8 +713,8 @@ Player_CheckCollisionVertical:
     jr      z,.goingdown
     ; fall through
 .goingup
-    ld      hl,Player_Flags
-    bit     BIT_PLAYER_CROUCHING,[hl]
+    ; ld      hl,Player_Flags
+    ; bit     BIT_PLAYER_CROUCHING,[hl]
     jr      nz,:+
     add     16-PLAYER_HEIGHT
     jr      :+
@@ -1264,51 +1162,7 @@ Player_ProcessProjectiles:
         inc     hl
         inc     hl
     endr
-    ; delete projectile if it touches a solid block
-    push    hl
-    ld      a,l
-    sub     SIZEOF_PROJECTILE - (PROJECTILE_PX + 1)
-    ld      l,a
-    jr      nc,:+
-    dec     h
-:   ld      a,[hl]
-    and     $f0
-    swap    a
-    ld      e,a
-    ld      a,l
-    add     (PROJECTILE_PY + 1) - (PROJECTILE_PX + 1)
-    ld      l,a
-    jr      nc,:+
-    inc     h
-:   ld      a,[hl]
-    add     8
-    and     $f0
-    or      e
-    ld      l,a
-    ld      h,high(Level_Map)
-    ld      a,bank(Level_Map)
-    bankswitch_to_a
-    ldh     [rSVBK],a
-    ld      a,[hl]
-    ld      e,a
-    ld      d,0
-    ld      hl,Level_ColMapPtr
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    add     hl,de
-    ld      a,[hl]
-    and     a
-    pop     hl
-    jr      nz,.nolevelcollision
-    push    hl
-    dec     hl
-    xor     a
-    rept    SIZEOF_PROJECTILE
-        ld      [hl-],a
-    endr
-    pop     hl
-.nolevelcollision
+    ; TODO: bounce off walls
     ; TODO: Delete projectile if it touches an enemy
     pop     bc
     dec     b

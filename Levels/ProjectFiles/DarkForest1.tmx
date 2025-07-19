@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="18">
+ <editorsettings>
+  <export target="../DarkForest1.json" format="json"/>
+ </editorsettings>
+ <tileset firstgid="1" source="DarkForest.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="16" height="16">
+  <data encoding="csv">
+8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,7,
+54,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,
+6,1,1,1,1,1,1,1,1,1,1,1,1,1,1,21,
+22,1,1,1,1,1,23,24,1,1,1,1,1,1,1,37,
+38,1,1,1,1,1,15,16,1,1,1,1,1,1,1,53,
+54,1,1,1,1,1,31,32,1,1,1,1,39,40,41,5,
+6,1,1,1,1,1,47,48,1,1,1,1,1,1,1,21,
+22,1,1,1,1,1,63,64,1,1,1,1,1,1,1,37,
+38,44,45,46,1,1,31,32,1,1,39,40,40,40,41,53,
+54,1,1,1,1,1,47,48,1,1,1,1,1,1,1,5,
+6,1,1,1,1,1,63,64,1,1,1,1,1,1,1,21,
+38,1,1,1,39,40,23,24,45,46,1,1,1,1,1,37,
+54,1,1,1,1,1,31,32,1,1,1,1,1,1,1,53,
+3,4,1,1,1,1,47,48,1,1,1,1,1,1,2,3,
+20,20,3,3,3,3,3,3,3,3,3,3,3,3,18,19,
+36,36,19,19,19,19,19,19,19,19,19,19,34,34,34,19
+</data>
+ </layer>
+ <objectgroup id="2" name="Objects">
+  <object id="12" name="Test" x="32" y="112" width="16" height="16"/>
+  <object id="14" name="PlayerStart" x="32" y="192" width="32" height="32"/>
+  <object id="15" name="LevelProperties" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="Music" value="MUSIC_NONE"/>
+    <property name="Objset" value="0"/>
+    <property name="Palette" value="Pal_DarkForest"/>
+    <property name="Tileset" value="Tileset_DarkForest"/>
+   </properties>
+  </object>
+  <object id="16" name="Test" x="192" y="208" width="16" height="16"/>
+  <object id="17" name="Test" x="224" y="112" width="16" height="16"/>
+ </objectgroup>
+</map>
