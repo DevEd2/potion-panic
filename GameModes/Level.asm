@@ -93,7 +93,7 @@ GM_Level:
     push    bc
     push    de
     pushbank
-    ld      a,bank(Mus_LostInTranslation)-1
+    ld      a,bank(Mus_DarkForest)-1
     call    GBM_LoadModule
     popbank
     pop     de

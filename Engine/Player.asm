@@ -218,7 +218,13 @@ ProcessPlayer:
     player_set_animation Jump
 .donejump
 .nojump
-    ; check if player should release jump
+    ; run coyote timer
+    ld      a,[Player_CoyoteTimer]
+    and     a
+    jr      z,:+
+    dec     a
+    ld      [Player_CoyoteTimer],a
+:   ; check if player should release jump
     ldh     a,[hReleasedButtons]
     bit     BIT_A,a
     jr      z,.norelease
@@ -436,8 +442,16 @@ ProcessPlayer:
     jr      z,.coyote
     ; snap to floor
     ld      a,[Player_VerticalCollisionSensorCenter]
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
     and     a
-    jr      z,.animateplayer
+    jr      z,:+
     ;ld      l,a
     ;ld      h,0
     ;add     hl,hl   ; x2
@@ -466,16 +480,11 @@ ProcessPlayer:
 .coyote
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
-    jr      nz,:+ ; skip ahead if player is already airborne
+    jr      nz,.animateplayer ; skip ahead if player is already airborne
     ; init time
     ld      a,PLAYER_COYOTE_TIME
     ld      [Player_CoyoteTimer],a
 :   set     BIT_PLAYER_AIRBORNE,[hl]    ; set airborne flag
-    ld      a,[Player_CoyoteTimer]
-    and     a
-    jr      z,.animateplayer ; if coyote timer = 0, bail out
-    dec     a
-    ld      [Player_CoyoteTimer],a ; set new coyote timer
     ; animate player
 .animateplayer
     ld      a,[Player_AnimTimer]
