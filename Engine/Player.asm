@@ -1411,17 +1411,26 @@ Player_ProcessProjectiles:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    inc     hl
-    inc     hl
+    dec     l
+    xor     a
+    ld      [hl+],a
+    ld      a,[hl]
+    and     $f0
+    add     2
+    ld      [hl+],a
     push    hl
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    call    Math_Neg16
+    ld      de,$80
+    add     hl,de
+    jr      nc,:+
+    ld      hl,0
+:   call    Math_Neg16
     pop     de
     ld      a,l
     ld      [de],a
-    inc     de
+    inc     e
     ld      a,h
     ld      [de],a
     jr      .donebouncehr
@@ -1464,18 +1473,28 @@ Player_ProcessProjectiles:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    inc     l
+    dec     l
+    xor     a
+    ld      [hl+],a
+    ld      a,[hl]
+    and     $f0
+    sub     2
+    ld      [hl+],a
     push    hl
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    call    Math_Neg16
+    ld      de,-$80
+    add     hl,de
+    jr      c,:+
+    ld      hl,0
+:   call    Math_Neg16
     pop     de
     ld      a,l
     ld      [de],a
     inc     e
     ld      a,h
-    ld      [de],a    
+    ld      [de],a
 .donebouncehr
    pop     hl    
     
