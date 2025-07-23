@@ -37,8 +37,8 @@ ErrorScreen:
     halt
     xor     a
     ldh     [rLCDC],a
-    di    
-    
+    di
+
     ; clear VRAM
     ld      a,1
     ldh     [rVBK],a
@@ -165,8 +165,7 @@ ErrorScreen:
     call    PrintHex
     
     ld      de,$98e4
-    ld      hl,hROMB0
-    ld      a,[hl]
+    ldh     a,[hROMB0]
     call    PrintHex
     ld      de,$98ef
     ldh     a,[hIsGBC]

@@ -1,5 +1,5 @@
 section "Level map",wramx,bank[1]
-def LEVEL_MAX_SCREENS = 16
+def LEVEL_MAX_SCREENS = 1
 def LEVEL_ROW_SIZE = 16
 def LEVEL_COLUMN_SIZE = 16
 

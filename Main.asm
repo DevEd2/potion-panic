@@ -216,8 +216,17 @@ ProgramStart:
     
     call    hOAMDMA
     
+    ; GBC check
     ldh     a,[hIsGBC]
     cp      $11
+    jr      nz,@ ; TODO: Lockout screen
+    ; Very Bad Amulator™ check
+    ld      a,5
+    add     a
+    daa
+    push    af
+    pop     hl
+    bit     5,l
     jr      nz,@ ; TODO: Lockout screen
     
     ; enable double speed mode
@@ -749,6 +758,10 @@ hTimerFlag:         db
 hVBlankPointer:     dw
 hSTATPointer:       dw
 hTimerPointer:      dw
+
+hTempPtr1:          dw
+hTempPtr2:          dw
+hTemp1:             db
 
 hIsGBC:             db ; $01 if on GBC or GBA, $00 otherwise
 hIsGBA:             db ; $01 if on GBC, $FF if on DMG0, otherwise $00

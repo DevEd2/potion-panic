@@ -116,8 +116,9 @@ CreateObject:
     ld      a,e
     ld      [hl+],a
     ; object screen
-    ld      a,c
-    ld      [hl+],a
+    ; ld      a,c
+    ; ld      [hl+],a
+    ; inc     l
     ; object X velocity
     xor     a
     ld      [hl+],a

@@ -14,7 +14,7 @@ def PLAYER_WIDTH                = 5 ; player hitbox width relative to center
 def PLAYER_HEIGHT               = 24 ; player hitbox height relative from bottom
 
 def SIZEOF_PROJECTILE = 10
-def MAX_PROJECTILES = 4
+def MAX_PROJECTILES = 2
 
 rsreset
 def PROJECTILE_SPR rb
@@ -129,10 +129,12 @@ ProcessPlayer:
     ldh     a,[hPressedButtons]
     bit     BIT_B,a
     jr      z,.nowand
+    call    Player_MakeStarProjectile
+    jr      c,.nowand
+    ld      hl,Player_Flags
     set     BIT_PLAYER_WAND,[hl]
     ld      a,PLAYER_WAND_TIME
     ld      [Player_WandTimer],a
-    call    Player_MakeStarProjectile
     call    Player_Wand
     jp      .skipcontrols
 .nowand
@@ -732,9 +734,11 @@ Player_CheckCollisionVertical:
     ; bit     BIT_PLAYER_CROUCHING,[hl]
     jr      nz,:+
     add     16-PLAYER_HEIGHT
+    jr      c,.oob
     jr      :+
 .goingdown
     add     15
+    jr      c,.oob
     ; fall through
 :   and     $f0
     swap    a
@@ -772,6 +776,12 @@ Player_CheckCollisionVertical:
     ; ld      b,e
     call    GetTile
     ld      [Player_VerticalCollisionSensorCenter],a
+    ret
+.oob
+    ld      a,1
+    ld      [Player_VerticalCollisionSensorLeft],a
+    ld      [Player_VerticalCollisionSensorCenter],a
+    ld      [Player_VerticalCollisionSensorRight],a
     ret
 
 ; Check for collision using two sensors - one at player Y - 8 pixels, one at player Y + 8 pixels, both at (X + 6) * [direction]
@@ -1079,7 +1089,7 @@ Player_MakeStarProjectile:
     ld      a,$10
     ld      [hl+],a
     ; TTL
-    ld      a,32
+    ld      a,-1
     ld      [hl+],a
     ; X pos
     ld      a,[Player_Flags]
@@ -1099,7 +1109,7 @@ Player_MakeStarProjectile:
     ld      [hl+],a
     ld      a,[Player_Flags]
     bit     BIT_PLAYER_DIRECTION,a
-    ld      a,4
+    ld      a,3
     jr      z,:+
     cpl
     inc     a
@@ -1113,7 +1123,7 @@ Player_MakeStarProjectile:
     ; Y velocity
     xor     a
     ld      [hl+],a
-    ld      [hl+],a    
+    ld      [hl+],a 
     ret
 
 Player_FindFreeProjectileSlot:
@@ -1140,7 +1150,8 @@ Player_ProcessProjectiles:
     and     a
     jp      z,.delete2
     ldh     a,[hGlobalTick]
-    and     $f
+    rra
+    and     $7
     add     a
     add     $10
     ld      [hl+],a
@@ -1150,35 +1161,325 @@ Player_ProcessProjectiles:
     cp      -1
     jr      z,:+
     dec     a
-    jr      z,.delete
+    jp      z,.delete
     ld      [hl+],a
     jr      :++
 :   inc     hl
 :   ; can't have an anonymous label and rept on the same line smh my head
     push    bc
-    rept 2
-        ; speed to position
-        push    hl
-        ld      a,[hl+]
-        ld      c,a
-        ld      a,[hl+]
-        ld      b,a
-        ld      a,[hl+]
-        ld      h,[hl]
-        ld      l,a
-        add     hl,bc
-        ld      d,h
-        ld      e,l
-        pop     hl
-        ld      a,e
-        ld      [hl+],a
-        ld      a,d
-        ld      [hl+],a
-        inc     hl
-        inc     hl
-    endr
-    ; TODO: bounce off walls
-    ; TODO: Delete projectile if it touches an enemy
+    ; X velocity to position
+    push    hl
+    ld      a,[hl+]
+    ld      c,a
+    ld      a,[hl+]
+    ld      b,a
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      d,h
+    ld      e,l
+    pop     hl
+    ld      a,e
+    ld      [hl+],a
+    ld      a,l
+    ldh     [hTempPtr1],a
+    ld      a,h
+    ldh     [hTempPtr1+1],a
+    ld      a,d
+    ld      [hl+],a
+    inc     hl
+    inc     hl
+    
+    ; Y velocity to position
+    push    hl
+    ld      a,[hl+]
+    ld      c,a
+    ld      a,[hl+]
+    ld      b,a
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      d,h
+    ld      e,l
+    pop     hl
+    ld      a,e
+    ld      [hl+],a
+    ld      a,l
+    ldh     [hTempPtr2],a
+    ld      a,h
+    ldh     [hTempPtr2+1],a
+    ld      a,d
+    ld      [hl+],a
+    push    hl
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      bc,PLAYER_GRAVITY
+    add     hl,bc
+    ld      b,h
+    ld      c,l
+    pop     hl
+    ld      a,c
+    ld      [hl+],a
+    ld      a,b
+    ld      [hl+],a
+    
+    
+    ; make sparkles
+    ldh     a,[hGlobalTick]
+    and     3
+    jr      nz,:+
+    push    bc
+    push    hl
+    push    de
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      d,[hl]
+    inc     hl
+    inc     hl
+    inc     hl
+    inc     hl
+    ld      e,[hl]
+    ld      b,OBJID_Sparkle
+    call    CreateObject
+    pop     de
+    pop     hl
+    pop     bc
+:    
+    ld      a,[Level_ColMapBank]
+    bankswitch_to_a
+    
+    ; bounce off floor
+    push    hl
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl]
+    and     $f0
+    ld      b,a
+    ld      hl,hTempPtr2
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl]
+    add     2
+    and     $f0
+    swap    a
+    or      b
+    ld      l,a
+    ld      h,high(Level_Map)
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    cp      COLLISION_SOLID
+    jr      z,:+
+    cp      COLLISION_TOPSOLID
+    jr      nz,.donebouncev
+:   ld      hl,hTempPtr2
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    inc     l
+    push    hl
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    bit     7,h
+    jr      nz,:+
+    srl     h
+    rr      l
+    ld      d,h
+    ld      e,l
+    srl     h
+    rr      l
+    srl     h
+    rr      l
+    add     hl,de
+:   call    Math_Neg16
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
+    ld      hl,hTempPtr2
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    dec     l
+    xor     a
+    ld      [hl+],a
+    ld      a,[hl+]
+    and     $f0
+    sub     2
+    ld      [hl],a
+    
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    inc     l
+    push    hl
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    bit     7,h
+    push    af
+    call    Math_Abs16
+    ld      de,-$40
+    add     hl,de
+    jr      c,:+
+    pop     af
+    pop     hl
+    pop     hl
+    push    hl
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      d,[hl]
+    inc     hl
+    inc     hl
+    inc     hl
+    inc     hl
+    ld      e,[hl]
+    ld      b,OBJID_Sparkle
+    call    CreateObject
+    pop     hl
+    pop     bc
+    ld      a,l
+    sub     SIZEOF_PROJECTILE
+    ld      l,a
+    jp      .delete2
+:   pop     af
+    call    nz,Math_Neg16
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
+    
+    ; TODO: Bounce sound effect
+.donebouncev
+   pop     hl
+   
+    ; bounce off left wall
+    push    hl
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl]
+    sub     4
+    and     $f0
+    ld      b,a
+    ld      hl,hTempPtr2
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl]
+    sub     2
+    and     $f0
+    swap    a
+    or      b
+    ld      l,a
+    ld      h,high(Level_Map)
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    cp      COLLISION_SOLID
+    jr      nz,.donebouncehl
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    inc     hl
+    inc     hl
+    push    hl
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    call    Math_Neg16
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     de
+    ld      a,h
+    ld      [de],a
+    jr      .donebouncehr
+.donebouncehl
+   pop     hl
+
+    ; bounce off right wall
+    push    hl
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl]
+    add     4
+    and     $f0
+    ld      b,a
+    ld      hl,hTempPtr2
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl]
+    sub     2
+    and     $f0
+    swap    a
+    or      b
+    ld      l,a
+    ld      h,high(Level_Map)
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    cp      COLLISION_SOLID
+    jr      nz,.donebouncehr
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    inc     l
+    push    hl
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    call    Math_Neg16
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a    
+.donebouncehr
+   pop     hl    
+    
+:   ; TODO: Delete projectile if it touches an enemy
     pop     bc
     dec     b
     jp      nz,.loop
@@ -1220,6 +1521,7 @@ Player_DrawProjectiles:
     ld      a,[hl+] ; y pos high
     inc     hl      ; y velocity low
     inc     hl      ; y velocity high
+    ; write Y pos
     push    bc
     ld      b,a
     ld      a,[Level_CameraY]
@@ -1230,6 +1532,7 @@ Player_DrawProjectiles:
     ld      [de],a
     inc     e
     pop     bc
+    ; write X pos
     pop     af
     push    bc
     ld      b,a
