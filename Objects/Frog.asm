@@ -1,10 +1,14 @@
-def FROG_IDLE_TIME_MIN = 120
-def FROG_IDLE_TIME_MAX = 240
+def FROG_IDLE_TIME_MIN = 30
+def FROG_IDLE_TIME_MAX = 60
 def FROG_CROAK_TIME_MIN = 30
 def FROG_CROAK_TIME_MAX = 90
 
 def FROG_HIT_WIDTH      = 6
 def FROG_HIT_HEIGHT     = 6
+
+def FROG_HOP_SPEED      = $00c0
+def FROG_JUMP_HEIGHT    = $0300
+def FROG_GRAVITY        = $0018
 
 rsreset
 def FROG_STATE_INIT     rb
@@ -36,7 +40,7 @@ Obj_Frog_Init:
     ldobjp  OBJ_STATE
     ld      a,FROG_STATE_IDLE
     ld      [hl+],a ; object state
-    ; ld      a,1<<OBJB_VISIBLE ; FROG_STATE_IDLE and 1<<OBJB_VISIBLE both resolve to 1
+    ; ld      a,1<<OBJSB_VISIBLE ; FROG_STATE_IDLE and 1<<OBJB_VISIBLE both resolve to 1
     ld      [hl+],a ; flags
     xor     a
     ld      [hl+],a ; x subpixel
@@ -66,20 +70,158 @@ Obj_Frog_Init:
     ; fall through
 
 Obj_Frog_Idle:
-    ;ldobjrp Frog_IdleTimer
-    ;dec     [hl]
-    ;jr      nz,:+
-    ;ldobjp  OBJ_STATE
-    ;call    Math_Random
-    ;and     1
-    ;add     FROG_STATE_TONGUE
-
-    ret
-    jr      Obj_Frog_Draw
+    ldobjrp Frog_IdleTimer
+    dec     [hl]
+    jr      nz,.doidle
+    ; initiate hop
+    ldobjp  OBJ_STATE
+    ld      [hl],FROG_STATE_HOP
+    ldobjp  OBJ_VY
+    ld      [hl],low(-FROG_JUMP_HEIGHT)
+    inc     l
+    ld      [hl],high(-FROG_JUMP_HEIGHT)
+    ldobjrp Frog_Frame
+    ld      [hl],FROG_F_HOP
+    
+    call    Math_Random
+    and     1
+    jr      nz,:+
+    ldobjp  OBJ_FLAGS
+    ld      a,[hl]
+    xor     1 << OBJB_XFLIP
+    ld      [hl],a
+    jr      :++
+:   ldobjp  OBJ_FLAGS
+:   ld      e,[hl]
+    ld      hl,FROG_HOP_SPEED
+    bit     OBJB_XFLIP,e
+    jr      nz,:+
+    call    Math_Neg16
+:   ld      d,h
+    ld      e,l
+    ldobjp  OBJ_VX
+    ld      a,e
+    ld      [hl+],a
+    ld      [hl],d
+    jp      Obj_Frog_Draw
+.doidle
+    ; idle logic (TODO)
+    jp      Obj_Frog_Draw
 
 Obj_Frog_Hop:
-    ; TODO
-    ret
+    ; do gravity
+    ldobjp  OBJ_VY
+    ld      d,h
+    ld      e,l
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      bc,FROG_GRAVITY
+    add     hl,bc
+    ld      c,h
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
+    bit     7,h             ; is vertical velocity negative?
+    jr      nz,.skipfloor   ; if not, skip floor check
+    ; floor check
+    ldobjp  OBJ_X
+    ld      a,[hl]
+    and     $f0
+    ld      b,a
+    inc     l
+    inc     l
+    ld      a,[hl]
+    add     c
+    and     $f0
+    ldh     [hTemp1],a
+    swap    a
+    or      b
+    ld      l,a
+    ld      h,high(Level_Map)
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    call    GetCollisionIndex
+    ld      a,b
+    and     a                   ; is tile nonsolid?
+    jr      z,.skipfloor        ; if yes, skip
+    cp      COLLISION_SOLID     ; is tile solid?
+    jr      z,.floor            ; if yes, run floor reset routine
+    cp      COLLISION_TOPSOLID  ; is tile topsolid?
+    jr      nz,.skipfloor       ; if not, skip
+.floor
+    ldobjp  OBJ_STATE
+    ld      [hl],FROG_STATE_IDLE
+    ldobjrp Frog_IdleTimer
+    ld      a,(FROG_IDLE_TIME_MAX - FROG_IDLE_TIME_MIN)
+    call    Math_RandRange
+    add     FROG_IDLE_TIME_MIN
+    ld      [hl],a
+    ldobjrp Frog_Frame
+    ld      [hl],FROG_F_IDLE
+    ldobjp  OBJ_YSUB
+    xor     a
+    ld      [hl+],a ; y pos low
+    ldh     a,[hTemp1]
+    ld      [hl+],a
+    xor     a
+    ld      [hl+],a ; x velocity low
+    ld      [hl+],a ; x velocity high
+    ld      [hl+],a ; y velocity low
+    ld      [hl+],a ; y velocity high
+.skipfloor
+    ldobjp  OBJ_VX
+    ld      a,[hl+]
+    ld      d,[hl]
+    ld      e,a
+    ld      a,d
+    or      e
+    jp      z,Obj_Frog_Draw ; skip if horizontal speed is zero
+    ldobjp  OBJ_X
+    ld      a,[hl]
+    bit     7,d
+    jr      nz,:+
+    add     4
+    jr      :++
+:   sub     4
+:   and     $f0
+    ld      b,a
+    inc     l
+    inc     l
+    ld      a,[hl]
+    sub     8
+    and     $f0
+    swap    a
+    or      b
+    ld      l,a
+    ld      h,high(Level_Map)
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    call    GetCollisionIndex
+    ld      a,b
+    cp      COLLISION_SOLID
+    jp      nz,Obj_Frog_Draw
+    ldobjp  OBJ_VX
+    push    hl
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    call    Math_Neg16
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
+    ldobjp  OBJ_FLAGS
+    ld      a,[hl]
+    xor     1<<OBJB_XFLIP
+    ld      [hl],a
+    jp      Obj_Frog_Draw
 
 Obj_Frog_Tongue:
     ; TODO
@@ -164,6 +306,11 @@ Obj_Frog_Draw:
     endr
     ld      a,e
     ldh     [hOAMPos],a
+    
+    
+    call    Obj_CheckProjectileIntersecting
+    ret     nc
+    ; TODO: defeat
     ret
 
 rsreset
@@ -200,12 +347,12 @@ SprDef_Frog_Idle:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  2                           ; left tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; left attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  0                           ; right tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; right attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
 
 SprDef_Frog_IdleCroak:
     dw  .left,.right
@@ -225,12 +372,12 @@ SprDef_Frog_IdleCroak:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  2                           ; tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  4                           ; right tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; right attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
 
 SprDef_Frog_IdleBlink:
     dw  .left,.right
@@ -250,12 +397,12 @@ SprDef_Frog_IdleBlink:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  2                           ; left tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; left attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  6                           ; righttile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; rightattributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; rightattributes
 
 SprDef_Frog_Tongue:
     dw  .left,.right
@@ -275,12 +422,12 @@ SprDef_Frog_Tongue:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  2                           ; left tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; left attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  8                           ; righttile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; rightattributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; rightattributes
 
 SprDef_Frog_PreHop:
     dw  .left,.right
@@ -300,12 +447,12 @@ SprDef_Frog_PreHop:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  12                          ; left tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; left attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  10                          ; right tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; right attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
 
 SprDef_Frog_Hop:
     dw  .left,.right
@@ -325,12 +472,12 @@ SprDef_Frog_Hop:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  16                          ; left tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; left attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  14                          ; right tile ID
-    db  2 | OAMF_BANK1 | OBJF_XFLIP ; right attributes
+    db  2 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
 
 ; =============================================================================
 

@@ -39,8 +39,7 @@ endm
 
 if INC_RAND
 section "RNG seeds",hram
-Math_RNGSeed1:  ds  2
-Math_RNGSeed2:  ds  2
+Math_RNGSeed:   ds  2
 endc
 
 section "Math routines",rom0
@@ -270,22 +269,16 @@ Math_ATan2:
 endc
 
 if INC_RAND
-; RNG routines based on work by Zeda and Runer112 - https://pastebin.com/5UWFemuu
-; They have been modified for use on Game Boy.
+; RNG routines adapted from https://learn.cemetech.net/index.php/Z80:Math_Routines
 
-def RNG_SEED_1  = 9999
-def RNG_SEED_2  = 987
+def RNG_SEED = 235
 
 ; Original routines used self-modifying code, which isn't viable on Game Boy
 Math_InitRandSeed:
-    ld      hl,Math_RNGSeed1
-    ld      a,low(RNG_SEED_1)
+    ld      hl,Math_RNGSeed
+    ld      a,low(RNG_SEED)
     ld      [hl+],a
-    ld      a,high(RNG_SEED_1)
-    ld      [hl+],a
-    ld      a,low(RNG_SEED_2)
-    ld      [hl+],a
-    ld      a,high(RNG_SEED_2)
+    ld      a,high(RNG_SEED)
     ld      [hl+],a
     ret
 
@@ -295,35 +288,29 @@ Math_InitRandSeed:
 ;            a = result (8-bit)
 ; DESTROYS: af, bc
 Math_Random:
-    push    af
-    ld      hl,Math_RNGSeed1
+    ld      hl,Math_RNGSeed
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    ld      b,h
     ld      c,l
+    ld      b,h
     add     hl,hl
-    add     hl,hl
-    inc     l
     add     hl,bc
+    add     hl,hl
+    add     hl,bc
+    add     hl,hl
+    add     hl,bc
+    add     hl,hl
+    add     hl,hl
+    add     hl,hl
+    add     hl,hl
+    add     hl,bc
+    inc     h
+    inc     hl
     ld      a,l
-    ldh     [Math_RNGSeed1],a
+    ldh     [Math_RNGSeed],a
     ld      a,h
-    ldh     [Math_RNGSeed1+1],a
-    ld      hl,Math_RNGSeed2
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    add     hl,hl
-    pop     af
-    sbc     a
-    and     %00101101
-    xor     l
-    ldh     [Math_RNGSeed2],a
-    ld      a,h
-    ldh     [Math_RNGSeed2+1],a
-    ld      l,a
-    add     hl,bc
+    ldh     [Math_RNGSeed+1],a
     ret
 
 ; Returns a random number from 0 to a given 8-bit integer.

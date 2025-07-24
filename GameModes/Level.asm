@@ -204,7 +204,7 @@ GM_Level:
     ; create test object
     call    DeleteAllObjects
     lb      bc,OBJID_Frog,0
-    lb      de,128,240
+    lb      de,128,224
     call    CreateObject
     
     call    CopyPalettes
@@ -470,6 +470,7 @@ Level_LoadObjectGFXSet:
     ld      h,0
     ld      de,ObjectGFXPositions
     add     hl,de
+    inc     hl
     ld      [hl],b
     pop     hl
     push    hl
@@ -531,7 +532,27 @@ Level_ObjectPaletteSetPointers:
     paldef  2,Frog,2
     db      0
 
-    
+
+; =============================================================================
+
+; Must be in ROM0!
+; INPUT:    b = 0
+;           c = tile X,Y
+; OUTPUT:   b = collision index
+; DESTROYS: af hl
+GetCollisionIndex:
+    pushbank
+    ld      a,[Level_ColMapBank]
+    bankswitch_to_a
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      b,[hl]
+    popbank
+    ret
+
 ; =============================================================================
 
 section "Dark forest tileset",romx

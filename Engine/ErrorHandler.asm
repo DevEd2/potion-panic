@@ -31,7 +31,6 @@ ErrorScreen:
     ldh     [hDE],a
     ld      a,d
     ldh     [hDE+1],a
-    ld      b,b
     ldh     a,[rLCDC]
     bit     LCDCB_ON,a
     jr      z,:++

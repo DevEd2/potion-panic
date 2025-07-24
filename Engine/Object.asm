@@ -37,11 +37,13 @@ def OBJF_VISIBLE    equ 1 << OBJB_VISIBLE
 def OBJF_XFLIP      equ 1 << OBJB_XFLIP
 def OBJF_YFLIP      equ 1 << OBJB_YFLIP
 
-rsreset
-def OBJID_NONE rb
+
+def NUM_OBJECTS = 0
+def OBJID_NONE = NUM_OBJECTS
 
 macro objdef
-def OBJID_\1 rb
+def OBJID_\1 = NUM_OBJECTS
+def NUM_OBJECTS = NUM_OBJECTS+1
 section fragment "Object GFX positions",wram0
 GFXPos_\1: db
 section fragment "Object pointer table",rom0
@@ -149,7 +151,7 @@ ProcessObjects:
 .loop
     ld      a,[hl]
     and     a
-    jr      z,.next
+    jp      z,.next
     
     ; set object RAM pointers
     ld      a,l
@@ -163,7 +165,7 @@ ProcessObjects:
     ld      e,l
     ; jump to object-specific processing routines
     ld      a,[hl]
-    dec     a
+    ;dec     a
     ld      c,a
     ld      b,0
     push    hl
@@ -191,64 +193,130 @@ ProcessObjects:
     pop     hl
     
     ; speed to position
+.speedtopos
     push    hl
-    ld      a,l
-    and     $f0
-    ld      e,a
-    or      OBJ_VX
-    ld      l,a
+    ldobjp  OBJ_XSUB
+    push    hl
     ld      a,[hl+]
-    ld      b,[hl]
-    ld      c,a
-    pop     hl
-    ld      a,e
-    or      OBJ_X
-    ld      l,a
-    push    hl
+    ld      d,[hl]
+    ld      e,a
+    ldobjp  OBJ_VX
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    add     hl,bc
-    ld      b,h
-    ld      c,l
+    add     hl,de
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
+        
+    ldobjp  OBJ_YSUB
+    push    hl
+    ld      a,[hl+]
+    ld      d,[hl]
+    ld      e,a
+    ldobjp  OBJ_VY
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,de
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
     pop     hl
-    ld      a,c
-    ld      [hl+],a
-    ld      a,b
-    ld      [hl+],a
     
-    push    hl
-    ld      a,l
-    and     $f0
-    ld      e,a
-    or      OBJ_VY
-    ld      l,a
-    ld      a,[hl+]
-    ld      b,[hl]
-    ld      c,a
-    pop     hl
-    ld      a,e
-    or      OBJ_Y
-    ld      l,a
-    push    hl
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    add     hl,bc
-    ld      b,h
-    ld      c,l
-    pop     hl
-    ld      a,c
-    ld      [hl+],a
-    ld      a,b
-    ld      [hl+],a
     ; fall through    
 .next
     ld      a,l
     and     $f0
     add     $10
     ld      l,a
-    jr      nc,.loop
+    jp      nc,.loop
+    ret
+
+; Returns zero flag if a projectile intersects with current object.
+; INPUT:    none
+; OUTPUT:   zero flag on collision
+Obj_CheckProjectileIntersecting:
+    ld      b,MAX_PROJECTILES
+    ld      hl,Player_Projectiles
+.loop
+    ld      a,[hl]
+    and     a
+    jr      z,.next
+    inc     l
+    inc     l
+    inc     l
+    push    bc
+    push    hl
+    ldobjp  OBJ_X
+    ld      e,[hl]
+    ldobjp  OBJ_HIT_WIDTH
+    ld      a,e
+    sub     [hl]
+    ldh     [hTemp1],a
+    ld      a,e
+    add     [hl]
+    ldh     [hTemp3],a
+    
+    ldobjp  OBJ_Y
+    ld      e,[hl]
+    ldobjp  OBJ_HIT_HEIGHT
+    ld      a,e
+    sub     [hl]
+    sub     [hl]
+    ldh     [hTemp2],a
+    ld      a,e
+    ldh     [hTemp4],a
+    
+    pop     hl
+    push    hl
+    ld      a,[hl+]
+    ld      b,a
+    inc     l
+    inc     l
+    inc     l
+    ld      a,[hl+]
+    ld      l,a
+    ld      h,b
+    ldh     a,[hTemp1]
+    ld      b,a
+    ldh     a,[hTemp2]
+    ld      c,a
+    ldh     a,[hTemp3]
+    ld      d,a
+    ldh     a,[hTemp4]
+    ld      e,a
+    call    Math_IsPointInRectangle
+    pop     hl
+    dec     l
+    dec     l
+    dec     l
+    jr      c,.hit
+    ld      a,l
+    add     SIZEOF_PROJECTILE
+    ld      l,a
+    pop     bc
+    dec     b
+    jr      nz,.loop
+    jr      .nohit
+.next
+    ld      a,l
+    add     SIZEOF_PROJECTILE
+    ld      l,a
+    dec     b
+    jr      nz,.loop
+.nohit
+    and     a
+    ret
+.hit
+    ld      [hl],0
+    pop     bc
     ret
 
 ; ================================================================

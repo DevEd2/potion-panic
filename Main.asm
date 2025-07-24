@@ -111,7 +111,8 @@ Reset30: ret
 
 section "Reset $38",rom0[$38]
 Error:
-    jp  ErrorScreen
+    ld      b,b
+    jp      ErrorScreen
     
 ; =============================================================================
 
@@ -762,6 +763,9 @@ hTimerPointer:      dw
 hTempPtr1:          dw
 hTempPtr2:          dw
 hTemp1:             db
+hTemp2:             db
+hTemp3:             db
+hTemp4:             db
 
 hIsGBC:             db ; $01 if on GBC or GBA, $00 otherwise
 hIsGBA:             db ; $01 if on GBC, $FF if on DMG0, otherwise $00
