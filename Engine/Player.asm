@@ -1172,7 +1172,6 @@ Player_ProcessProjectiles:
     ld      a,[hl+]
     ld      c,a
     ld      a,[hl+]
-    ldh     [hTemp1],a
     ld      b,a
     ld      a,[hl+]
     ld      h,[hl]
@@ -1253,6 +1252,38 @@ Player_ProcessProjectiles:
 :    
     ld      a,[Level_ColMapBank]
     bankswitch_to_a
+    
+    ; skip collision checks if projectile is inside a topsolid tile
+    push    hl
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl]
+    and     $f0
+    ld      b,a
+    ld      hl,hTempPtr2
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl]
+    and     $f0
+    swap    a
+    or      b
+    ld      l,a
+    ld      h,high(Level_Map)
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    ld      hl,Level_ColMapPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,bc
+    ld      a,[hl]
+    cp      COLLISION_TOPSOLID
+    pop     hl
+    jp      z,.skipcollisionchecks
     
     ; bounce off floor
     push    hl
@@ -1340,8 +1371,8 @@ Player_ProcessProjectiles:
     call    Math_Abs16
     ld      de,-$40
     add     hl,de
-    jr      c,:++
-:   pop     af
+    jr      c,:+
+    pop     af
     pop     hl
     pop     hl
     push    hl
@@ -1363,16 +1394,7 @@ Player_ProcessProjectiles:
     sub     SIZEOF_PROJECTILE
     ld      l,a
     jp      .delete2
-:   push    hl
-    ld      hl,hTempPtr1
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    ldh     a,[hTemp1]
-    cp      [hl]
-    pop     hl
-    jr      z,:--    
-    pop     af
+:   pop     af
     call    nz,Math_Neg16
     pop     de
     ld      a,l
@@ -1506,7 +1528,9 @@ Player_ProcessProjectiles:
     ld      a,h
     ld      [de],a
 .donebouncehr
-   pop     hl    
+   pop     hl
+
+.skipcollisionchecks
     
 :   ; TODO: Delete projectile if it touches an enemy
     pop     bc
