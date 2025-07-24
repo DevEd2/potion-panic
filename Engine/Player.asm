@@ -1251,40 +1251,7 @@ Player_ProcessProjectiles:
     pop     bc
 :    
     ld      a,[Level_ColMapBank]
-    bankswitch_to_a
-    
-    ; skip collision checks if projectile is inside a topsolid tile
-    push    hl
-    ld      hl,hTempPtr1
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    ld      a,[hl]
-    and     $f0
-    ld      b,a
-    ld      hl,hTempPtr2
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    ld      a,[hl]
-    and     $f0
-    swap    a
-    or      b
-    ld      l,a
-    ld      h,high(Level_Map)
-    ld      a,[hl]
-    ld      c,a
-    ld      b,0
-    ld      hl,Level_ColMapPtr
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    add     hl,bc
-    ld      a,[hl]
-    cp      COLLISION_TOPSOLID
-    pop     hl
-    jp      z,.skipcollisionchecks
-    
+    bankswitch_to_a    
     ; bounce off floor
     push    hl
     ld      hl,hTempPtr1
