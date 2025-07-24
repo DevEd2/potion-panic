@@ -1172,6 +1172,7 @@ Player_ProcessProjectiles:
     ld      a,[hl+]
     ld      c,a
     ld      a,[hl+]
+    ldh     [hTemp1],a
     ld      b,a
     ld      a,[hl+]
     ld      h,[hl]
@@ -1339,8 +1340,8 @@ Player_ProcessProjectiles:
     call    Math_Abs16
     ld      de,-$40
     add     hl,de
-    jr      c,:+
-    pop     af
+    jr      c,:++
+:   pop     af
     pop     hl
     pop     hl
     push    hl
@@ -1354,15 +1355,24 @@ Player_ProcessProjectiles:
     inc     hl
     inc     hl
     ld      e,[hl]
-    ld      b,OBJID_Sparkle
-    call    CreateObject
+    ;ld      b,OBJID_Sparkle
+    ;call    CreateObject
     pop     hl
     pop     bc
     ld      a,l
     sub     SIZEOF_PROJECTILE
     ld      l,a
     jp      .delete2
-:   pop     af
+:   push    hl
+    ld      hl,hTempPtr1
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ldh     a,[hTemp1]
+    cp      [hl]
+    pop     hl
+    jr      z,:--    
+    pop     af
     call    nz,Math_Neg16
     pop     de
     ld      a,l

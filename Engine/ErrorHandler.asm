@@ -31,15 +31,16 @@ ErrorScreen:
     ldh     [hDE],a
     ld      a,d
     ldh     [hDE+1],a
-    ld      a,IEF_VBLANK
-    ldh     [rIE],a
-    ei
-    halt
+    ld      b,b
+    ldh     a,[rLCDC]
+    bit     LCDCB_ON,a
+    jr      z,:++
+:   ldh     a,[rLY]
+    cp      SCRN_Y
+    jr      nz,:-
     xor     a
     ldh     [rLCDC],a
-    di
-
-    ; clear VRAM
+:   ; clear VRAM
     ld      a,1
     ldh     [rVBK],a
     ld      hl,_VRAM
