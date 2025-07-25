@@ -228,8 +228,31 @@ Obj_Frog_Tongue:
     ret
 
 Obj_Frog_Defeat:
-    ; TODO
+    ldobjp  OBJ_VY
+    push    hl
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      bc,PLAYER_GRAVITY
+    add     hl,bc
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
+    bit     7,h
+    jr      nz,Obj_Frog_Draw
+    ldobjp  OBJ_Y
+    ld      a,[hl]
+    sub     16
+    cp      $f0
+    jr      c,Obj_Frog_Draw
+    ldobjp  OBJ_ID
+    ld      [hl],0
     ret
+    
+    ; fall through
 
 Obj_Frog_Draw:
     ldobjp  OBJ_FLAGS
@@ -306,11 +329,31 @@ Obj_Frog_Draw:
     endr
     ld      a,e
     ldh     [hOAMPos],a
+    ; fall through
     
-    
+Frog_CheckDefeat:
     call    Obj_CheckProjectileIntersecting
     ret     nc
-    ; TODO: defeat
+    ld      a,l
+    add     PROJECTILE_VX+1
+    ld      l,a
+    bit     7,[hl]
+    ld      hl,$100
+    call    nz,Math_Neg16
+    ld      d,h
+    ld      e,l
+    ldobjp  OBJ_VX
+    ld      [hl],e
+    inc     l
+    ld      [hl],d
+    inc     l
+    ld      [hl],low(-$200)
+    inc     l
+    ld      [hl],high(-$200)
+    ldobjp  OBJ_STATE
+    ld      [hl],FROG_STATE_DEFEAT
+    inc     l
+    set     OBJB_YFLIP,[hl]
     ret
 
 rsreset

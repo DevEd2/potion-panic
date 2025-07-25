@@ -241,7 +241,8 @@ ProcessObjects:
 
 ; Returns zero flag if a projectile intersects with current object.
 ; INPUT:    none
-; OUTPUT:   zero flag on collision
+; OUTPUT:   zero flag on collision + HL = projectile pointer
+; DESTROYS: a bc e
 Obj_CheckProjectileIntersecting:
     ld      b,MAX_PROJECTILES
     ld      hl,Player_Projectiles
