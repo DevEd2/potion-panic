@@ -60,6 +60,16 @@ Obj_Sparkle_Idle:
 :   inc     [hl]
     ; fall through
 Obj_Sparkle_Draw:
+    ; skip drawing sparkle on alternating frames based on object slot
+    ld      a,l
+    swap    a
+    and     $f
+    ld      b,a
+    ldh     a,[hGlobalTick]
+    add     b
+    and     1
+    ret     z
+
     ldobjp  OBJ_FLAGS
     bit     OBJB_VISIBLE,[hl]
     ret     z
