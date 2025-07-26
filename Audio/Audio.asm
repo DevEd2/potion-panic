@@ -1,10 +1,9 @@
 include "Audio/GBMod_Player.asm"
 
+macro incmus
+section "GBMod module: \1",romx[$4000]
+Mus_\1: incbin  "Audio/Modules/\1.xm.gbm"
+endm
 
-section "GBMod module: Lost In Translation",romx[$4000]
-Mus_LostInTranslation:
-    incbin  "Audio/Modules/LostInTranslation.xm.gbm"
-
-section "GBMod module: Dark Forest",romx[$4000]
-Mus_DarkForest:
-    incbin  "Audio/Modules/DarkForest.xm.gbm"
+    incmus  LostInTranslation
+    incmus  DarkForest

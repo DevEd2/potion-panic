@@ -74,8 +74,6 @@ GM_Level:
     ; level size
     ld      a,[hl+]
     ld      [Level_Size],a
-    inc     a
-    ld      b,a
     ; player start position
     ld      a,[hl]
     and     $f0
@@ -85,20 +83,13 @@ GM_Level:
     and     $f0
     ;sub     16
     ld      [Player_YPos],a
-    ; music - TODO, skip and play placeholder music for now
-    ld      a,[hl+]
-    ld      a,[hl+]
+    ; music
+    pushbank
     ld      a,[hl+]
     push    hl
-    push    bc
-    push    de
-    pushbank
-    ld      a,bank(Mus_DarkForest)-1
     call    GBM_LoadModule
-    popbank
-    pop     de
-    pop     bc
     pop     hl
+    popbank
     ; tileset
     ld      a,[hl+]
     ld      [Level_BlockMapBank],a
@@ -173,6 +164,18 @@ GM_Level:
     inc     a
     jr      nz,:-
     
+    ; load bigfont
+    pushbank
+    xor     a
+    ldh     [rVBK],a
+    farload hl,GFX_BigFont
+    ld      de,_VRAM
+    call    DecodeWLE
+    ; ld      hl,Pal_BigFont
+    ld      a,15
+    call    LoadPal
+    popbank
+    
     ; screen setup
     ld      a,256-SCRN_Y
     ld      [Level_CameraMaxY],a
@@ -201,9 +204,9 @@ GM_Level:
     ld      [Level_CameraY],a
     ld      [Level_CameraTargetY],a
     
-    ; create test object
     call    DeleteAllObjects
-    lb      bc,OBJID_Frog,0
+    ; create test object (TEMP REMOVE ME)
+    ld      b,OBJID_Frog
     lb      de,128,224
     call    CreateObject
     
@@ -552,6 +555,12 @@ GetCollisionIndex:
     ld      b,[hl]
     popbank
     ret
+
+; =============================================================================
+
+section "Misc GFX",romx
+GFX_BigFont:    incbin  "GFX/bigfont.2bpp.wle"
+Pal_BigFont:    incbin  "GFX/bigfont.pal"
 
 ; =============================================================================
 

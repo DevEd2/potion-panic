@@ -173,7 +173,7 @@ endr
 
 ; =============================================================================
 
-section "Program code",rom0[$150]
+section fragment "Program code",rom0[$150]
 ProgramStart:
     di
     ld      sp,STACK_TOP
