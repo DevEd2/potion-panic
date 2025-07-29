@@ -210,6 +210,12 @@ GM_Level:
     lb      de,128,224
     call    CreateObject
     
+    ld      b,OBJID_BigText
+    lb      de,0,0
+    call    CreateObject
+    inc     h
+    ld      [hl],BIGTEXT_GET_READY
+    
     call    CopyPalettes
     call    UpdatePalettes
     
@@ -609,9 +615,6 @@ Tileset_Test:
 ;.colangles      incbin "Tilesets/TestTileset_CollisionAngles.bin"
 
 Pal_TestTileset:    incbin  "Tilesets/TestTileset.pal"
-
-; TEMP HACK REMOVE ME
-MUSIC_NONE: db "TEMP HACK REMOVE ME"
 
     include "Levels/testlevel.inc"
     include "Levels/DarkForest1.inc"

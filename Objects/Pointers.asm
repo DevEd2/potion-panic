@@ -3,3 +3,4 @@ ObjPointers:
     objdef Test
     objdef Sparkle
     objdef Frog
+    objdef BigText

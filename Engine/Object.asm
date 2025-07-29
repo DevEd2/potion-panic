@@ -86,8 +86,10 @@ section "Object routines",rom0
 ;           c = screen
 ;           d = X position
 ;           e = Y position
-; OUTPUT:   carry if no slots are free
-; DESTROYS: af -- -- hl
+; OUTPUT:   hl = object slot pointer
+;           carry if no slots are free
+; DESTROYS: af, hl*
+; * only if no free object slot was found
 CreateObject:
     ld      hl,ObjList + OBJ_ID
 :   ld      a,[hl]
@@ -100,6 +102,7 @@ CreateObject:
     scf
     ret
 .gotslot
+    push    hl
     ; object ID
     ld      a,b
     ld      [hl+],a
@@ -128,6 +131,7 @@ CreateObject:
     ; object Y velocity
     ld      [hl+],a
     ld      [hl+],a
+    pop     hl
     ret
 
 ; Deletes every object by setting their ID to 0 (used to indicate a slot is free).
