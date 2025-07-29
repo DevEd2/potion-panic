@@ -70,9 +70,18 @@ Obj_Frog_Init:
     ; fall through
 
 Obj_Frog_Idle:
+    ldobjrp Frog_Frame
+    ldh     a,[hGlobalTick]
+    rra
+    rra
+    rra
+    rra
+    and     1
+    ld      [hl],a
+    
     ldobjrp Frog_IdleTimer
     dec     [hl]
-    jr      nz,.doidle
+    jp      nz,Obj_Frog_Draw
     ; initiate hop
     ldobjp  OBJ_STATE
     ld      [hl],FROG_STATE_HOP
@@ -103,9 +112,6 @@ Obj_Frog_Idle:
     ld      a,e
     ld      [hl+],a
     ld      [hl],d
-    jp      Obj_Frog_Draw
-.doidle
-    ; idle logic (TODO)
     jp      Obj_Frog_Draw
 
 Obj_Frog_Hop:

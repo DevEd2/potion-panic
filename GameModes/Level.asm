@@ -137,8 +137,10 @@ GM_Level:
     ; object set
     ld      a,1
     ldh     [rVBK],a
+    pushbank
     ld      a,[hl+]
     call    Level_LoadObjectGFXSet
+    popbank
     
     ; actual level layout
     ld      a,[hl+]
@@ -210,6 +212,7 @@ GM_Level:
     lb      de,128,224
     call    CreateObject
     
+    ; create level intro text object
     ld      b,OBJID_BigText
     lb      de,0,0
     call    CreateObject

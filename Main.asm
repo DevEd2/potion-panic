@@ -188,7 +188,7 @@ ProgramStart:
 :   ldh     [hIsSGB],a
     ld      a,b
     ld      [hIsGBA],a
-    
+        
     ; initialize interrupt pointers
     ld      a,low(Int_Dummy)
     ldh     [hVBlankPointer],a
@@ -240,6 +240,15 @@ ProgramStart:
     stop
     
     call    GBM_Stop
+    
+    xor     a
+    
+    ldh     [hPressedButtons],a
+    ldh     [hHeldButtons],a
+    ldh     [hReleasedButtons],a
+    ldh     [hGlobalTick],a
+    
+    call    Math_InitRandSeed
     
     jp      GM_Debug
     

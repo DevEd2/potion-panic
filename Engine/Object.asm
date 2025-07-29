@@ -320,7 +320,7 @@ Obj_CheckProjectileIntersecting:
     and     a
     ret
 .hit
-    ld      [hl],0
+    ;ld      [hl],0
     pop     bc
     ret
 

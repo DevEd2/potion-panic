@@ -453,7 +453,7 @@ ProcessPlayer:
     add     hl,bc
     ld      a,[hl]
     and     a
-    jr      z,:+
+    jr      z,.animateplayer
     ;ld      l,a
     ;ld      h,0
     ;add     hl,hl   ; x2
@@ -486,7 +486,8 @@ ProcessPlayer:
     ; init time
     ld      a,PLAYER_COYOTE_TIME
     ld      [Player_CoyoteTimer],a
-:   set     BIT_PLAYER_AIRBORNE,[hl]    ; set airborne flag
+:   ;ld      hl,Player_Flags
+    set     BIT_PLAYER_AIRBORNE,[hl]    ; set airborne flag
     ; animate player
 .animateplayer
     ld      a,[Player_AnimTimer]
