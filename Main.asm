@@ -594,8 +594,8 @@ def SIZEOF_OAMDMA = @-_OAMDMA
 ; ================================================================
 
 _WaitForVBlank:
-    halt
-:   ldh     a,[hVBlankFlag]
+:   halt
+    ldh     a,[hVBlankFlag]
     and     a
     jr      z,:-
     xor     a
@@ -603,8 +603,8 @@ _WaitForVBlank:
     ret
 
 _WaitForSTAT:
-    halt
-:   ldh     a,[hSTATFlag]
+:   halt
+    ldh     a,[hSTATFlag]
     and     a
     jr      z,:-
     xor     a
@@ -612,8 +612,8 @@ _WaitForSTAT:
     ret
 
 _WaitForTimer:
-    halt
-:   ldh     a,[hTimerFlag]
+:   halt
+    ldh     a,[hTimerFlag]
     and     a
     jr      nz,:-
     xor     a
