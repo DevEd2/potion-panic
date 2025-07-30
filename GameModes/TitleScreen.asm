@@ -45,7 +45,7 @@ GM_Title:
     call    UpdatePalettes
     call    DeleteAllObjects
     
-    ld      a,bank(Mus_LostInTranslation)-1
+    ld      a,bank(Mus_DevEdGames)-1
     call    GBM_LoadModule    
     
     ; TODO: Remaining init stuff
@@ -86,9 +86,9 @@ TitleLoop:
     ldh     [rHDMA4],a
     rst     WaitForVBlank
     ld      a,7 | HDMA5F_MODE_HBL
-    ld      hl,rHDMA5
-    ld      [hl],a
-:   bit     VDMA_LENB_BUSY,[hl]
+    ld      [rHDMA5],a
+:   ldh     a,[rLY]
+    cp      SCRN_Y/2
     jr      nz,:-
     call    GBM_Update
     

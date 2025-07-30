@@ -151,7 +151,7 @@ def DEBUG_MAIN_MENU_NUM_ITEMS = ((@-Debug_JumpTable_Main)/2)
 .dummy
     ret
 .testmap
-    xor     a
+    ld      a,1
     ld      [Level_ID],a
     jp      GM_Level
 
