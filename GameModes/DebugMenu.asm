@@ -142,13 +142,18 @@ DebugLoop:
 
 
 Debug_JumpTable_Main:
-    dw  GM_Level        ; start game
+    dw  .testmap        ; test map
+    dw  GM_Title        ; title screen
     dw  .dummy          ; level select
     dw  .dummy          ; sound test
     dw  GM_CanvasTest   ; canvas test
 def DEBUG_MAIN_MENU_NUM_ITEMS = ((@-Debug_JumpTable_Main)/2)
 .dummy
     ret
+.testmap
+    xor     a
+    ld      [Level_ID],a
+    jp      GM_Level
 
 Debug_DrawMenuItems:
     ld      a,[hl+]
@@ -216,13 +221,15 @@ Debug_String_RGBDSVersion2: db  strupr("{__RGBDS_VERSION__}"),-1
 
 Debug_String_Header1:       db  "=POTION PANIC=",-1
 
-Debug_String_StartGame:     db  "START GAME",-1
+Debug_String_TestLevel:     db  "TEST MAP",-1
+Debug_String_TitleScreen:   db  "TITLE SCREEN",-1
 Debug_String_LevelSelect:   db  "LEVEL SELECT",-1
 Debug_String_SoundTest:     db  "SOUND TEST",-1
 Debug_String_CanvasTest:    db  "CANVAS TEST",-1
 
 Debug_MainMenuItemText:
-    dw  Debug_String_StartGame
+    dw  Debug_String_TestLevel
+    dw  Debug_String_TitleScreen
     dw  Debug_String_LevelSelect
     dw  Debug_String_SoundTest
     dw  Debug_String_CanvasTest

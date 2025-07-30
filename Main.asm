@@ -83,6 +83,10 @@ macro rgb
     dw      \1 | \2 << 5 | \3 << 10
 endm
 
+macro rgb8
+    dw (\1 >> 3) | (\2 >> 3) << 5 | (\3 >> 3) << 10
+endm
+
 ; =============================================================================
 
 section "Reset $00",rom0[$00]
@@ -247,6 +251,9 @@ ProgramStart:
     ldh     [hHeldButtons],a
     ldh     [hReleasedButtons],a
     ldh     [hGlobalTick],a
+    ld      [Level_ID],a
+    ld      [Level_CameraX],a
+    ld      [Level_CameraY],a
     
     call    Math_InitRandSeed
     
@@ -588,7 +595,7 @@ def SIZEOF_OAMDMA = @-_OAMDMA
 
 _WaitForVBlank:
     halt
-    ldh     a,[hVBlankFlag]
+:   ldh     a,[hVBlankFlag]
     and     a
     jr      z,:-
     xor     a
@@ -597,7 +604,7 @@ _WaitForVBlank:
 
 _WaitForSTAT:
     halt
-    ldh     a,[hSTATFlag]
+:   ldh     a,[hSTATFlag]
     and     a
     jr      z,:-
     xor     a
@@ -606,7 +613,7 @@ _WaitForSTAT:
 
 _WaitForTimer:
     halt
-    ldh     a,[hTimerFlag]
+:   ldh     a,[hTimerFlag]
     and     a
     jr      nz,:-
     xor     a
@@ -730,6 +737,8 @@ include "Engine/Object.asm"
 include "GameModes/DebugMenu.asm"
 include "GameModes/CanvasTest.asm"
 include "GameModes/Level.asm"
+include "GameModes/TitleScreen.asm"
+include "GameModes/Credits.asm"
 
 ; =============================================================================
 

@@ -10,11 +10,6 @@ Level_Map:  ds SIZEOF_LEVELMAP_RAM
 section "Level RAM",wram0
 Level_ID:               db
 
-Level_LayoutBank:       db
-Level_LayoutPtr:        dw
-Level_ObjectsBank:      db
-Level_ObjectsPtr:       db
-
 Level_BlockMapBank:     db
 Level_BlockMapPtr:      dw
 Level_ColMapBank:       db
@@ -69,8 +64,21 @@ GM_Level:
     xor     a
     ldh     [rVBK],a
 
-    ; load test level - TEMP HACK, remove later
-    farload hl,Map_DarkForest1
+    ; get map pointer from ID
+    ld      a,[Level_ID]
+    ld      l,a
+    ld      c,a
+    ld      h,0
+    ld      b,0
+    add     hl,hl
+    add     hl,bc
+    ld      bc,Level_Pointers
+    add     hl,bc
+    ld      a,[hl+]
+    bankswitch_to_a
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
     ; level size
     ld      a,[hl+]
     ld      [Level_Size],a
@@ -567,6 +575,12 @@ GetCollisionIndex:
 
 ; =============================================================================
 
+Level_Pointers:
+    dwbank  Map_testlevel
+    dwbank  Map_DarkForest1
+
+; =============================================================================
+
 section "Misc GFX",romx
 GFX_BigFont:    incbin  "GFX/bigfont.2bpp.wle"
 Pal_BigFont:    incbin  "GFX/bigfont.pal"
@@ -622,9 +636,7 @@ Pal_TestTileset:    incbin  "Tilesets/TestTileset.pal"
     include "Levels/testlevel.inc"
     include "Levels/DarkForest1.inc"
 
-
 ; =============================================================================
-
 
     include "Engine/Player.asm"
 
