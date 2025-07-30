@@ -45,7 +45,7 @@ GM_Title:
     call    UpdatePalettes
     call    DeleteAllObjects
     
-    ld      a,bank(Mus_DevEdGames)-1
+    ld      a,bank(Mus_LostInTranslation)-1 ; TODO: Proper title screen music
     call    GBM_LoadModule    
     
     ; TODO: Remaining init stuff
