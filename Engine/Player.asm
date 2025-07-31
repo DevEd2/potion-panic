@@ -33,6 +33,15 @@ if BUILD_DEBUG
 def BIT_PLAYER_NOCLIP       rb
 endc
 
+rsreset
+def POTION_TYPE_POSITIVE            rb
+def POTION_TYPE_RISKY               rb
+def POTION_TYPE_NEGATIVE            rb
+def POTION_TYPE_ONESHOT_POSITIVE    rb
+def POTION_TYPE_ONESHOT_RISKY       rb
+def POTION_TYPE_ONESHOT_NEGATIVE    rb
+def POTION_TYPE_COSMETIC            rb
+
 Player_RAMStart:
 Player_XPos:    ds  2   ; x position (Q16.8)
 Player_YPos:    ds  2   ; y position (Q8.8)
@@ -54,6 +63,8 @@ Player_AnimCurrent:                     dw
 Player_AnimFlag:                        db
 Player_WandTimer:                       db
 Player_Projectiles: ds  MAX_PROJECTILES * SIZEOF_PROJECTILE
+Player_CurrentPotionEffect:             db
+Player_PotionEffectTimer:               dw
 Player_RAMEnd:
 
 macro player_set_animation
@@ -1080,6 +1091,80 @@ Player_Anim_WandRight:
     db  24,frame_wand_right
     db  $ff
     dw  Player_Anim_WandRight
+    
+    
+Player_Anim_Fat_Idle:
+    db  16,frame_fat_idle1
+    db  16,frame_fat_idle2
+    db  16,frame_fat_idle1
+    db  8,frame_fat_idle2
+    db  8,frame_fat_idle3
+    db  $ff
+    dw  Player_Anim_Fat_Idle
+
+Player_Anim_Fat_Walk:
+    db  6,frame_fat_walk1
+    db  6,frame_fat_walk2
+    db  6,frame_fat_walk3
+    db  6,frame_fat_walk4
+    db  6,frame_fat_walk5
+    db  6,frame_fat_walk6
+    db  6,frame_fat_walk7
+    db  6,frame_fat_walk8
+    db  $ff
+    dw  Player_Anim_Fat_Walk
+
+Player_Anim_Fat_Jump:
+    db  1,frame_fat_jump
+    db  $ff
+    dw  Player_Anim_Fat_Jump
+
+Player_Anim_Fat_Fall:
+    db  4,frame_fat_fall0
+:   db  4,frame_fat_fall1
+    db  4,frame_fat_fall2
+    db  $ff
+    dw  :-
+    
+Player_Anim_Fat_FallFast:
+    db  3,frame_fat_fall3
+    db  3,frame_fat_fall4
+    db  $ff
+    dw  Player_Anim_Fat_FallFast
+
+Player_Anim_Fat_WandLeft:
+    db  24,frame_fat_wand_left
+    db  $ff
+    dw  Player_Anim_Fat_WandLeft
+    
+Player_Anim_Fat_WandRight:
+    db  24,frame_fat_wand_right
+    db  $ff
+    dw  Player_Anim_Fat_WandRight
+
+Player_Anim_Tiny_Fall:
+Player_Anim_Tiny_FallFast:
+Player_Anim_Tiny_Idle:
+    db  1,frame_tiny_1
+    db  $ff
+    dw  Player_Anim_Tiny_Idle
+
+Player_Anim_Tiny_Walk:
+    db  10,frame_tiny_1
+    db  10,frame_tiny_2
+    db  $ff
+    dw  Player_Anim_Tiny_Walk
+
+Player_Anim_Tiny_Jump:
+    db  1,frame_tiny_jump
+    db  $ff
+    dw  Player_Anim_Tiny_Walk
+
+Player_Anim_Tiny_WandLeft:
+Player_Anim_Tiny_WandRight:
+    db  1,frame_tiny_wand
+    db  $ff
+    dw  Player_Anim_Tiny_WandRight
 
 ; ========
 
@@ -1587,6 +1672,46 @@ Player_DrawProjectiles:
     ldh     [hOAMPos],a
     ret
     
+macro potion_effect_def
+    db      \1                          ; potion type
+    db      \2                          ; string ID
+    db      bank(PotionEffect_\3_Start) ; bank of effect start code
+    dw      PotionEffect_\3_Start       ; pointer to effect start code
+    db      bank(PotionEffect_\3_End)   ; bank of effect end code
+    dw      PotionEffect_\3_End         ; pointer to effect end code
+endm
+    
+Player_PotionEffectList:
+    potion_effect_def   POTION_TYPE_RISKY, EFFECT_STR_FAT, Fat
+
+rsreset
+def EFFECT_STR_FAT  rb
+
+Player_PotionEffectStrings:
+    ;    ####################
+    ; db  "   DOUBLE DAMAGE!   "  ; double damage
+    ; db  "DOUBLE JUMP ENABLED!"  ; double jump
+    ; db  "  SCORE MULTIPLIER! "  ; multiplier
+    ; db  " GOT A MICROSCOPE?  "  ; shrink
+    db  "    UH-OH, BIG!     "  ; fat
+    ; db  "  BLACK MAGIC SHOT  "  ; quad damage
+    ; db  "   WHAT ENEMIES?    "  ; screen nuke
+    ; db  "     JACKPOT!!      "  ; jackpot
+    ; db  "  MEGA JACKPOT!!!!  "  ; mega jackpot
+    ; db  "    * SO RETRO *    "  ; DMG mode
+    ; db  " I CAN DRAW I SWEAR "  ; programmer art
+    ; db  "    iUMOP 3PISdn    "  ; upside down
+    ; db  "OOPS THAT WAS POISON"  ; poison
+    ; db  "  LADY LUCK SMILES  "  ; good luck
+    ; db  "  LADY LUCK FROWNS  "  ; bad luck
+    ; db  "      SCORE TAX     "  ; score tax
+    ; db  "   INVERTED COLORS  "  ; inverted colors
+    ; db  "TOTALLY TRIPPING OUT"  ; trippy mode
+    ; db  " SLORTNOC SDRAWKCAB "  ; inverted controls (lol slortnoc)
+    ; db  "   SHE FLIES NOW    "  ; floating
+    ; db  " FAMILIAR SUMMONED  "  ; summon
+
+include "Engine/PotionEffects.asm"
 
 section "Player GFX",romx,align[8]
 
@@ -1628,3 +1753,28 @@ PlayerTiles:
     animframe   fall4,%01100110
     animframe   wand_right,%11101110
     animframe   wand_left,%11101110
+    
+    animframe   fat_idle1,%11101110
+    animframe   fat_idle2,%11101110
+    animframe   fat_idle3,%11101110
+    animframe   fat_walk1,%11101110
+    animframe   fat_walk2,%11101110
+    animframe   fat_walk3,%11101110
+    animframe   fat_walk4,%11101110
+    animframe   fat_walk5,%11101110
+    animframe   fat_walk6,%11101110
+    animframe   fat_walk7,%11101110
+    animframe   fat_walk8,%11101110
+    animframe   fat_jump,%11101110
+    animframe   fat_fall0,%11101110
+    animframe   fat_fall1,%11101110
+    animframe   fat_fall2,%11101110
+    animframe   fat_fall3,%11101110
+    animframe   fat_fall4,%11101110
+    animframe   fat_wand_right,%11101110
+    animframe   fat_wand_left,%11101110
+    
+    animframe   tiny_1,%00000110
+    animframe   tiny_2,%00000110
+    animframe   tiny_jump,%00000110
+    animframe   tiny_wand,%00000110

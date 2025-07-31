@@ -1,7 +1,7 @@
 Credits_RoleList:
     db  $01,$00 ; header
     db  $02,$03,$04,$05,$06 ; everything I did
-    db  $07,$07,$07,$07 ; fonts
+    db  $07,$07,$07,$07,$07 ; fonts
     db  $09,$09,$09,$09,$09,$09,$09,$09,$09 ; greets
     db  $08,$08,$08,$08,$08,$08 ; special thanks
     db  $0A ; thanks for playing
@@ -11,7 +11,7 @@ Credits_RoleList:
 Credits_NameList:
     db  $00,$15 ; intro
     db  $01,$01,$01,$01,$01 ; everything I did
-    db  $02,$03,$04,$17 ; fonts
+    db  $02,$03,$04,$17,$18 ; fonts
     db  $0b,$0c,$0d,$0e,$0f,$10,$11,$12,$13 ; greets
     db  $05,$06,$07,$08,$09,$0a,$16 ; special thanks
     db  $14 ; thanks for playing
@@ -57,3 +57,4 @@ Credits_People:
     db      "                    " ; 15 Copyright
     db      "          ...AND YOU" ; 16 Speical thanks
     db      "        FONT END DEV" ; 17 Fonts - https://fontenddev.com/fonts/grape-soda/
+    db      "       YUJI OSHIMOTO" ; 18 Fonts - https://www.dafont.com/04b-03.font

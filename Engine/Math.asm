@@ -22,6 +22,36 @@
 ; SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ; ======================================================================
 
+def OPTIMIZE_FOR_SIZE = 0
+def OPTIMIZE_FOR_SPEED = 1
+
+macro sea    ; Sign Extend A to HL
+    ld      l,a
+    rlca
+    sbc     a
+    ld      h,a
+endm
+
+macro exdehl
+    if OPTIMIZE_FOR_SIZE
+        push    de
+        ld      d,h
+        ld      e,l
+        pop     hl
+    endc
+    if OPTIMIZE_FOR_SPEED
+        ld      a,h
+        ld      h,d
+        ld      d,a
+        ld      a,l
+        ld      l,e
+        ld      e,a
+    endc
+endm
+
+; ======================================================================
+
+
 def INC_MUL     = 1 ; multiplication
 def INC_DIV     = 1 ; division
 def INC_POW     = 1 ; square (NYI)

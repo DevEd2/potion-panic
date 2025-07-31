@@ -79,6 +79,11 @@ macro dwbank
     dw      \1
 endm
 
+macro dbw
+    db      \1
+    dw      \2
+endm
+
 macro rgb
     dw      \1 | \2 << 5 | \3 << 10
 endm

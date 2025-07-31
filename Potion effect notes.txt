@@ -1,0 +1,43 @@
+POTION EFFECT IDEAS
+===================
+
+NOTE 1: All non one-shot potion effects last for 10 seconds.
+NOTE 2: Negative potion effects (except for Bad Luck Charm) will only occur if you have previously gotten a Bad Luck Charm.
+NOTE 3: Negative potion effects always grant add 1 to a global score multiplier that lasts for the rest of the game. The reverse is *not* true for positive effects.
+
+GAMEPLAY ALTERING (POSITIVE)
+Dual Damage: Magic attacks do 2x damage
+Air Jump: Gain a double jump ability
+Multiplier: 2X score multiplier
+Super Multiplier: Rarer than Multiplier, 5X score multiplier
+Freeze: All enemies freeze in place
+
+GAMEPLAY ALTERING (DOUBLE-EDGED SWORD)
+Shrink: Natalie shrinks, cannot be hit by enemies and can jump midair at any time but magic attack is weaker
+Fat: Natalie gains weight, can defeat enemies on contact and double jump but jumps are smaller and movement is slower
+Quad Damage: Magic attacks do 4x damage but can also hurt you for 1hp
+
+GAMEPLAY ALTERING (NEGATIVE)
+Reverse: Reverse controls
+Floating: Float up slowly
+
+ONE-SHOT (POSITIVE):
+Enemy-B-Gone: All enemies in current wave disappear in a puff of smoke
+Water of Life: Gain an extra life
+Water of Health: Full health restore
+Summon: Summons a familar to aid you. disappears if you take damage
+Good Luck Charm: Rare positive potion effects become more likely to occur, with the exception of Good Luck Charm
+Jackpot: Gain 1000 points
+Mega Jackpot: Rare; gain 5000 points
+
+ONE-SHOT (NEGATIVE):
+Bad Luck Charm: Rare negative potion effects become more likely to occur
+Poision: Lose one health point (can only occur if you have full health)
+Score Tax: Lose 1000 points
+
+COSMETIC ONLY:
+No Color: Removes color
+Trippy mode: Raster-based wave effect
+Upside Down: Screen inverts vertically
+Invert: Colors are inverted
+Programmer Art: Makes the graphics worse
