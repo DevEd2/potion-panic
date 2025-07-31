@@ -7,3 +7,11 @@ PotionEffect_Fat_Start:
 PotionEffect_Fat_End:
     ; TODO
     ret
+
+PotionEffect_Tiny_Start:
+    ; TODO
+    ret
+
+PotionEffect_Tiny_End:
+    ; TODO
+    ret

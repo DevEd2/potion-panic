@@ -1683,33 +1683,35 @@ endm
     
 Player_PotionEffectList:
     potion_effect_def   POTION_TYPE_RISKY, EFFECT_STR_FAT, Fat
+    potion_effect_def   POTION_TYPE_RISKY, EFFECT_STR_TINY, Tiny
 
 rsreset
 def EFFECT_STR_FAT  rb
+def EFFECT_STR_TINY rb
 
 Player_PotionEffectStrings:
     ;    ####################
-    ; db  "   DOUBLE DAMAGE!   "  ; double damage
-    ; db  "DOUBLE JUMP ENABLED!"  ; double jump
-    ; db  "  SCORE MULTIPLIER! "  ; multiplier
-    ; db  " GOT A MICROSCOPE?  "  ; shrink
     db  "    UH-OH, BIG!     "  ; fat
-    ; db  "  BLACK MAGIC SHOT  "  ; quad damage
-    ; db  "   WHAT ENEMIES?    "  ; screen nuke
-    ; db  "     JACKPOT!!      "  ; jackpot
-    ; db  "  MEGA JACKPOT!!!!  "  ; mega jackpot
-    ; db  "    * SO RETRO *    "  ; DMG mode
-    ; db  " I CAN DRAW I SWEAR "  ; programmer art
-    ; db  "    iUMOP 3PISdn    "  ; upside down
-    ; db  "OOPS THAT WAS POISON"  ; poison
-    ; db  "  LADY LUCK SMILES  "  ; good luck
-    ; db  "  LADY LUCK FROWNS  "  ; bad luck
-    ; db  "      SCORE TAX     "  ; score tax
-    ; db  "   INVERTED COLORS  "  ; inverted colors
-    ; db  "TOTALLY TRIPPING OUT"  ; trippy mode
-    ; db  " SLORTNOC SDRAWKCAB "  ; inverted controls (lol slortnoc)
-    ; db  "   SHE FLIES NOW    "  ; floating
-    ; db  " FAMILIAR SUMMONED  "  ; summon
+    db  " GOT A MICROSCOPE?  "  ; shrink
+    db  "   DOUBLE DAMAGE!   "  ; double damage
+    db  "DOUBLE JUMP ENABLED!"  ; double jump
+    db  "  SCORE MULTIPLIER! "  ; multiplier
+    db  "  BLACK MAGIC SHOT  "  ; quad damage
+    db  "   WHAT ENEMIES?    "  ; screen nuke
+    db  "     JACKPOT!!      "  ; jackpot
+    db  "  MEGA JACKPOT!!!!  "  ; mega jackpot
+    db  "      SO RETRO      "  ; DMG mode
+    db  " I CAN DRAW I SWEAR "  ; programmer art
+    db  "    iUMOP 3PISdn    "  ; upside down
+    db  "OOPS THAT WAS POISON"  ; poison
+    db  "  LADY LUCK SMILES  "  ; good luck
+    db  "  LADY LUCK FROWNS  "  ; bad luck
+    db  "      SCORE TAX     "  ; score tax
+    db  "   INVERTED COLORS  "  ; inverted colors
+    db  "TOTALLY TRIPPING OUT"  ; trippy mode
+    db  " SLORTNOC SDRAWKCAB "  ; inverted controls (lol slortnoc)
+    db  "   SHE FLIES NOW    "  ; floating
+    db  " FAMILIAR SUMMONED  "  ; summon
 
 include "Engine/PotionEffects.asm"
 

@@ -173,7 +173,7 @@ Header_ROMChecksum:     dw  0                           ; handled by rgbfix
 ; =============================================================================
 
     newcharmap MainFont
-def chars equs "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!@$%(),.?>© =:^vlrwsadzxtl+-"
+def chars equs " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz\{|\}~©"
 def char = 0
 rept strlen("{chars}")
     charmap strsub("{chars}", char + 1, 1), char

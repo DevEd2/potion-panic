@@ -192,7 +192,7 @@ Debug_DrawCursor:
     ld      [hl+],a
     ld      a,8
     ld      [hl+],a
-    ld      [hl],$35
+    ld      [hl],">"
     ret
 
 Pal_DebugMenu:
