@@ -119,9 +119,8 @@ section "Reset $30",rom0[$30]
 Reset30: ret
 
 section "Reset $38",rom0[$38]
-Error:
-    ld      b,b
-    jp      ErrorScreen
+Reset38:
+    jr      _Reset38
     
 ; =============================================================================
 
@@ -148,7 +147,14 @@ CallHL_Error:
     ldh     [hErrType],a
     pop     af
     jp      ErrorScreen
-    
+
+_Reset38:
+    push    af
+    ld      a,ERR_TRAP
+    ldh     [hErrType],a
+    pop     af
+    jp      ErrorScreen
+
 ; =============================================================================
 
 section "ROM header",rom0[$100]
@@ -169,16 +175,6 @@ Header_OldLicenseCode:  db  $33                         ; must be $33 for SGB su
 Header_Revision:        db  -1                          ; revision (-1 for prerelease builds)
 Header_Checksum:        db  0                           ; handled by rgbfix
 Header_ROMChecksum:     dw  0                           ; handled by rgbfix
-
-; =============================================================================
-
-    newcharmap MainFont
-def chars equs " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz\{|\}~©"
-def char = 0
-rept strlen("{chars}")
-    charmap strsub("{chars}", char + 1, 1), char
-def char = char + 1
-endr
 
 ; =============================================================================
 
@@ -269,8 +265,7 @@ ProgramStart:
 ; =============================================================================
 ; Support routines
 ; =============================================================================
-
-
+    
 ; print a null-terminated string to DE
 ; INPUT: hl = pointer
 ;        de = destination
@@ -278,6 +273,7 @@ PrintString:
     ld      a,[hl+]
     and     a
     ret     z
+    sub     " "
     ld      [de],a
     inc     de
     jr      PrintString
@@ -289,6 +285,7 @@ PrintString2:
     ld      a,[hl+]
     cp      -1
     ret     z
+    sub     " "
     ld      [de],a
     inc     de
     jr      PrintString2
@@ -300,6 +297,7 @@ PrintStringInverted:
     ld      a,[hl+]
     and     a
     ret     z
+    sub     " "
     set     7,a
     ld      [de],a
     inc     de
@@ -312,11 +310,21 @@ PrintHex:
     ld      b,a
     swap    a
     and     $f
-    ld      [de],a
+    cp      $a
+    jr      nc,:+
+    add     "0"-" "
+    jr      :++
+:   add     "A"-" "-$a
+:   ld      [de],a
     inc     e
     ld      a,b
     and     $f
-    ld      [de],a
+    cp      $a
+    jr      nc,:+
+    add     "0"-" "
+    jr      :++
+:   add     "A"-" "-$a
+:   ld      [de],a
     inc     e
     ret
 

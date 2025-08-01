@@ -122,7 +122,7 @@ Math_Div16:
     ld      a,ERR_DIV_ZERO
     ldh     [hErrType],a
     pop     af
-    rst     Error
+    jp      ErrorScreen
 endc
 
 if INC_POW

@@ -67,7 +67,7 @@ ErrorScreen:
     
     ld      hl,_SCRN0
     ld      bc,_SCRN1-_SCRN0
-    ld      e," "
+    ld      e,0
     call    MemFill
         
     ld      de,_SCRN0+6
@@ -112,21 +112,21 @@ ErrorScreen:
     
     ld      hl,_SCRN0+$144
     ld      bc,$20
-    ld      [hl],":"
+    ld      [hl],":"-" "
     add     hl,bc
-    ld      [hl],":"
+    ld      [hl],":"-" "
     add     hl,bc
-    ld      [hl],":"
+    ld      [hl],":"-" "
     add     hl,bc
-    ld      [hl],":"
+    ld      [hl],":"-" "
     add     hl,bc
-    ld      [hl],":"
+    ld      [hl],":"-" "
     add     hl,bc
-    ld      [hl],":"
+    ld      [hl],":"-" "
     add     hl,bc
-    ld      [hl],":"
+    ld      [hl],":"-" "
     add     hl,bc
-    ld      [hl],":"
+    ld      [hl],":"-" "
     
     ld      de,$9884
     ld      hl,hAF+1
@@ -202,27 +202,47 @@ ErrorScreen:
     ld      sp,hl
     ld      b,8
     ld      de,$9946
-:   ; cant have rept and an anonymous label on the same line smh my head
+.loop
     rept    3
         pop     hl
         ; calling PrintHex here trashes the stack so we need to inline it for both h and l
         ld      a,h
         swap    a
         and     $f
-        ld      [de],a
+        cp      $a
+        jr      nc,:+
+        add     "0"-" "
+        jr      :++
+:       add     "A"-" "-$a
+:       ld      [de],a
         inc     e
         ld      a,h
         and     $f
-        ld      [de],a
+        cp      $a
+        jr      nc,:+
+        add     "0"-" "
+        jr      :++
+:       add     "A"-" "-$a
+:       ld      [de],a
         inc     e
         ld      a,l
         swap    a
         and     $f
-        ld      [de],a
+        cp      $a
+        jr      nc,:+
+        add     "0"-" "
+        jr      :++
+:       add     "A"-" "-$a
+:       ld      [de],a
         inc     e
         ld      a,l
         and     $f
-        ld      [de],a
+        cp      $a
+        jr      nc,:+
+        add     "0"-" "
+        jr      :++
+:       add     "A"-" "-$a
+:       ld      [de],a
         inc     e
         inc     de ; advance one char
     endr
@@ -231,7 +251,7 @@ ErrorScreen:
     ld      d,h
     ld      e,l
     dec     b
-    jr      nz,:-
+    jp      nz,.loop
     
     ld      sp,$fffe
     
@@ -274,27 +294,31 @@ str_SP:                 db  "SP=",0
 str_IE:                 db  "IE=",0
 str_RB:                 db  "RB=",0
 str_Console:            db  "GB=",0
-str_StackTrace:         db  "STACK TRACE:",0
+str_StackTrace:         db  "Stack trace:",0
 
 rsreset
 def ERR_TRAP                rb
 def ERR_DIV_ZERO            rb
 def ERR_JP_HL_OUTSIDE_ROM   rb
+def ERR_MANUAL_TRIG         rb
 
 ErrorStringPointers:
 ErrorStrings:
     dw      .trap
     dw      .divbyzero
     dw      .jphloutsiderom
+    dw      .manualtrig
 def NUM_ERROR_STRINGS = (@ - ErrorStringPointers) / 2
     
 .trap ;  ####################
-    db  "RST $38 TRAP",0
+    db  "RST $38 trap",0
 .divbyzero
-    db  "DIVISION BY ZERO",0
+    db  "Division by zero",0
 .jphloutsiderom
-    db  "JP HL OUTSIDE ROM",0
+    db  "JP HL outside ROM",0
+.manualtrig
+    db  "Test crash",0
 .unknown
-    db  "UNKNOWN ERROR",0
+    db  "Unknown error",0
     ;    ####################
     

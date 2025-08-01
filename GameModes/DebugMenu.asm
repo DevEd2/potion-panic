@@ -20,9 +20,8 @@ GM_Debug:
     call    MemFill
     xor     a
     ldh     [rVBK],a
-    ld      hl,_VRAM
-    ld      bc,_SRAM-_VRAM
-    ld      e," "
+    ld      hl,_SCRN0
+    ld      bc,_SCRN1-_SCRN0
     call    MemFill
     
     ; load font
@@ -147,6 +146,7 @@ Debug_JumpTable_Main:
     dw  .dummy          ; level select
     dw  .dummy          ; sound test
     dw  GM_CanvasTest   ; canvas test
+    dw  .crash
 def DEBUG_MAIN_MENU_NUM_ITEMS = ((@-Debug_JumpTable_Main)/2)
 .dummy
     ret
@@ -154,6 +154,12 @@ def DEBUG_MAIN_MENU_NUM_ITEMS = ((@-Debug_JumpTable_Main)/2)
     ld      a,1
     ld      [Level_ID],a
     jp      GM_Level
+.crash
+    push    af
+    ld      a,ERR_MANUAL_TRIG
+    ldh     [hErrType],a
+    pop     af
+    jp      ErrorScreen
 
 Debug_DrawMenuItems:
     ld      a,[hl+]
@@ -166,6 +172,7 @@ Debug_DrawMenuItems:
     cp      -1
     jr      z,.next
     inc     bc
+    sub     " "
     ld      [de],a
     inc     de
     jr      :-
@@ -192,7 +199,7 @@ Debug_DrawCursor:
     ld      [hl+],a
     ld      a,8
     ld      [hl+],a
-    ld      [hl],">"
+    ld      [hl],">"-" "
     ret
 
 Pal_DebugMenu:
@@ -210,22 +217,23 @@ endc
 def _YEAR equs strsub("{d:__UTC_YEAR__}",3)
 
 Debug_String_BuildDate:     
-    db  "BUILD {_MONTH}{_DAY}{_YEAR}",-1
+    db  "Build {_MONTH}{_DAY}{_YEAR}",-1
 
 PURGE _MONTH
 PURGE _DAY
 PURGE _YEAR
 
-Debug_String_RGBDSVersion1: db  "RGBDS VERSION:",-1
-Debug_String_RGBDSVersion2: db  strupr("{__RGBDS_VERSION__}"),-1
+Debug_String_RGBDSVersion1: db  "RGBDS version:",-1
+Debug_String_RGBDSVersion2: db  "{__RGBDS_VERSION__}",-1
 
 Debug_String_Header1:       db  "=POTION PANIC=",-1
 
-Debug_String_TestLevel:     db  "TEST MAP",-1
-Debug_String_TitleScreen:   db  "TITLE SCREEN",-1
-Debug_String_LevelSelect:   db  "LEVEL SELECT",-1
-Debug_String_SoundTest:     db  "SOUND TEST",-1
-Debug_String_CanvasTest:    db  "CANVAS TEST",-1
+Debug_String_TestLevel:     db  "Test map",-1
+Debug_String_TitleScreen:   db  "Title screen",-1
+Debug_String_LevelSelect:   db  "Level select",-1
+Debug_String_SoundTest:     db  "Sound test",-1
+Debug_String_CanvasTest:    db  "Canvas test",-1
+Debug_String_Crash:         db  "Crash",-1
 
 Debug_MainMenuItemText:
     dw  Debug_String_TestLevel
@@ -233,4 +241,5 @@ Debug_MainMenuItemText:
     dw  Debug_String_LevelSelect
     dw  Debug_String_SoundTest
     dw  Debug_String_CanvasTest
+    dw  Debug_String_Crash
     dw  0
