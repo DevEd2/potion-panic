@@ -79,6 +79,7 @@ Player_WandTimer:                       db
 Player_Projectiles: ds  MAX_PROJECTILES * SIZEOF_PROJECTILE
 Player_CurrentPotionEffect:             db
 Player_PotionEffectTimer:               dw
+Player_ControlBitFlipMask:              db
 Player_RAMEnd:
 
 macro player_set_animation
@@ -267,6 +268,11 @@ ProcessPlayer:
     ; left/right movement
 .checkright
     ldh     a,[hHeldButtons]
+    ld      b,a
+    and     BTN_LEFT | BTN_RIGHT
+    jp      z,.decel
+    ld      a,[Player_ControlBitFlipMask]
+    xor     b
     bit     BIT_RIGHT,a
     jr      z,.checkleft
     ld      hl,Player_Flags
@@ -293,6 +299,8 @@ ProcessPlayer:
     
 .checkleft
     ldh     a,[hHeldButtons]
+    ld      a,[Player_ControlBitFlipMask]
+    xor     b
     bit     BIT_LEFT,a
     jr      z,.decel
     ld      hl,Player_Flags
