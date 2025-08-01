@@ -18,7 +18,7 @@ def PLAYER_WALK_SPEED_TINY      = $100
 def PLAYER_JUMP_HEIGHT_TINY     = $1e0
 def PLAYER_GRAVITY_TINY         = $008
 
-def PLAYER_TERMINAL_VELOCITY    = $800
+def PLAYER_TERMINAL_VELOCITY    = $400
 def PLAYER_COYOTE_TIME          = 15 ; coyote time in frames
 def PLAYER_WAND_TIME            = 15 ; wand time in frames
 
@@ -388,8 +388,20 @@ ProcessPlayer:
     ;bit     BIT_PLAYER_WAND,a
     ;jr      nz,:+
     player_set_animation Fall
-:
-    ; velocity to position
+    ; terminal velocity
+    push    de
+    ld      d,h
+    ld      e,l
+    ld      bc,PLAYER_TERMINAL_VELOCITY
+    call    Math_Compare16
+    pop     de
+    jr      nc,:+
+    ld      a,c
+    ld      [Player_YVel],a
+    ld      a,b
+    ld      [Player_YVel+1],a
+    player_set_animation FallFast
+:   ; velocity to position
     ld      hl,Player_XVel
     ld      a,[hl+]
     ld      b,[hl]
@@ -1191,6 +1203,7 @@ Player_Anim_Fat_WandRight:
     db  $ff
     dw  Player_Anim_Fat_WandRight
 
+Player_Anim_Tiny_Jump:
 Player_Anim_Tiny_Fall:
 Player_Anim_Tiny_FallFast:
 Player_Anim_Tiny_Idle:
@@ -1203,11 +1216,6 @@ Player_Anim_Tiny_Walk:
     db  10,frame_tiny_2
     db  $ff
     dw  Player_Anim_Tiny_Walk
-
-Player_Anim_Tiny_Jump:
-    db  1,frame_tiny_jump
-    db  $ff
-    dw  Player_Anim_Tiny_Jump
 
 Player_Anim_Tiny_WandLeft:
 Player_Anim_Tiny_WandRight:
