@@ -4,8 +4,20 @@ def PLAYER_ACCEL                = $040
 def PLAYER_DECEL                = $020
 def PLAYER_WALK_SPEED           = $120
 def PLAYER_JUMP_HEIGHT          = $400
-; def PLAYER_JUMP_HEIGHT_HIGH     = $490
 def PLAYER_GRAVITY              = $028
+
+def PLAYER_ACCEL_FAT            = $010
+def PLAYER_DECEL_FAT            = $008
+def PLAYER_WALK_SPEED_FAT       = $0c0
+def PLAYER_JUMP_HEIGHT_FAT      = $480
+def PLAYER_GRAVITY_FAT          = $030
+
+def PLAYER_ACCEL_TINY           = $020
+def PLAYER_DECEL_TINY           = $010
+def PLAYER_WALK_SPEED_TINY      = $100
+def PLAYER_JUMP_HEIGHT_TINY     = $1e0
+def PLAYER_GRAVITY_TINY         = $008
+
 def PLAYER_TERMINAL_VELOCITY    = $800
 def PLAYER_COYOTE_TIME          = 15 ; coyote time in frames
 def PLAYER_WAND_TIME            = 15 ; wand time in frames
@@ -29,6 +41,8 @@ def BIT_PLAYER_DIRECTION    rb
 def BIT_PLAYER_AIRBORNE     rb
 def BIT_PLAYER_CROUCHING    rb
 def BIT_PLAYER_WAND         rb
+def BIT_PLAYER_FAT          rb
+def BIT_PLAYER_TINY         rb
 if BUILD_DEBUG
 def BIT_PLAYER_NOCLIP       rb
 endc
@@ -68,26 +82,59 @@ Player_PotionEffectTimer:               dw
 Player_RAMEnd:
 
 macro player_set_animation
-    ;push    af
-    ld      a,[Player_AnimCurrent]
-    ld      c,a
-    ld      a,[Player_AnimCurrent+1]
-    ld      b,a
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_FAT,a
+    jr      nz,.fat\@
+    bit     BIT_PLAYER_TINY,a
+    jr      nz,.tiny\@
+.normal\@
     ld      de,Player_Anim_\1
-    call    Math_Compare16
-    jr      z,:+
-    ld      a,low(Player_Anim_\1)
-    ld      [Player_AnimPointer],a
-    ld      [Player_AnimCurrent],a
-    ld      a,high(Player_Anim_\1)
-    ld      [Player_AnimPointer+1],a
-    ld      [Player_AnimCurrent+1],a
-    ld      a,1
-    ld      [Player_AnimTimer],a
-:   
+    jr      .setanim\@
+.fat\@
+    ld      de,Player_Anim_Fat_\1
+    jr      .setanim\@
+.tiny\@
+    ld      de,Player_Anim_Tiny_\1
+.setanim\@
+    call    Player_SetAnimation
+endm
+
+macro get_const
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_FAT,a
+    jr      nz,.fat\@
+    bit     BIT_PLAYER_TINY,a
+    jr      nz,.tiny\@
+.normal\@
+    ld      \1,\2
+    jr      .gotconst\@
+.fat\@
+    ld      \1,\2_FAT
+    jr      .gotconst\@
+.tiny\@
+    ld      \1,\2_TINY
+.gotconst\@
 endm
 
 section "Player routines",rom0
+
+if BUILD_DEBUG
+Player_ForceFat:
+    ld      hl,Player_Flags
+    set     BIT_PLAYER_FAT,[hl]
+    ret
+
+Player_ForceTiny:
+    ld      hl,Player_Flags
+    set     BIT_PLAYER_TINY,[hl]
+    ret
+
+Player_ForceNormal:
+    ld      hl,Player_Flags
+    res     BIT_PLAYER_FAT,[hl]
+    res     BIT_PLAYER_TINY,[hl]
+    ret
+endc
 
 InitPlayer:
     ; clear player RAM
@@ -118,15 +165,22 @@ InitPlayer:
     ; ld      hl,BorisPalette
     ; ld      a,10
     ; call    LoadPal
-    ld      a,low(PLAYER_GRAVITY)
-    ld      [Player_Grav],a
-    xor     a   ; ld a,high(PLAYER_GRAVITY)
-    ld      [Player_Grav+1],a
     
     player_set_animation Idle
     ret
 
 ProcessPlayer:
+    if BUILD_DEBUG
+        ldh     a,[hPressedButtons]
+        bit     BIT_START,a
+        call    nz,Player_ForceTiny
+    endc
+    get_const hl,PLAYER_GRAVITY
+    ld      a,l
+    ld      [Player_Grav],a
+    ld      a,h
+    ld      [Player_Grav+1],a
+
     if BUILD_DEBUG
         ld      hl,Player_Flags
         bit     BIT_PLAYER_NOCLIP,[hl]
@@ -214,18 +268,10 @@ ProcessPlayer:
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
     jr      nz,.nojump
-    ;ldh     a,[hHeldButtons]
-    ;bit     BIT_UP,a
-    ;jr      z,:+
-    ;ld      a,low(-PLAYER_JUMP_HEIGHT_HIGH)
-    ;ld      [Player_YVel],a
-    ;ld      a,high(-PLAYER_JUMP_HEIGHT_HIGH)
-    ;ld      [Player_YVel+1],a
-    ;set     BIT_PLAYER_AIRBORNE,[hl]
-    ;jr      .donejump
-:   ld      a,low(-PLAYER_JUMP_HEIGHT)
+:   get_const bc,-PLAYER_JUMP_HEIGHT
+    ld      a,c
     ld      [Player_YVel],a
-    ld      a,high(-PLAYER_JUMP_HEIGHT)
+    ld      a,b
     ld      [Player_YVel+1],a
     set     BIT_PLAYER_AIRBORNE,[hl]
     player_set_animation Jump
@@ -267,20 +313,21 @@ ProcessPlayer:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    ld      bc,PLAYER_ACCEL
+    get_const bc,PLAYER_ACCEL
     add     hl,bc
     ld      d,h
     ld      e,l
-    ld      bc,PLAYER_WALK_SPEED
+    get_const bc,PLAYER_WALK_SPEED
     call    Math_Compare16
     jr      nc,.nocapright
-    ld      hl,PLAYER_WALK_SPEED
+    ld      h,b
+    ld      l,c
 .nocapright
     ld      a,l
     ld      [Player_XVel],a
     ld      a,h
     ld      [Player_XVel+1],a
-    jr      .nodecel
+    jp      .nodecel
     
 .checkleft
     ldh     a,[hHeldButtons]
@@ -292,14 +339,15 @@ ProcessPlayer:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    ld      bc,-PLAYER_ACCEL
+    get_const bc,-PLAYER_ACCEL
     add     hl,bc
     ld      d,h
     ld      e,l
-    ld      bc,-PLAYER_WALK_SPEED
+    get_const bc,-PLAYER_WALK_SPEED
     call    Math_Compare16
     jr      c,.nocapleft
-    ld      hl,-PLAYER_WALK_SPEED
+    ld      h,b
+    ld      l,c
 .nocapleft
     ld      a,l
     ld      [Player_XVel],a
@@ -316,7 +364,7 @@ ProcessPlayer:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    ld      bc,-PLAYER_DECEL
+    get_const bc,-PLAYER_DECEL
     add     hl,bc
     bit     7,h
     jr      z,.donedecel
@@ -327,7 +375,7 @@ ProcessPlayer:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    ld      bc,PLAYER_DECEL
+    get_const  bc,PLAYER_DECEL
     add     hl,bc
     bit     7,h
     jr      nz,.donedecel
@@ -1158,7 +1206,7 @@ Player_Anim_Tiny_Walk:
 Player_Anim_Tiny_Jump:
     db  1,frame_tiny_jump
     db  $ff
-    dw  Player_Anim_Tiny_Walk
+    dw  Player_Anim_Tiny_Jump
 
 Player_Anim_Tiny_WandLeft:
 Player_Anim_Tiny_WandRight:
@@ -1179,6 +1227,8 @@ Player_MakeStarProjectile:
     ld      [hl+],a
     ; X pos
     ld      a,[Player_Flags]
+    bit     BIT_PLAYER_TINY,a
+    jr      nz,.tinyX
     bit     BIT_PLAYER_DIRECTION,a
     ld      a,[Player_XPos]
     jr      z,.right
@@ -1187,6 +1237,9 @@ Player_MakeStarProjectile:
     jr      :+
 .right
     add     14
+    jr      :+
+.tinyX
+    ld      a,[Player_XPos]
 :   ld      [hl],0
     inc     hl
     ld      [hl+],a
@@ -1203,9 +1256,16 @@ Player_MakeStarProjectile:
     ; Y pos
     xor     a
     ld      [hl+],a
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_TINY,a
     ld      a,[Player_YPos]
+    jr      nz,.tinyY
+.normal
     inc     a
-    ld      [hl+],a
+    jr      :+
+.tinyY
+    add     12
+:   ld      [hl+],a
     ; Y velocity
     xor     a
     ld      [hl+],a
@@ -1563,7 +1623,7 @@ Player_ProcessProjectiles:
     ld      [hl+],a
     ld      a,[hl]
     and     $f0
-    sub     2
+    add     $e
     ld      [hl+],a
     push    hl
     ld      a,[hl+]
@@ -1671,7 +1731,24 @@ Player_DrawProjectiles:
     ld      a,e
     ldh     [hOAMPos],a
     ret
-    
+
+Player_SetAnimation:
+    ld      a,[Player_AnimCurrent]
+    ld      c,a
+    ld      a,[Player_AnimCurrent+1]
+    ld      b,a
+    call    Math_Compare16
+    ret     z
+    ld      a,e
+    ld      [Player_AnimPointer],a
+    ld      [Player_AnimCurrent],a
+    ld      a,d
+    ld      [Player_AnimPointer+1],a
+    ld      [Player_AnimCurrent+1],a
+    ld      a,1
+    ld      [Player_AnimTimer],a
+    ret
+
 macro potion_effect_def
     db      \1                          ; potion type
     db      \2                          ; string ID
@@ -1776,7 +1853,7 @@ PlayerTiles:
     animframe   fat_wand_right,%11101110
     animframe   fat_wand_left,%11101110
     
-    animframe   tiny_1,%00000110
-    animframe   tiny_2,%00000110
-    animframe   tiny_jump,%00000110
-    animframe   tiny_wand,%00000110
+    animframe   tiny_1,%01100000
+    animframe   tiny_2,%01100000
+    animframe   tiny_jump,%01100000
+    animframe   tiny_wand,%01100000
