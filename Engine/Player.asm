@@ -116,25 +116,7 @@ macro get_const
 .gotconst\@
 endm
 
-section "Player routines",rom0
-
-if BUILD_DEBUG
-Player_ForceFat:
-    ld      hl,Player_Flags
-    set     BIT_PLAYER_FAT,[hl]
-    ret
-
-Player_ForceTiny:
-    ld      hl,Player_Flags
-    set     BIT_PLAYER_TINY,[hl]
-    ret
-
-Player_ForceNormal:
-    ld      hl,Player_Flags
-    res     BIT_PLAYER_FAT,[hl]
-    res     BIT_PLAYER_TINY,[hl]
-    ret
-endc
+section fragment "Player ROMX",romx
 
 InitPlayer:
     ; clear player RAM
@@ -173,7 +155,24 @@ ProcessPlayer:
     if BUILD_DEBUG
         ldh     a,[hPressedButtons]
         bit     BIT_START,a
-        call    nz,Player_ForceTiny
+        jr      z,.skip
+        ld      hl,Player_Flags
+        ld      a,[hl]
+        and     1<<BIT_PLAYER_FAT | 1<<BIT_PLAYER_TINY
+        jr      nz,:+
+        set     BIT_PLAYER_FAT,[hl]
+        jr      .skip
+:       bit     BIT_PLAYER_FAT,[hl]
+        jr      z,:+
+        res     BIT_PLAYER_FAT,[hl]
+        set     BIT_PLAYER_TINY,[hl]
+        jr      .skip
+:       bit     BIT_PLAYER_TINY,[hl]
+        jr      z,:+
+        res     BIT_PLAYER_FAT,[hl]
+        res     BIT_PLAYER_TINY,[hl]
+        jr      .skip
+.skip
     endc
     get_const hl,PLAYER_GRAVITY
     ld      a,l
@@ -221,43 +220,6 @@ ProcessPlayer:
 :   ;res     BIT_PLAYER_WAND,[hl]
     
     ; player controls
-    
-    ; check if player should crouch
-;    ld      hl,Player_Flags
-;    bit     BIT_PLAYER_AIRBORNE,[hl]
-;    jr      nz,.skipcrouch
-;    ldh     a,[hHeldButtons]
-;    bit     BIT_DOWN,a
-;    jr      z,.nocrouch
-;    set     BIT_PLAYER_CROUCHING,[hl]
-;    jr      .skipcrouch
-;.nocrouch
-;    ; check if we should be able to uncrouch
-;    ld      a,[Player_YPos]
-;    sub     8
-;    and     $f0
-;    swap    a
-;    ld      c,a
-;    ld      a,[Player_XPos+2]
-;    ld      e,a
-;    ld      a,[Player_XPos]
-;    and     $f0
-;    or      c
-;    ld      b,e
-;    call    GetTile
-;    ld      e,a
-;    ld      d,0
-;    ld      hl,Level_ColMapPtr
-;    ld      a,[hl+]
-;    ld      h,[hl]
-;    ld      l,a
-;    add     hl,de
-;    ld      a,[hl]
-;    and     a
-;    jr      nz,.skipcrouch
-;    ld      hl,Player_Flags
-;    res     BIT_PLAYER_CROUCHING,[hl]
-;.skipcrouch
     ; check if player should jump
     ldh     a,[hPressedButtons]
     bit     BIT_A,a
@@ -422,9 +384,9 @@ ProcessPlayer:
     ld      [Player_YVel+1],a
     bit     7,h
     jr      nz,:+
-    ld      a,[Player_Flags]
-    bit     BIT_PLAYER_WAND,a
-    jr      nz,:+
+    ;ld      a,[Player_Flags]
+    ;bit     BIT_PLAYER_WAND,a
+    ;jr      nz,:+
     player_set_animation Fall
 :
     ; velocity to position
@@ -583,11 +545,12 @@ ProcessPlayer:
     ld      [Player_AnimFlag],a
     jr      .getbyte
 
+section fragment "Player ROM0",rom0
+
 Player_CollisionResponseVertical:
     pushbank
     ld      a,[Level_ColMapBank]
     bankswitch_to_a
-    
     ld      a,[Player_VerticalCollisionSensorLeft]
     ld      e,a
     ld      c,a
@@ -647,7 +610,6 @@ Player_CollisionResponseVertical:
     ld      h,[hl]
     ld      l,a
     rst     CallHL
-    
     popbank
     ret
 
@@ -701,8 +663,11 @@ Player_CollisionResponseVertical:
     ld      [Player_YVel],a
     ld      [Player_YVel+1],a
     ret
-    
+  
 Player_CollisionResponseHorizontal:
+    pushbank
+    ld      a,[Level_ColMapBank]
+    bankswitch_to_a
     ld      a,[Player_HorizontalCollisionSensorTop]
     ld      e,a
     ld      c,a
@@ -723,7 +688,6 @@ Player_CollisionResponseHorizontal:
     ld      l,a
     rst     CallHL
     
-    
     ld      a,[Player_HorizontalCollisionSensorBottom]
     ld      e,a
     ld      c,a
@@ -743,6 +707,7 @@ Player_CollisionResponseHorizontal:
     ld      h,[hl]
     ld      l,a
     rst     CallHL
+    popbank
     ret
 .colresponsetable2
     dw      .none           ; blank
@@ -783,6 +748,8 @@ Player_CollisionResponseHorizontal:
 .donelr
     ret
 
+section fragment "Player ROMX",romx
+
 Player_CheckCollisionVertical:
     ld      a,[Player_YVel+1]
     bit     7,a ; is player moving up?
@@ -797,7 +764,7 @@ Player_CheckCollisionVertical:
     jr      c,.oob
     jr      :+
 .goingdown
-    add     15
+    add     16
     jr      c,.oob
     ; fall through
 :   and     $f0
@@ -982,6 +949,18 @@ Player_Wand:
     res     BIT_PLAYER_WAND,[hl]
     ret
 
+Player_Hitstop:
+    ld      b,4
+:   ld      a,[Level_CameraY]
+    xor     1
+    ld      [Level_CameraY],a
+    call    DrawPlayer
+    halt
+    dec     b
+    jr      nz,:-
+
+section fragment "Player ROM0",rom0
+ 
 DrawPlayer:
     ; copy GFX
     ld      a,1
@@ -1286,7 +1265,9 @@ Player_FindFreeProjectileSlot:
     ret
 :   and     a
     ret
-    
+
+section fragment "Player ROM0",rom0
+
 Player_ProcessProjectiles:
     ld      hl,Player_Projectiles
     ld      b,MAX_PROJECTILES
@@ -1397,7 +1378,7 @@ Player_ProcessProjectiles:
     pop     bc
 :    
     ld      a,[Level_ColMapBank]
-    bankswitch_to_a    
+    bankswitch_to_a
     ; bounce off floor
     push    hl
     ld      hl,hTempPtr1
@@ -1663,6 +1644,8 @@ Player_ProcessProjectiles:
 .startable
     db  $10,$10,$12,$12,$14,$14,$12,$12
 
+section fragment "Player ROM0",rom0
+
 Player_DrawProjectiles:
     ld      a,[hOAMPos]
     ld      e,a
@@ -1731,6 +1714,8 @@ Player_DrawProjectiles:
     ld      a,e
     ldh     [hOAMPos],a
     ret
+
+section fragment "Player ROM0",rom0
 
 Player_SetAnimation:
     ld      a,[Player_AnimCurrent]

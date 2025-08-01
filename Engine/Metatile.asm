@@ -32,15 +32,11 @@ GetTileCoordinates:
 ;            c = tile ID
 GetTile:
     ld      l,a
-    ld      a,high(Level_Map)
+    ld      h,high(Level_Map)
     ; add     b
-    ld      h,a
+    ; ld      h,a
     ld      a,bank(Level_Map)
     ldh     [rSVBK],a
-    
-    ld      a,[Level_ColMapBank]
-    bankswitch_to_a
-    ; get tile ID
     ld      a,[hl]
     ret
     

@@ -60,7 +60,7 @@ GM_Level:
     call    MemFill
 
     ; init player
-    call    InitPlayer
+    farcall InitPlayer
     xor     a
     ldh     [rVBK],a
 
@@ -373,10 +373,10 @@ LevelLoop:
 ;    dec     c
 ;    jr      nz,:-
 ;.skipredraw
-    call    ProcessPlayer
+    pushbank
+    farcall ProcessPlayer
     call    Player_ProcessProjectiles
     call    ProcessObjects
-    pushbank
     call    GBM_Update
     popbank
     rst     WaitForVBlank

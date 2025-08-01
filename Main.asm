@@ -6,6 +6,8 @@
 ; file in the root directory of this repository for the full license terms.
 ; =============================================================================
 
+    charmap "©",$a9
+
     include "hardware.inc/hardware.inc"
 		
 def BUILD_DEBUG = 1
