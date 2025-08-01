@@ -460,7 +460,7 @@ ProcessPlayer:
     ld      h,[hl]
     ld      l,a
     add     hl,bc
-    ld      a,[hl]
+    call    Player_GetColMapIndex
     and     a
     jr      z,.coyote
     ; snap to floor
@@ -546,6 +546,17 @@ ProcessPlayer:
     jr      .getbyte
 
 section fragment "Player ROM0",rom0
+
+Player_GetColMapIndex:
+    push    de
+    pushbank
+    ld      a,[Level_ColMapBank]
+    bankswitch_to_a
+    ld      e,[hl]
+    popbank
+    ld      a,e
+    pop     de
+    ret
 
 Player_CollisionResponseVertical:
     pushbank
@@ -765,7 +776,6 @@ Player_CheckCollisionVertical:
     jr      :+
 .goingdown
     add     16
-    jr      c,.oob
     ; fall through
 :   and     $f0
     swap    a
@@ -805,7 +815,7 @@ Player_CheckCollisionVertical:
     ld      [Player_VerticalCollisionSensorCenter],a
     ret
 .oob
-    ld      a,1
+    xor     a
     ld      [Player_VerticalCollisionSensorLeft],a
     ld      [Player_VerticalCollisionSensorCenter],a
     ld      [Player_VerticalCollisionSensorRight],a
@@ -843,6 +853,7 @@ Player_CheckCollisionHorizontal:
     ; jr      :+
 ; .nocrouch
     sub     8
+    jr      c,.oob
 :   and     $f0
     swap    a
     or      b
@@ -877,6 +888,17 @@ Player_CheckCollisionHorizontal:
     ; ld      b,e
     call    GetTile
     ld      [Player_HorizontalCollisionSensorBottom],a
+    ret
+.oob
+    xor     a
+    ld      [Player_HorizontalCollisionSensorTop],a
+    ld      [Player_HorizontalCollisionSensorBottom],a
+    ld      hl,Player_YVel
+    ld      [hl],$80
+    inc     l
+    ld      [hl+],a
+    ld      hl,Player_YPos
+    ld      [hl],8
     ret
 
 if BUILD_DEBUG
