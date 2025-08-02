@@ -1,3 +1,7 @@
+; !!! KNOWN ISSUES:
+; - When tiny, level top boundary is 16 pixels lower than it should be
+; - Player projectiles can get stuck or clip through collision if they hit corners
+
 section "Player RAM",wram0
 
 def PLAYER_ACCEL                = $040
@@ -24,6 +28,10 @@ def PLAYER_WAND_TIME            = 15 ; wand time in frames
 
 def PLAYER_WIDTH                = 5 ; player hitbox width relative to center
 def PLAYER_HEIGHT               = 24 ; player hitbox height relative from bottom
+def PLAYER_WIDTH_FAT            = 8
+def PLAYER_HEIGHT_FAT           = 24
+def PLAYER_WIDTH_TINY           = 1
+def PLAYER_HEIGHT_TINY          = 3
 
 def SIZEOF_PROJECTILE = 10
 def MAX_PROJECTILES = 2
@@ -82,6 +90,9 @@ Player_PotionEffectTimer:               dw
 Player_ControlBitFlipMask:              db
 Player_RAMEnd:
 
+; Set the player's current animation.
+; INPUT:    arg1 = animation name
+; DESTROYS: af bc de
 macro player_set_animation
     ld      a,[Player_Flags]
     bit     BIT_PLAYER_FAT,a
@@ -100,6 +111,9 @@ macro player_set_animation
     call    Player_SetAnimation
 endm
 
+; Get appropriate movement constant for player's current state.
+; INPUT:    arg1 = register, arg2 = constant
+; DESTROYS: af
 macro get_const
     ld      a,[Player_Flags]
     bit     BIT_PLAYER_FAT,a
@@ -408,7 +422,7 @@ ProcessPlayer:
     ld      [Player_YVel],a
     ld      a,b
     ld      [Player_YVel+1],a
-    player_set_animation FallFast
+    ;player_set_animation FallFast
 :   ; velocity to position
     ld      hl,Player_XVel
     ld      a,[hl+]
@@ -688,7 +702,10 @@ Player_CollisionResponseVertical:
 .solidceiling
     ld      a,[Player_YPos]
     and     $f0
-    add     16 + (32 - PLAYER_HEIGHT)
+    push    af
+    get_const b,-16+PLAYER_HEIGHT
+    pop     af
+    add     b
     ld      [Player_YPos],a
 :   xor     a
     ld      [Player_YVel],a
@@ -757,7 +774,10 @@ Player_CollisionResponseHorizontal:
     ; ld      b,a
     ld      a,c
     and     $f0
-    add     PLAYER_WIDTH
+    push    af
+    get_const b,PLAYER_WIDTH
+    pop     af
+    add     b
     ; jr      nc,:+
     ; inc     b
 :   ld      [Player_XPos],a
@@ -770,7 +790,10 @@ Player_CollisionResponseHorizontal:
     ; ld      b,a
     ld      a,c
     and     $f0
-    add     15-PLAYER_WIDTH
+    push    af
+    get_const b,15-PLAYER_WIDTH
+    pop     af
+    add     b
     ; jr      nc,:+
     ; dec     b
 :   ld      [Player_XPos],a
@@ -788,10 +811,13 @@ Player_CheckCollisionVertical:
     jr      z,.goingdown
     ; fall through
 .goingup
-    ; ld      hl,Player_Flags
-    ; bit     BIT_PLAYER_CROUCHING,[hl]
-    jr      nz,:+
-    add     16-PLAYER_HEIGHT
+    ld      hl,Player_Flags
+    bit     BIT_PLAYER_TINY,[hl]
+    jr      z,:+    
+    push    af
+    get_const b,16-PLAYER_HEIGHT
+    pop     af
+    add     b
     jr      c,.oob
     jr      :+
 .goingdown
@@ -804,7 +830,10 @@ Player_CheckCollisionVertical:
     ; ld      a,[Player_XPos+2]
     ; ld      e,a
     ld      a,[Player_XPos]
-    sub     PLAYER_WIDTH-2
+    push    af
+    get_const b,-2+PLAYER_WIDTH
+    pop     af
+    sub     b
     ; jr      nc,:+
     ; dec     e
 :   and     $f0
@@ -816,7 +845,10 @@ Player_CheckCollisionVertical:
     ; ld      a,[Player_XPos+2]
     ; ld      e,a
     ld      a,[Player_XPos]
-    add     PLAYER_WIDTH-2
+    push    af
+    get_const b,-2+PLAYER_WIDTH
+    pop     af
+    add     b
     ; jr      nc,:+
     ; inc     e
 :   and     $f0
@@ -853,13 +885,19 @@ Player_CheckCollisionHorizontal:
     jr      z,.ur
 .ul
     ld      a,[Player_XPos]
-    sub     PLAYER_WIDTH
+    push    af
+    get_const b,PLAYER_WIDTH
+    pop     af
+    sub     b
     ; jr      nc,:+
     ; dec     e
     jr      :+
 .ur
     ld      a,[Player_XPos]
-    add     PLAYER_WIDTH
+    push    af
+    get_const b,PLAYER_WIDTH
+    pop     af
+    add     b
     ; jr      nc,:+
     ; inc     e
 :   and     $f0
@@ -889,13 +927,19 @@ Player_CheckCollisionHorizontal:
     jr      z,.br
 .bl
     ld      a,[Player_XPos]
-    sub     PLAYER_WIDTH
+    push    af
+    get_const b,PLAYER_WIDTH
+    pop     af
+    sub     b
     ; jr      nc,:+
     ; dec     e
     jr      :+
 .br
     ld      a,[Player_XPos]
-    add     PLAYER_WIDTH
+    push    af
+    get_const b,PLAYER_WIDTH
+    pop     af
+    add     b
     ; jr      nc,:+
     ; inc     e
 :   and     $f0

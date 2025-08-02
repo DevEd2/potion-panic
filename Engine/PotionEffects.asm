@@ -2,22 +2,22 @@ section "Potion effect handlers",romx
 
 PotionEffect_Fat_Start:
     ld      hl,Player_Flags
-    set     PLAYER_BIT_FAT,[hl]
+    set     BIT_PLAYER_FAT,[hl]
     ret
 
 PotionEffect_Fat_End:
     ld      hl,Player_Flags
-    res     PLAYER_BIT_FAT,[hl]
+    res     BIT_PLAYER_FAT,[hl]
     ret
 
 PotionEffect_Tiny_Start:
     ld      hl,Player_Flags
-    set     PLAYER_BIT_TINY,[hl]
+    set     BIT_PLAYER_TINY,[hl]
     ret
 
 PotionEffect_Tiny_End:
     ld      hl,Player_Flags
-    res     PLAYER_BIT_TINY,[hl]
+    res     BIT_PLAYER_TINY,[hl]
     ret
 
 PotionEffect_ReverseControls_Start:
