@@ -12,13 +12,22 @@ all: *.asm Engine/*.asm GameModes/*.asm Audio/*.asm levels modules playersprites
 	rgbfix -v -p 255 $(PROJECTNAME).gbc
 
 levels:
-	./Tools/convertmaps.sh
+	cd Levels
+	for f in *.json; do
+		python3 ../Tools/convertmap.py -c $f
+	done
 
 modules:
-	./Tools/convertmodules.sh
-    
+	cd Audio/Modules
+	for f in *.xm; do
+		python3 ../../Tools/xmconv.py $f $f.gbm
+	done
+
 playersprites:
-	./Tools/convertplayersprites.sh
+	cd GFX/Player
+	for f in *.png; do
+		superfamiconv -M gbc -RDF -W 8 -H 16 -i $f -t $f.2bpp
+	done
 
 clean:
 	find . -type f -name "*.gbc" -delete
@@ -31,4 +40,4 @@ clean:
 	find . -type f -wholename "./Audio/Modules/*.gbm" -delete
 	find . -type f -wholename "./GFX/Player/*.2bpp" -delete
 
-.PHONY: all playersprites
+.PHONY: all
