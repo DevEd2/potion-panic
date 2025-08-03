@@ -8,3 +8,4 @@ endm
     incmus  LostInTranslation
     incmus  DarkForest
     incmus  DevEdGames
+    incmus  WorldMap

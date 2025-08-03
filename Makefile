@@ -1,4 +1,4 @@
-PROJECTNAME=gbcompo25
+PROJECTNAME=potionpanic
 
 PYTHON=python3
 
