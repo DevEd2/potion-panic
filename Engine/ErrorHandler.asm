@@ -203,7 +203,12 @@ ErrorScreen:
     ld      b,8
     ld      de,$9946
 .loop
+:   ; can't have an anonymous label and a rept on the same line smh my head
     rept    3
+        ld      hl,sp+0
+        ld      a,h
+        cp      $d0
+        jp      z,.stackdump_end
         pop     hl
         ; calling PrintHex here trashes the stack so we need to inline it for both h and l
         ld      a,h
@@ -252,7 +257,16 @@ ErrorScreen:
     ld      e,l
     dec     b
     jp      nz,.loop
-    
+    jr      .stackdump_done
+.stackdump_end
+    ld      b,b
+:   xor     a
+    ld      [de],a
+    inc     de
+    ld      a,d
+    cp      $9b
+    jr      nz,:-
+.stackdump_done
     ld      sp,$fffe
     
     ; GBC palette
