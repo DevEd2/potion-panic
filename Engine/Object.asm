@@ -1,8 +1,9 @@
 section "Object system RAM",wram0,align[8]
 def MAX_OBJECTS = 16
 
-ObjList:    ds  MAX_OBJECTS * 16
-ObjRAM:     ds  MAX_OBJECTS * 16
+ObjList:        ds  MAX_OBJECTS * 16
+ObjRAM:         ds  MAX_OBJECTS * 16
+FreezeObjects:  db
 
 section "Object system HRAM",hram
 hObjGFXPos:         dw
@@ -140,6 +141,8 @@ CreateObject:
 ; OUTPUT:   none
 ; DESTROYS: af b- de hl
 DeleteAllObjects:
+    xor     a
+    ld      [FreezeObjects],a
     ld      hl,ObjList + OBJ_ID
     ld      de,$10
     ld      b,32
@@ -197,6 +200,9 @@ ProcessObjects:
     pop     hl
     
     ; speed to position
+    ld      a,[FreezeObjects]
+    and     a
+    jr      nz,.next
 .speedtopos
     push    hl
     ldobjp  OBJ_XSUB

@@ -88,6 +88,7 @@ Player_Projectiles: ds  MAX_PROJECTILES * SIZEOF_PROJECTILE
 Player_CurrentPotionEffect:             db
 Player_PotionEffectTimer:               dw
 Player_ControlBitFlipMask:              db
+Player_Lock:                            db
 Player_RAMEnd:
 
 ; Set the player's current animation.
@@ -108,6 +109,11 @@ macro player_set_animation
 .tiny\@
     ld      de,Player_Anim_Tiny_\1
 .setanim\@
+    call    Player_SetAnimation
+endm
+
+macro player_set_animation_direct
+    ld      de,Player_Anim_\1
     call    Player_SetAnimation
 endm
 
@@ -167,6 +173,8 @@ InitPlayer:
     ret
 
 ProcessPlayer:
+    xor     a
+    ld      [Player_AnimFlag],a
     if BUILD_DEBUG
         ldh     a,[hPressedButtons]
         bit     BIT_START,a
@@ -176,11 +184,29 @@ ProcessPlayer:
         and     1<<BIT_PLAYER_FAT | 1<<BIT_PLAYER_TINY
         jr      nz,:+
         set     BIT_PLAYER_FAT,[hl]
+        player_set_animation_direct Fatten
+        ld      a,1
+        ld      [Player_Lock],a
+        ld      [FreezeObjects],a
+        dec     a
+        ld      [Player_XVel],a
+        ld      [Player_XVel+1],a
+        ld      [Player_YVel],a
+        ld      [Player_YVel+1],a
         jr      .skip
 :       bit     BIT_PLAYER_FAT,[hl]
         jr      z,:+
         res     BIT_PLAYER_FAT,[hl]
         set     BIT_PLAYER_TINY,[hl]
+        player_set_animation_direct Shrink
+        ld      a,1
+        ld      [Player_Lock],a
+        ld      [FreezeObjects],a
+        dec     a
+        ld      [Player_XVel],a
+        ld      [Player_XVel+1],a
+        ld      [Player_YVel],a
+        ld      [Player_YVel+1],a
         jr      .skip
 :       bit     BIT_PLAYER_TINY,[hl]
         jr      z,:+
@@ -188,6 +214,9 @@ ProcessPlayer:
         res     BIT_PLAYER_TINY,[hl]
         jr      .skip
 .skip
+    ld      a,[Player_Lock]
+    and     a
+    jp      nz,.animateplayer
     endc
     get_const hl,PLAYER_GRAVITY
     ld      a,l
@@ -577,6 +606,9 @@ ProcessPlayer:
 .animflag
     ld      a,[hl+]
     ld      [Player_AnimFlag],a
+    xor     a
+    ld      [Player_Lock],a
+    ld      [FreezeObjects],a
     jr      .getbyte
 
 section fragment "Player ROM0",rom0
@@ -1204,8 +1236,28 @@ Player_Anim_WandRight:
     db  24,frame_wand_right
     db  $ff
     dw  Player_Anim_WandRight
-    
-    
+
+Player_Anim_Fatten:
+    db  3,frame_shrink_fatten_0
+    db  1,frame_fatten_1
+    db  1,frame_shrink_fatten_0
+    db  3,frame_fatten_1
+    db  1,frame_fatten_2
+    db  1,frame_fatten_1
+    db  3,frame_fatten_2
+    db  1,frame_fatten_3
+    db  1,frame_fatten_2
+    db  3,frame_fatten_3
+    db  1,frame_fatten_4
+    db  1,frame_fatten_3
+    db  3,frame_fatten_4
+    db  1,frame_fatten_5
+    db  1,frame_fatten_4
+    db  6,frame_fatten_5
+    db  8,frame_fatten_6
+    db  8,frame_fatten_7
+    db  $fe,1
+    ; fall through
 Player_Anim_Fat_Idle:
     db  16,frame_fat_idle1
     db  16,frame_fat_idle2
@@ -1255,6 +1307,24 @@ Player_Anim_Fat_WandRight:
     db  $ff
     dw  Player_Anim_Fat_WandRight
 
+Player_Anim_Shrink:
+    db  3,frame_shrink_fatten_0
+    db  1,frame_shrink_1
+    db  1,frame_shrink_fatten_0
+    db  3,frame_shrink_1
+    db  1,frame_shrink_2
+    db  1,frame_shrink_1
+    db  3,frame_shrink_2
+    db  1,frame_shrink_3
+    db  1,frame_shrink_2
+    db  3,frame_shrink_3
+    db  1,frame_shrink_4
+    db  1,frame_shrink_3
+    db  3,frame_shrink_4
+    db  1,frame_tiny_1
+    db  1,frame_shrink_4
+    db  $fe,1
+    ; fall through
 Player_Anim_Tiny_Jump:
 Player_Anim_Tiny_Fall:
 Player_Anim_Tiny_FallFast:
@@ -1924,3 +1994,18 @@ PlayerTiles:
     animframe   tiny_2,%01100000
     animframe   tiny_jump,%01100000
     animframe   tiny_wand,%01100000
+    
+    animframe   shrink_fatten_0,%01100110
+    animframe   fatten_1,%01100110
+    animframe   fatten_2,%01100110
+    animframe   fatten_3,%11100110
+    animframe   fatten_4,%11100110
+    animframe   fatten_5,%11100110
+    animframe   fatten_6,%11100110
+    animframe   fatten_7,%11100110
+    
+    animframe   shrink_1,%01100110
+    animframe   shrink_2,%01100110
+    animframe   shrink_3,%01100000
+    animframe   shrink_4,%01100000
+    

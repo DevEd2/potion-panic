@@ -70,6 +70,9 @@ Obj_Frog_Init:
     ; fall through
 
 Obj_Frog_Idle:
+    ld      a,[FreezeObjects]
+    and     a
+    jp      nz,Obj_Frog_Draw
     ldobjrp Frog_Frame
     ldh     a,[hGlobalTick]
     rra
@@ -115,6 +118,9 @@ Obj_Frog_Idle:
     jp      Obj_Frog_Draw
 
 Obj_Frog_Hop:
+    ld      a,[FreezeObjects]
+    and     a
+    jp      nz,Obj_Frog_Draw
     ; do gravity
     ldobjp  OBJ_VY
     ld      d,h
@@ -230,10 +236,16 @@ Obj_Frog_Hop:
     jp      Obj_Frog_Draw
 
 Obj_Frog_Tongue:
+    ld      a,[FreezeObjects]
+    and     a
+    jr      nz,Obj_Frog_Draw
     ; TODO
     ret
 
 Obj_Frog_Defeat:
+    ld      a,[FreezeObjects]
+    and     a
+    jr      nz,Obj_Frog_Draw
     ldobjp  OBJ_VY
     push    hl
     ld      a,[hl+]
