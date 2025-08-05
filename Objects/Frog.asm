@@ -397,23 +397,23 @@ SprDef_Frog_Idle:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  0                           ; left tile ID
-    db  2 | OAMF_BANK1              ; left attributes
+    db  3 | OAMF_BANK1              ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  2                           ; right tile ID
-    db  2 | OAMF_BANK1              ; right attributes
+    db  3 | OAMF_BANK1              ; right attributes
 .right
     ; sprite 1
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  2                           ; left tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  0                           ; right tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
 
 SprDef_Frog_IdleCroak:
     dw  .left,.right
@@ -422,23 +422,23 @@ SprDef_Frog_IdleCroak:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  4                           ; left tile ID
-    db  2 | OAMF_BANK1              ; left attributes
+    db  3 | OAMF_BANK1              ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  2                           ; right tile ID
-    db  2 | OAMF_BANK1              ; right attributes
+    db  3 | OAMF_BANK1              ; right attributes
 .right
     ; sprite 1
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  2                           ; tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  4                           ; right tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
 
 SprDef_Frog_IdleBlink:
     dw  .left,.right
@@ -447,23 +447,23 @@ SprDef_Frog_IdleBlink:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  6                           ; left tile ID
-    db  2 | OAMF_BANK1              ; left attributes
+    db  3 | OAMF_BANK1              ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  2                           ; right tile ID
-    db  2 | OAMF_BANK1              ; right attributes
+    db  3 | OAMF_BANK1              ; right attributes
 .right
     ; sprite 1
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  2                           ; left tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  6                           ; righttile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; rightattributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; rightattributes
 
 SprDef_Frog_Tongue:
     dw  .left,.right
@@ -472,23 +472,23 @@ SprDef_Frog_Tongue:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  8                           ; left tile ID
-    db  2 | OAMF_BANK1              ; left attributes
+    db  3 | OAMF_BANK1              ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  2                           ; right tile ID
-    db  2 | OAMF_BANK1              ; right attributes
+    db  3 | OAMF_BANK1              ; right attributes
 .right
     ; sprite 1
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  2                           ; left tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  8                           ; righttile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; rightattributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; rightattributes
 
 SprDef_Frog_PreHop:
     dw  .left,.right
@@ -497,23 +497,23 @@ SprDef_Frog_PreHop:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  10                          ; left tile ID
-    db  2 | OAMF_BANK1              ; left attributes
+    db  3 | OAMF_BANK1              ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  12                          ; right tile ID
-    db  2 | OAMF_BANK1              ; right attributes
+    db  3 | OAMF_BANK1              ; right attributes
 .right
     ; sprite 1
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  12                          ; left tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  10                          ; right tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
 
 SprDef_Frog_Hop:
     dw  .left,.right
@@ -522,23 +522,23 @@ SprDef_Frog_Hop:
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  14                          ; keft tile ID
-    db  2 | OAMF_BANK1              ; keft attributes
+    db  3 | OAMF_BANK1              ; keft attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  16                          ; right tile ID
-    db  2 | OAMF_BANK1              ; right attributes
+    db  3 | OAMF_BANK1              ; right attributes
 .right
     ; sprite 1
     db  0                           ; left Y pos
     db  0                           ; left X pos
     db  16                          ; left tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; left attributes
     ; sprite 2
     db  0                           ; right Y pos
     db  8                           ; right X pos
     db  14                          ; right tile ID
-    db  2 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
+    db  3 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
 
 ; =============================================================================
 

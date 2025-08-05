@@ -31,6 +31,7 @@ Level_CameraMaxX:       dw
 Level_CameraMaxY:       db
 Level_CameraXPrev:      db
 Level_ScrollDir:        db
+Level_ScreenShakePtr:   dw
 
 Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 1 = ???
@@ -220,6 +221,11 @@ GM_Level:
     lb      de,128,224
     call    CreateObject
     
+    ld      a,low(ScreenShake_Dummy)
+    ld      [Level_ScreenShakePtr],a
+    ld      a,high(ScreenShake_Dummy)
+    ld      [Level_ScreenShakePtr+1],a
+    
     ; create level intro text object
     ld      b,OBJID_BigText
     lb      de,0,0
@@ -382,11 +388,32 @@ LevelLoop:
     rst     WaitForVBlank
     call    DrawPlayer
     call    Player_DrawProjectiles
-    ld      a,[Level_CameraX]
+    
+    ; do screen shake
+    ld      hl,Level_ScreenShakePtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl+]
+    cp      $80
+    jr      z,:+
+    ld      [Level_CameraOffsetX],a
+    ld      a,[hl+]
+    ld      [Level_CameraOffsetY],a
+    ld      a,l
+    ld      [Level_ScreenShakePtr],a
+    ld      a,h
+    ld      [Level_ScreenShakePtr+1],a
+:   ld      a,[Level_CameraX]
+    ld      b,a
+    ld      a,[Level_CameraOffsetX]
+    add     b
     ldh     [rSCX],a
     ld      a,[Level_CameraY]
-    ldh     [rSCY],a
-    
+    ld      b,a
+    ld      a,[Level_CameraOffsetY]
+    add     b
+    ldh     [rSCY],a    
     jp      LevelLoop
     
 LoadTileset:
@@ -441,6 +468,10 @@ LoadTileset:
     ; ld      [Level_ColAnglePtr+1],a
     
     ret
+
+ScreenShake_Dummy:
+    db  0,0
+    db  $80
 
 ; =============================================================================
 
@@ -549,7 +580,7 @@ Level_ObjectGFXSetPointers:
     db      0
     
 Level_ObjectPaletteSetPointers:
-    paldef  2,Frog,2
+    paldef  3,Frog,2
     db      0
 
 

@@ -107,7 +107,7 @@ Obj_Sparkle_Draw:
     ld      [de],a
     inc     e
     ; attribute
-    ld      a,1 | %00001000
+    ld      a,2 | %00001000
     ld      [de],a
     inc     e
     ld      a,e

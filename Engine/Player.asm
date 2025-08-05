@@ -162,8 +162,10 @@ InitPlayer:
     ld      hl,PlayerPalette
     ld      a,8
     call    LoadPal
-    ; ld      hl,PlayerStarPalette
     ld      a,9
+    call    LoadPal
+    ; ld      hl,PlayerStarPalette
+    ld      a,$a
     call    LoadPal
     ; ld      hl,BorisPalette
     ; ld      a,10
@@ -1798,6 +1800,15 @@ Player_ProcessProjectiles:
 
 section fragment "Player ROM0",rom0
 
+Player_CamShake_FatLand:
+    db        0, 0, 0,-2, 0,-3, 0,-3, 0,-2, 0, 0, 0, 2, 0, 3, 0, 2, 0, 1
+    db        0, 0, 0,-1, 0,-2, 0,-2, 0,-1, 0, 0, 0, 1, 0, 2, 0, 2, 0, 1
+    db        0, 0, 0,-1, 0,-2, 0,-2, 0,-1, 0, 0, 0, 1, 0, 2, 0, 2, 0, 1
+    db        0, 0, 0,-1, 0,-1, 0,-1, 0,-1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1
+    db        0, 0, 0,-1, 0,-1, 0,-1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0
+    db        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    db      $80
+    
 Player_DrawProjectiles:
     ld      a,[hOAMPos]
     ld      e,a
@@ -1847,7 +1858,7 @@ Player_DrawProjectiles:
     ld      a,c
     ld      [de],a
     inc     e
-    ld      a,1 | %00001000
+    ld      a,2 | %00001000
     ld      [de],a
     inc     e
     pop     bc
@@ -1934,6 +1945,7 @@ section "Player GFX",romx,align[8]
 PlayerPlaceholderTiles: incbin  "GFX/Player/placeholder.png.2bpp"
 PlayerStarTiles:        incbin  "GFX/star.2bpp.wle"
 PlayerPalette:          incbin  "GFX/player.pal"
+                        incbin  "GFX/player2.pal"
 PlayerStarPalette:      incbin  "GFX/star.pal"
 
 rsreset
