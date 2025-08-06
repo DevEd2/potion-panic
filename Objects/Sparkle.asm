@@ -1,10 +1,12 @@
 rsreset
-def SPARKLE_STATE_INIT      rb
-def SPARKLE_STATE_IDLE      rb
+def SPARKLE_STATE_INIT  rb
+def SPARKLE_STATE_IDLE  rb
 rsreset
-def Sparkle_Frame     rb
-def Sparkle_Timer     rb
+def Sparkle_Timer       rb
+def Sparkle_Frame       rb
 assert _RS <= 16, "Object uses too much RAM! (Max size = $10, got {_RS})"
+
+def SPARKLE_FRAME_TIME = 2
 
 Obj_Sparkle:
 ; Routine pointers.
@@ -34,30 +36,27 @@ Obj_Sparkle_Init:
     ;ld      a,SPARKLE_HIT_HEIGHT
     ld      [hl+],a ; object hitbox height (from bottom center)
     
-    ldobjrp 0
-    ld      a,-1
-    ld      [hl+],a ; Sparkle_Frame
-    xor     a
-    ld      [hl+],a ; Sparkle_Timer
+    ldobjrp Sparkle_Timer
+    ld      a,SPARKLE_FRAME_TIME+1
+    ld      [hl+],a
+    ld      [hl],0 ; Sparkle_Frame
 
     ; fall through
 
 Obj_Sparkle_Idle:
     ldobjrp Sparkle_Timer
-    ld      a,[hl]
-    and     a
-    jr      z,:+
     dec     [hl]
-    jr      Obj_Sparkle_Draw
-:   ld      [hl],1
-    dec     l
+    jr      nz,Obj_Sparkle_Draw
+    ld      [hl],SPARKLE_FRAME_TIME+1
+    inc     l
+    inc     [hl]
     ld      a,[hl]
-    cp      4
+    cp      5
     jr      nz,:+
     ldobjp  OBJ_ID
     ld      [hl],0
     ret
-:   inc     [hl]
+:
     ; fall through
 Obj_Sparkle_Draw:
     ; skip drawing sparkle on alternating frames based on object slot

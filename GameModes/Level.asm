@@ -184,6 +184,17 @@ GM_Level:
     call    DecodeWLE
     ; ld      hl,Pal_BigFont
     ld      a,15
+    push    de
+    call    LoadPal
+    
+    ; load puff of smoke and explosion graphics
+    ; ld      hl,GFX_Explosion
+    ld      de,_VRAM + ($60 * 16)
+    call    DecodeWLE
+    ; ld      hl,GFX_PuffOfSmoke
+    call    DecodeWLE
+    ; ld      hl,Pal_Explosion
+    ld      a,14
     call    LoadPal
     popbank
     
@@ -220,6 +231,14 @@ GM_Level:
     ld      b,OBJID_Frog
     lb      de,128,224
     call    CreateObject
+    
+    ;ld      b,OBJID_Explosion
+    ;ld      de,$20c0
+    ;call    CreateObject
+    
+    ;ld      b,OBJID_PuffOfSmoke
+    ;ld      de,$40c0
+    ;call    CreateObject
     
     ld      a,low(ScreenShake_Dummy)
     ld      [Level_ScreenShakePtr],a
@@ -613,8 +632,12 @@ Level_Pointers:
 ; =============================================================================
 
 section "Misc GFX",romx
-GFX_BigFont:    incbin  "GFX/bigfont.2bpp.wle"
-Pal_BigFont:    incbin  "GFX/bigfont.pal"
+GFX_BigFont:        incbin  "GFX/bigfont.2bpp.wle"
+Pal_BigFont:        incbin  "GFX/bigfont.pal"
+
+GFX_Explosion:      incbin  "GFX/explosion.2bpp.wle"
+GFX_PuffOfSmoke:    incbin  "GFX/puffofsmoke.2bpp.wle"
+Pal_Explosion:      incbin  "GFX/explosion.pal" ; also used for puff of smoke
 
 ; =============================================================================
 

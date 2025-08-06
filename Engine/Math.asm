@@ -25,7 +25,7 @@
 def OPTIMIZE_FOR_SIZE = 0
 def OPTIMIZE_FOR_SPEED = 1
 
-macro sea    ; Sign Extend A to HL
+macro ext    ; Sign Extend A to HL
     ld      l,a
     rlca
     sbc     a
