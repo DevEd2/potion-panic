@@ -113,6 +113,8 @@ DebugLoop:
     rst     CallHL
     jr      :+
 .up
+    ld      e,SFX_MENU_CURSOR
+    call    DSFX_PlaySound
     ld      a,[Debug_MenuPos]
     dec     a
     cp      -1
@@ -122,6 +124,8 @@ DebugLoop:
     ld      [Debug_MenuPos],a
     jr      :+
 .down
+    ld      e,SFX_MENU_CURSOR
+    call    DSFX_PlaySound
     ld      a,[Debug_MenuPos]
     ld      b,a
     ld      a,[Debug_MenuMax]
@@ -136,7 +140,8 @@ DebugLoop:
     inc     a
     ld      [Debug_MenuPos],a
     ; fall through
-:   halt
+:   call    DSFX_Update
+    halt
     jr      DebugLoop
 
 

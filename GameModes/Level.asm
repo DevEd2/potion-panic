@@ -70,7 +70,7 @@ GM_Level:
     call    MemFill
 
     ; init player
-    farcall InitPlayer
+    call    InitPlayer
     xor     a
     ldh     [rVBK],a
     ld      [Level_ClearTimer],a
@@ -485,6 +485,7 @@ LevelLoop:
     call    Player_ProcessProjectiles
     call    ProcessObjects
     call    GBM_Update
+    call DSFX_Update
     popbank
     rst     WaitForVBlank
     call    DrawPlayer

@@ -24,6 +24,12 @@ GBM_LoadModule:     jp  GBMod_LoadModule
 GBM_Update:         jp  GBMod_Update
 GBM_Stop:           jp  GBMod_Stop
 
+GBMod_Thumbprint:
+    pushc
+    setcharmap main
+    db  "GBMod music engine by DevEd | deved8@gmail.com",0
+    popc
+
 ; ================================
 
 GBMod_LoadModule:
@@ -565,9 +571,11 @@ GBMod_Update:
     jr      z,.continue3
     ld      b,a
     ld      a,[GBM_LastWave]
+    cp      $ff
+    jr      z,:+    ; force reload if GBM_LastWave = $FF
     cp      b
     jr      z,.continue3
-    ld      a,b
+:   ld      a,b
     ld      [GBM_Wave3],a
     ld      [GBM_LastWave],a
     push    hl

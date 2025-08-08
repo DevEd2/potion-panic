@@ -138,7 +138,7 @@ macro get_const
 .gotconst\@
 endm
 
-section fragment "Player ROMX",romx
+section fragment "Player ROM0",rom0
 
 InitPlayer:
     ; clear player RAM
@@ -174,6 +174,8 @@ InitPlayer:
     
     player_set_animation Idle
     ret
+
+section fragment "Player ROMX",romx
 
 ProcessPlayer:
     xor     a

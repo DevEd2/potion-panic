@@ -1,4 +1,5 @@
 include "Audio/GBMod_Player.asm"
+include "Audio/DevSFX.asm"
 
 macro incmus
 section "GBMod module: \1",romx[$4000]

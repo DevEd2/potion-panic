@@ -246,7 +246,10 @@ ProgramStart:
     ldh     [rKEY1],a
     stop
     
+    ; ld      a,1
+    bankswitch_to_a
     call    GBM_Stop
+    call    DSFX_Init
     
     xor     a
     

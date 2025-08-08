@@ -11,12 +11,12 @@ Credits_RoleList:
 Credits_NameList:
     db  $00,$15 ; intro
     db  $01,$01,$01,$01,$01 ; everything I did
-    db  $02,$03,$04,$17,$18 ; fonts
-    db  $0b,$0c,$0d,$0e,$0f,$10,$11,$12,$13 ; greets
-    db  $05,$06,$07,$08,$09,$0a,$16 ; special thanks
-    db  $14 ; thanks for playing
-    db  $15 ; copyright
-    db  $15,$ff ; loopback
+    db  $02,$03,$04,$05,$06 ; fonts
+    db  $0d,$0e,$0f,$10,$11,$12,$13,$14,$15 ; greets
+    db  $07,$08,$09,$0a,$0b,$0c ; special thanks
+    db  $16 ; thanks for playing
+    db  $17 ; copyright
+    db  $17,$ff ; loopback
 
 Credits_Roles:
     db      "                    " ; 00
@@ -38,23 +38,23 @@ Credits_People:
     db      "        DAMIEN GUARD" ; 02 Fonts - https://damieng.com/typography/zx-origins/zx-gona/
     db      "       DAMIEN GOSSET" ; 03 Fonts - https://www.dafont.com/8-bitanco.font
     db      "        KERRI SHOTTS" ; 04 Fonts - https://fontstruct.com/fontstructions/show/1208100/16-bit-7x9-nostalgia
-    db      "   COLLIN VAN GINKEL" ; 05 Special thanks
-    db      "            CALINDRO" ; 06 Special thanks
-    db      "     MARTIJN WENTING" ; 07 Special thanks
-    db      "      FARIED VERHEUL" ; 08 Special thanks
-    db      "    ALBERTO GONZALEZ" ; 09 Special thanks
-    db      "     HIROKAZU TANAKA" ; 0A Special thanks
-    db      "                AYCE" ; 0B Greets
-    db      "            WITCHBIZ" ; 0C Greets
-    db      "            SNORPUNG" ; 0D Greets
-    db      "            PHANTASY" ; 0E Greets
-    db      "                CNCD" ; 0F Greets
-    db      "  BATTLE OF THE BITS" ; 10 Greets
-    db      "           FAIRLIGHT" ; 11 Greets
-    db      "               TITAN" ; 12 Greets
-    db      "              DALTON" ; 13 Greets
-    db      "      PLAYING!      " ; 14 Thanks for playing
-    db      "                    " ; 15 Copyright
+    db      "        FONT END DEV" ; 05 Fonts - https://fontenddev.com/fonts/grape-soda/
+    db      "       YUJI OSHIMOTO" ; 06 Fonts - https://www.dafont.com/04b-03.font
+    db      "   COLLIN VAN GINKEL" ; 07 Special thanks
+    db      "            CALINDRO" ; 08 Special thanks
+    db      "     MARTIJN WENTING" ; 09 Special thanks
+    db      "      FARIED VERHEUL" ; 0A Special thanks
+    db      "    ALBERTO GONZALEZ" ; 0B Special thanks
+    db      "     HIROKAZU TANAKA" ; 0C Special thanks
+    db      "                AYCE" ; 0D Greets
+    db      "            WITCHBIZ" ; 0E Greets
+    db      "            SNORPUNG" ; 0F Greets
+    db      "            PHANTASY" ; 10 Greets
+    db      "                CNCD" ; 11 Greets
+    db      "  BATTLE OF THE BITS" ; 12 Greets
+    db      "           FAIRLIGHT" ; 13 Greets
+    db      "               TITAN" ; 14 Greets
+    db      "              DALTON" ; 15 Greets
     db      "          ...AND YOU" ; 16 Speical thanks
-    db      "        FONT END DEV" ; 17 Fonts - https://fontenddev.com/fonts/grape-soda/
-    db      "       YUJI OSHIMOTO" ; 18 Fonts - https://www.dafont.com/04b-03.font
+    db      "      PLAYING!      " ; 17 Thanks for playing
+    db      "                    " ; 18 Copyright

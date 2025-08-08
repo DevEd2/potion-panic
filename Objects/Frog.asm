@@ -1,20 +1,23 @@
-def FROG_IDLE_TIME_MIN = 30
-def FROG_IDLE_TIME_MAX = 60
-def FROG_CROAK_TIME_MIN = 30
-def FROG_CROAK_TIME_MAX = 90
+def FROG_IDLE_TIME_MIN      = 30
+def FROG_IDLE_TIME_MAX      = 60
+def FROG_CROAK_TIME_MIN     = 30
+def FROG_CROAK_TIME_MAX     = 90
+def FROG_PREHOP_TIME        = 16
 
-def FROG_HIT_WIDTH      = 6
-def FROG_HIT_HEIGHT     = 6
+def FROG_HIT_WIDTH          = 6
+def FROG_HIT_HEIGHT         = 8
 
-def FROG_HOP_SPEED      = $00c0
-def FROG_JUMP_HEIGHT    = $0300
-def FROG_GRAVITY        = $0018
+def FROG_HOP_SPEED          = $00c0
+def FROG_HOP_HEIGHT_SMALL   = $0180
+def FROG_HOP_HEIGHT_BIG     = $0300
+def FROG_GRAVITY            = $0018
 
 rsreset
 def FROG_STATE_INIT     rb
 def FROG_STATE_IDLE     rb
 def FROG_STATE_HOP      rb
 def FROG_STATE_TONGUE   rb
+def FROG_STATE_PREHOP   rb
 def FROG_STATE_DEFEAT   rb
 
 rsreset
@@ -24,6 +27,7 @@ def Frog_AnimSpeed      rb
 def Frog_AnimTimer      rb
 def Frog_Frame          rb
 def Frog_TongueLength   rb
+def Frog_HopCount       rb
 assert _RS <= 16, "Object uses too much RAM! (Max size = $10, got {_RS})"
 
 Obj_Frog:
@@ -34,6 +38,7 @@ Obj_Frog_RoutinePointers:
     dw  Obj_Frog_Idle
     dw  Obj_Frog_Hop
     dw  Obj_Frog_Tongue
+    dw  Obj_Frog_Prehop
     dw  Obj_Frog_Defeat
 
 Obj_Frog_Init:
@@ -68,6 +73,7 @@ Obj_Frog_Init:
     ld      [hl],FROG_F_HOP     ; Frog_Frame
     inc     l
     ld      [hl+],a             ; Frog_TongueLength
+    ld      [hl+],a             ; Frog_HopCount
     ; fall through
 
 Obj_Frog_Idle:
@@ -87,12 +93,18 @@ Obj_Frog_Idle:
     dec     [hl]
     jp      nz,Obj_Frog_Draw
     ; initiate hop
+    ldobjrp Frog_HopCount
+    ld      a,[hl]
+    inc     a
+    ld      [hl],a
+    cp      3
+    jr      z,.initbighop
     ldobjp  OBJ_STATE
     ld      [hl],FROG_STATE_HOP
     ldobjp  OBJ_VY
-    ld      [hl],low(-FROG_JUMP_HEIGHT)
+    ld      [hl],low(-FROG_HOP_HEIGHT_SMALL)
     inc     l
-    ld      [hl],high(-FROG_JUMP_HEIGHT)
+    ld      [hl],high(-FROG_HOP_HEIGHT_SMALL)
     ldobjrp Frog_Frame
     ld      [hl],FROG_F_HOP
     
@@ -117,6 +129,22 @@ Obj_Frog_Idle:
     ld      [hl+],a
     ld      [hl],d
     jp      Obj_Frog_Draw
+.initbighop
+    ld      [hl],0
+    call    Math_Random
+    and     1
+    jr      nz,:+
+    ldobjp  OBJ_FLAGS
+    ld      a,[hl]
+    xor     1 << OBJB_XFLIP
+    ld      [hl],a
+:   ldobjrp Frog_StateTimer
+    ld      [hl],FROG_PREHOP_TIME
+    ldobjrp Frog_Frame
+    ld      [hl],FROG_F_PREHOP
+    ldobjp  OBJ_STATE
+    ld      [hl],FROG_STATE_PREHOP
+    jp      Obj_Frog_Prehop
 
 Obj_Frog_Hop:
     ld      a,[FreezeObjects]
@@ -239,9 +267,39 @@ Obj_Frog_Hop:
 Obj_Frog_Tongue:
     ld      a,[FreezeObjects]
     and     a
-    jr      nz,Obj_Frog_Draw
+    jp      nz,Obj_Frog_Draw
     ; TODO
     ret
+
+Obj_Frog_Prehop:
+    ld      a,[FreezeObjects]
+    and     a
+    jp      nz,Obj_Frog_Draw
+    ldobjrp Frog_StateTimer
+    dec     [hl]
+    jp      nz,Obj_Frog_Draw
+    ldobjp  OBJ_STATE
+    ld      [hl],FROG_STATE_HOP
+    ldobjp  OBJ_VY
+    ld      [hl],low(-FROG_HOP_HEIGHT_BIG)
+    inc     l
+    ld      [hl],high(-FROG_HOP_HEIGHT_BIG)
+    ldobjrp Frog_Frame
+    ld      [hl],FROG_F_HOP
+    
+    ldobjp  OBJ_FLAGS
+    ld      e,[hl]
+    ld      hl,FROG_HOP_SPEED
+    bit     OBJB_XFLIP,e
+    jr      nz,:+
+    call    Math_Neg16
+:   ld      d,h
+    ld      e,l
+    ldobjp  OBJ_VX
+    ld      a,e
+    ld      [hl+],a
+    ld      [hl],d
+    jr      Obj_Frog_Draw
 
 Obj_Frog_Defeat:
     ld      a,[FreezeObjects]
