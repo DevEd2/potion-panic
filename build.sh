@@ -18,7 +18,7 @@ find . -type f -wholename "./GFX/Player/*.2bpp" -delete
 echo "Converting maps..."
 cd $BASEDIR/Levels
 for f in *.json; do
-    python3 $BASEDIR/Tools/convertmap.py -c `basename $f`
+    python3 $BASEDIR/Tools/convertmap.py `basename $f`
 done
 
 echo "Converting modules..."

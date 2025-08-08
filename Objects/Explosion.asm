@@ -26,19 +26,10 @@ Obj_Explosion_Init:
     inc     l       ; x position
     ld      [hl+],a ; y subpixel
     inc     l       ; y position
-    call    Math_Random
     ld      [hl+],a ; x velocity low
-    ; sign extend
-    rlca
-    sbc     a
     ld      [hl+],a ; x velocity high
-    call    Math_Random
     ld      [hl+],a ; y velocity low
-    ; sign extend
-    rlca
-    sbc     a
     ld      [hl+],a ; y velocity high
-    xor     a
     ;ld      a,EXPLOSION_HIT_WIDTH
     ld      [hl+],a ; object hitbox width (from center)
     ;ld      a,EXPLOSION_HIT_HEIGHT

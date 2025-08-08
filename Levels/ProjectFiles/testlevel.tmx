@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="18">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="24">
  <editorsettings>
   <export target="../testlevel.json" format="json"/>
  </editorsettings>
@@ -25,17 +25,15 @@
 </data>
  </layer>
  <objectgroup id="2" name="Objects">
-  <object id="12" name="Test" x="80" y="144" width="16" height="16"/>
   <object id="14" name="PlayerStart" x="16" y="208" width="32" height="32"/>
   <object id="15" name="LevelProperties" x="0" y="0" width="16" height="16">
    <properties>
-    <property name="Music" value="MUSIC_NONE"/>
+    <property name="EnemyCount" value="4"/>
+    <property name="Music" value="Mus_LostInTranslation"/>
     <property name="Objset" value="0"/>
     <property name="Palette" value="Pal_TestTileset"/>
     <property name="Tileset" value="Tileset_Test"/>
    </properties>
   </object>
-  <object id="16" name="Test" x="144" y="192" width="16" height="16"/>
-  <object id="17" name="Test" x="192" y="128" width="16" height="16"/>
  </objectgroup>
 </map>

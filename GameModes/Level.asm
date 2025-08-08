@@ -3,6 +3,8 @@ def LEVEL_MAX_SCREENS = 1
 def LEVEL_ROW_SIZE = 16
 def LEVEL_COLUMN_SIZE = 16
 
+def LEVEL_TIME_BETWEEN_ENEMY_SPAWNS = 20
+
 def SIZEOF_LEVELMAP_RAM = (LEVEL_ROW_SIZE * LEVEL_COLUMN_SIZE) * LEVEL_MAX_SCREENS
 
 Level_Map:  ds SIZEOF_LEVELMAP_RAM
@@ -31,7 +33,7 @@ Level_CameraMaxX:       dw
 Level_CameraMaxY:       db
 Level_CameraXPrev:      db
 Level_ScrollDir:        db
-Level_ScreenShakePtr:   dw
+Level_ScreenShakePtr:   db
 
 Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 1 = ???
@@ -42,7 +44,14 @@ Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 6 = ???
                             ; bit 7 = ???
 Level_Size:             db  ; 0-15
- 
+
+Level_EnemyCount:       db
+Level_EnemySpawnTimer:  db
+Level_EnemyListBank:    db
+Level_EnemyListPtr:     dw
+
+Level_ClearTimer:       db
+
 section "Level routines",rom0
 GM_Level:
     call    LCDOff
@@ -64,6 +73,7 @@ GM_Level:
     farcall InitPlayer
     xor     a
     ldh     [rVBK],a
+    ld      [Level_ClearTimer],a
 
     ; get map pointer from ID
     ld      a,[Level_ID]
@@ -151,6 +161,10 @@ GM_Level:
     call    Level_LoadObjectGFXSet
     popbank
     
+    ; enemy count
+    ld      a,[hl+]
+    ld      [Level_EnemyCount],a
+    
     ; actual level layout
     ld      a,[hl+]
     push    hl
@@ -162,9 +176,16 @@ GM_Level:
     call    DecodeWLE
     pop     hl
     inc     hl
-    ; object layout - TODO, skip for now
+    ; object layout
     ld      a,[hl+]
+    ld      [Level_EnemyListBank],a
     ld      a,[hl+]
+    ld      [Level_EnemyListPtr],a
+    ld      a,[hl+]
+    ld      [Level_EnemyListPtr+1],a
+    
+    ld      a,200
+    ld      [Level_EnemySpawnTimer],a
     
     ; fill background map with first 16 columns of level map
     xor     a
@@ -184,7 +205,6 @@ GM_Level:
     call    DecodeWLE
     ; ld      hl,Pal_BigFont
     ld      a,15
-    push    de
     call    LoadPal
     
     ; load puff of smoke and explosion graphics
@@ -228,17 +248,17 @@ GM_Level:
     
     call    DeleteAllObjects
     ; create test object (TEMP REMOVE ME)
-    ld      b,OBJID_Frog
-    lb      de,128,224
-    call    CreateObject
+    ; ld      b,OBJID_Frog
+    ; lb      de,128,224
+    ; call    CreateObject
     
-    ;ld      b,OBJID_Explosion
-    ;ld      de,$20c0
-    ;call    CreateObject
+    ; ld      b,OBJID_Explosion
+    ; ld      de,$20c0
+    ; call    CreateObject
     
-    ;ld      b,OBJID_PuffOfSmoke
-    ;ld      de,$40c0
-    ;call    CreateObject
+    ; ld      b,OBJID_PuffOfSmoke
+    ; ld      de,$40c0
+    ; call    CreateObject
     
     ld      a,low(ScreenShake_Dummy)
     ld      [Level_ScreenShakePtr],a
@@ -262,8 +282,70 @@ GM_Level:
     ei
     
 LevelLoop:
+    ; level clear logic
+    ld      a,[Level_EnemyCount]
+    and     a
+    jr      nz,:++
+    ld      a,[Player_LockControls]
+    and     a
+    jr      nz,:+
+    ld      a,1
+    ld      [Player_LockControls],a
+    xor     a
+    ld      [ObjList],a ; delete existing bigtext object
+    ld      b,OBJID_BigText
+    lb      de,0,0
+    call    CreateObject
+    inc     h
+    ld      [hl],BIGTEXT_WELL_DONE
+:   ; TODO: score tally
+    ; check if we should go to next level yet
+    ld      a,[Level_ClearTimer]
+    inc     a
+    ld      [Level_ClearTimer],a
+    cp      240
+    jr      nz,:++
+    ; TODO: go to next level
+    ld      b,b
+    jr      @
+
+:   ; spawn enemies
+    ld      a,[Level_EnemySpawnTimer]
+    dec     a
+    ld      [Level_EnemySpawnTimer],a
+    jr      nz,:+
+    ld      a,[Level_EnemyListBank]
+    bankswitch_to_a
+    ld      hl,Level_EnemyListPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl+] ; read object ID
+    cp      -1      ; end of list reached?
+    jr      z,:+    ; if yes, skip
+    ld      c,a     ; save for later
+    inc     hl      ; skip dummy byte
+    ld      a,[hl+] ; read object X position
+    ld      d,a
+    ld      a,[hl+] ; read object Y position
+    ld      e,a
+    push    hl
+    ; create puff of smoke object
+    ld      b,OBJID_PuffOfSmoke
+    call    CreateObject
+    ; actually spawn the enemy
+    ld      b,c
+    call    CreateObject
+    ; save pointer
+    pop     hl
+    ld      a,l
+    ld      [Level_EnemyListPtr],a
+    ld      a,h
+    ld      [Level_EnemyListPtr+1],a
+    ld      a,LEVEL_TIME_BETWEEN_ENEMY_SPAWNS
+    ld      [Level_EnemySpawnTimer],a
+:   ; debug builds only: noclip logic
     if BUILD_DEBUG
-        ; toggle noclip flag
         ldh     a,[hPressedButtons]
         bit     BIT_SELECT,a
         jr      z,:+       

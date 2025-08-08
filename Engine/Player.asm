@@ -88,7 +88,8 @@ Player_Projectiles: ds  MAX_PROJECTILES * SIZEOF_PROJECTILE
 Player_CurrentPotionEffect:             db
 Player_PotionEffectTimer:               dw
 Player_ControlBitFlipMask:              db
-Player_Lock:                            db
+Player_LockInPlace:                     db
+Player_LockControls:                    db
 Player_RAMEnd:
 
 ; Set the player's current animation.
@@ -178,6 +179,9 @@ ProcessPlayer:
     xor     a
     ld      [Player_AnimFlag],a
     if BUILD_DEBUG
+        ld      a,[Player_LockControls]
+        and     a
+        jr      nz,.skip
         ldh     a,[hPressedButtons]
         bit     BIT_START,a
         jr      z,.skip
@@ -188,7 +192,7 @@ ProcessPlayer:
         set     BIT_PLAYER_FAT,[hl]
         player_set_animation_direct Fatten
         ld      a,1
-        ld      [Player_Lock],a
+        ld      [Player_LockInPlace],a
         ld      [FreezeObjects],a
         dec     a
         ld      [Player_XVel],a
@@ -202,7 +206,7 @@ ProcessPlayer:
         set     BIT_PLAYER_TINY,[hl]
         player_set_animation_direct Shrink
         ld      a,1
-        ld      [Player_Lock],a
+        ld      [Player_LockInPlace],a
         ld      [FreezeObjects],a
         dec     a
         ld      [Player_XVel],a
@@ -216,7 +220,7 @@ ProcessPlayer:
         res     BIT_PLAYER_TINY,[hl]
         jr      .skip
 .skip
-    ld      a,[Player_Lock]
+    ld      a,[Player_LockInPlace]
     and     a
     jp      nz,.animateplayer
     endc
@@ -236,6 +240,9 @@ ProcessPlayer:
     ;ld      hl,Player_Flags
     ;bit     BIT_PLAYER_WAND,[hl]
     ;jr      nz,.nowand
+    ld      a,[Player_LockControls]
+    and     a
+    jr      nz,.nowand
     ldh     a,[hPressedButtons]
     bit     BIT_B,a
     jr      z,.nowand
@@ -267,6 +274,9 @@ ProcessPlayer:
     
     ; player controls
     ; check if player should jump
+    ld      a,[Player_LockControls]
+    and     a
+    jr      nz,.nojump
     ldh     a,[hPressedButtons]
     bit     BIT_A,a
     jr      z,.nojump
@@ -312,6 +322,9 @@ ProcessPlayer:
 .norelease
     ; left/right movement
 .checkright
+    ld      a,[Player_LockControls]
+    and     a
+    jp      nz,.decel
     ldh     a,[hHeldButtons]
     ld      b,a
     and     BTN_LEFT | BTN_RIGHT
@@ -609,7 +622,7 @@ ProcessPlayer:
     ld      a,[hl+]
     ld      [Player_AnimFlag],a
     xor     a
-    ld      [Player_Lock],a
+    ld      [Player_LockInPlace],a
     ld      [FreezeObjects],a
     jr      .getbyte
 

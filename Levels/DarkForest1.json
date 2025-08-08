@@ -35,17 +35,6 @@
          "name":"Objects",
          "objects":[
                 {
-                 "height":16,
-                 "id":12,
-                 "name":"Test",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":32,
-                 "y":112
-                }, 
-                {
                  "height":32,
                  "id":14,
                  "name":"PlayerStart",
@@ -61,6 +50,11 @@
                  "id":15,
                  "name":"LevelProperties",
                  "properties":[
+                        {
+                         "name":"EnemyCount",
+                         "type":"string",
+                         "value":"5"
+                        }, 
                         {
                          "name":"Music",
                          "type":"string",
@@ -89,26 +83,59 @@
                  "y":0
                 }, 
                 {
-                 "height":16,
-                 "id":16,
-                 "name":"Test",
+                 "height":0,
+                 "id":31,
+                 "name":"Frog",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":16,
-                 "x":192,
-                 "y":208
+                 "width":0,
+                 "x":77.3333333333333,
+                 "y":162.666666666667
                 }, 
                 {
-                 "height":16,
-                 "id":17,
-                 "name":"Test",
+                 "height":0,
+                 "id":32,
+                 "name":"Frog",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":16,
-                 "x":224,
-                 "y":112
+                 "width":0,
+                 "x":99.3333333333333,
+                 "y":157
+                }, 
+                {
+                 "height":0,
+                 "id":33,
+                 "name":"Frog",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":119.333333333333,
+                 "y":156
+                }, 
+                {
+                 "height":0,
+                 "id":35,
+                 "name":"Frog",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":140.666666666667,
+                 "y":155
+                }, 
+                {
+                 "height":0,
+                 "id":36,
+                 "name":"Frog",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":160,
+                 "y":157.333333333333
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -117,7 +144,7 @@
          "y":0
         }],
  "nextlayerid":7,
- "nextobjectid":18,
+ "nextobjectid":37,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

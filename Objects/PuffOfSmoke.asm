@@ -22,23 +22,16 @@ Obj_PuffOfSmoke_Init:
     ; ld      a,1<<OBJB_VISIBLE ; SMOKE_PUFF_STATE_IDLE and 1<<OBJB_VISIBLE both resolve to 1
     ld      [hl+],a ; flags
     xor     a
-    ld      [hl+],a ; x subpixel
-    inc     l       ; x position
-    ld      [hl+],a ; y subpixel
-    inc     l       ; y position
-    call    Math_Random
-    ld      [hl+],a ; x velocity low
-    ; sign extend
-    rlca
-    sbc     a
-    ld      [hl+],a ; x velocity high
-    call    Math_Random
-    ld      [hl+],a ; y velocity low
-    ; sign extend
-    rlca
-    sbc     a
-    ld      [hl+],a ; y velocity high
-    xor     a
+    ld      [hl+],a         ; x subpixel
+    inc     l               ; x position
+    ld      [hl+],a         ; y subpixel
+    inc     l               ; y position
+    ld      [hl+],a         ; x velocity low
+    ld      [hl+],a         ; x velocity high
+    ld      [hl],low(-$80)  ; y velocity low
+    inc     l
+    ld      [hl],high(-$80) ; y velocity high
+    inc     l
     ;ld      a,SMOKE_PUFF_HIT_WIDTH
     ld      [hl+],a ; object hitbox width (from center)
     ;ld      a,SMOKE_PUFF_HIT_HEIGHT

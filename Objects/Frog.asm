@@ -38,7 +38,7 @@ Obj_Frog_RoutinePointers:
 
 Obj_Frog_Init:
     ldobjp  OBJ_STATE
-    ld      a,FROG_STATE_IDLE
+    ld      a,FROG_STATE_HOP
     ld      [hl+],a ; object state
     ; ld      a,1<<OBJSB_VISIBLE ; FROG_STATE_IDLE and 1<<OBJB_VISIBLE both resolve to 1
     ld      [hl+],a ; flags
@@ -62,11 +62,12 @@ Obj_Frog_Init:
     add     FROG_IDLE_TIME_MIN
     ld      [hl+],a ; Frog_IdleTimer
     xor     a
-    ld      [hl+],a ; Frog_StateTimer
-    ld      [hl+],a ; Frog_AnimSpeed
-    ld      [hl+],a ; Frog_AnimTimer
-    ld      [hl+],a ; Frog_Frame
-    ld      [hl+],a ; Frog_TongueLength
+    ld      [hl+],a             ; Frog_StateTimer
+    ld      [hl+],a             ; Frog_AnimSpeed
+    ld      [hl+],a             ; Frog_AnimTimer
+    ld      [hl],FROG_F_HOP     ; Frog_Frame
+    inc     l
+    ld      [hl+],a             ; Frog_TongueLength
     ; fall through
 
 Obj_Frog_Idle:
@@ -274,8 +275,8 @@ Obj_Frog_Defeat:
 
 Obj_Frog_Draw:
     ldobjp  OBJ_FLAGS
-    bit     OBJB_VISIBLE,[hl]
-    ret     z
+    ;bit     OBJB_VISIBLE,[hl]
+    ;ret     z
     ld      c,[hl]
 
     ldobjrp Frog_Frame
@@ -350,6 +351,10 @@ Obj_Frog_Draw:
     ; fall through
     
 Frog_CheckDefeat:
+    ldobjp  OBJ_STATE
+    ld      a,[hl]
+    cp      FROG_STATE_DEFEAT
+    ret     z
     call    Obj_CheckProjectileIntersecting
     ret     nc
     ld      a,l
@@ -372,6 +377,8 @@ Frog_CheckDefeat:
     ld      [hl],FROG_STATE_DEFEAT
     inc     l
     set     OBJB_YFLIP,[hl]
+    ld      hl,Level_EnemyCount
+    dec     [hl]
     ret
 
 rsreset

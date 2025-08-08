@@ -3,7 +3,6 @@ from datetime import datetime
 
 parser = argparse.ArgumentParser(description = 'Convert Tilekit map exports to Game Boy format')
 parser.add_argument('infile', metavar = '[input]', type = argparse.FileType('r'), help = 'Input file name')
-parser.add_argument('-c', '--compress', help = "compress the map data using Walle Length Encoding", action = 'store_true')
 argv = parser.parse_args()
 infile=argv.infile
 
@@ -100,16 +99,15 @@ def encodeWLE(buf):
 ################################################################
 
 if __name__ == "__main__":
-    # open files
-    inname = os.path.splitext(infile.name)[0]
-    mapfile1 = open(inname + "-01.bin", "wb")
-    #mapfile2 = open(inname + "-02.bin", "wb")
-    #mapfile3 = open(inname + "-03.bin", "wb")
-    #mapfile4 = open(inname + "-04.bin", "wb")
-    hdrfile = open(inname + ".inc", "w")
-    
+    # validate map data
     # parse JSON tags
+    inname = os.path.splitext(infile.name)[0]
     mapdata = json.loads(infile.read())
+    if(mapdata['width'] != 16):
+        print("Error: Map width must be 16!")
+        infile.close()
+        exit(1)
+    
     # check for Tiled Map Editor export
     try:
         tv=mapdata['tiledversion']
@@ -118,63 +116,40 @@ if __name__ == "__main__":
         obj = mapdata['layers'][1]['objects']
     # if the above fails, we have a Tilekit export
     except KeyError:
-        tv = -1
-        print("Converting " + inname + " (TileKit format)...")
-        map = mapdata['map']
-        obj = mapdata['objects']
+        print("ERROR: TileKit format maps are no longer supported")
+        exit(1)
     
+    # open files
+    mapfile1 = open(inname + "-01.bin", "wb")
+    hdrfile = open(inname + ".inc", "w")
+            
     objlist = []
     objcount = 0
-    
+        
     # initialize level properties
     for x in range(0, len(obj)):
         if obj[x]['name'] == "LevelProperties":
-            if tv == -1:
-                try:
-                    tileset = obj[x]['Tileset']
-                except KeyError:
-                    print("ERROR: Tileset not set! (Ensure LevelProperties object has Tileset tag set)")
-                    exit(1)
-                try:
-                    music = obj[x]['Music']
-                except KeyError:
-                    print("ERROR: Level music not set! (Ensure LevelProperties object has Music tag set)")
-                    exit(1)
-                #try:
-                #   background = obj[x]['Background']
-                #except KeyError:
-                #   print("ERROR: Background not set! (Ensure LevelProperties object has Background tag set)")
-                #   exit(1)
-                try:
-                    palette = obj[x]['Palette']
-                except KeyError:
-                    print("ERROR: Palette not set! (Ensure LevelProperties object has Palette tag set)")
-                    exit(1)
-                try:
-                    objset = obj[x]['Objset']
-                except KeyError:
-                    print("ERROR: Object set not set! (Ensure LevelProperties object has Objset tag set)")
-            else:
-                r = 0
-                for q in range(0,len(obj[x]['properties'])):
-                    if obj[x]['properties'][q]['name'] == "Tileset":
-                        tileset = obj[x]['properties'][q]['value']
-                        r += 1
-                    elif obj[x]['properties'][q]['name'] == "Music":
-                        music = obj[x]['properties'][q]['value']
-                        r += 1
-                    #elif obj[x]['properties'][q]['name'] == "Background":
-                    #   background = obj[x]['properties'][q]['value']
-                    #   r += 1
-                    elif obj[x]['properties'][q]['name'] == "Palette":
-                        palette = obj[x]['properties'][q]['value']
-                        r += 1
-                    elif obj[x]['properties'][q]['name'] == "Objset":
-                        objset = obj[x]['properties'][q]['value']
-                        r += 1
-                if r != 4:
-                    print("ERROR: Some level properties weren't set! (Ensure LevelProperties object has the Tileset, Music, Palette, and Objset tags set)")
-                    exit(1)
+            r = 0
+            for q in range(0,len(obj[x]['properties'])):
+                if obj[x]['properties'][q]['name'] == "Tileset":
+                    tileset = obj[x]['properties'][q]['value']
+                    r += 1
+                elif obj[x]['properties'][q]['name'] == "Music":
+                    music = obj[x]['properties'][q]['value']
+                    r += 1
+                elif obj[x]['properties'][q]['name'] == "Palette":
+                    palette = obj[x]['properties'][q]['value']
+                    r += 1
+                elif obj[x]['properties'][q]['name'] == "Objset":
+                    objset = obj[x]['properties'][q]['value']
+                    r += 1
+                elif obj[x]['properties'][q]['name'] == "EnemyCount":
+                    enemycount = obj[x]['properties'][q]['value']
+                    r += 1
+            print(r)
+            if r != 5:
+                print("ERROR: Some level properties weren't set! (Ensure LevelProperties object has the Tileset, Music, Palette, and Objset tags set)")
+                exit(1)
         elif obj[x]['name'] == "PlayerStart":
             try:
                 px = (int(obj[x]['x']) + 16) // 16
@@ -194,119 +169,25 @@ if __name__ == "__main__":
             except KeyError:
                 print("Error: Object " + obj[x]['name'] + " is missing tags! (Enusre id, x, and y tags are present)")
                 exit(1)
-            
-    # validate map data
-    if tv == -1:
-        if(map['w'] %16 != 0):
-            print("Error: Map width must be a multiple of 16.")
-            infile.close()
-            mapfile.close()
-            exit(1)
-        #if(map['h'] %16 != 0):
-        #   print("Error: Map height must be a multiple of 16.")
-        #   infile.close()
-        #   mapfile.close()
-        #   exit(1)
-        if(map['w'] // 16 > 16):
-            print("Error: Too many screens! (max 16, current = " + str((map['w'] // 16) + 1) + ")")
-            infile.close()
-            outfile.close()
-            exit(1)
-        #if(map['h'] // 16 > 4):
-        #   print("Error: Too many subareas! (max 4, current = " + str((map['h'] // 16) + 1) + ")")
-        #   infile.close()
-        #   outfile.close()
-        #   exit(1)
-    else:
-        if(mapdata['width'] %16 != 0):
-            print("Error: Map width must be a multiple of 16.")
-            infile.close()
-            mapfile.close()
-            exit(1)
-        #if(mapdata['height'] %16 != 0):
-        #   print("Error: Map height must be a multiple of 16.")
-        #   infile.close()
-        #   mapfile.close()
-        #   exit(1)
-        if(mapdata['width'] // 16 > 16):
-            print("Error: Too many screens! (max 16, current = " + str((map['w'] // 16) + 1) + ")")
-            infile.close()
-            outfile.close()
-            exit(1)
-        #if(mapdata['height'] // 16 > 4):
-        #   print("Error: Too many subareas! (max 4, current = " + str((map['h'] // 16) + 1) + ")")
-        #   infile.close()
-        #   outfile.close()
-        #   exit(1)
+                
+    # write map header
+    now=datetime.now()
+    hdrfile.write("; This file was generated by convertmap.py on " + now.strftime("%m/%d/%Y %H:%M:%S") + "\n; DO NOT EDIT!!!\n\n")
+    hdrfile.write("section \"Map_" + inname + "\",romx\n\nMap_" + inname + "::\n")
+    hdrfile.write(".width      db       " + str((mapdata['width'] // 16) - 1) + "\n")
+    hdrfile.write(".startxy    db       " + str((px << 4) | (py + 16)) + "\n")
+    hdrfile.write(".music      db       bank(" + music + ")-1\n")
+    hdrfile.write(".tileset    dwbank   " + tileset + "\n")
+    hdrfile.write(".palette    dwbank   " + palette + "\n")
+    hdrfile.write(".objset     db       " + objset + "\n")
+    hdrfile.write(".enemycount db       " + enemycount + "\n")
+    hdrfile.write(".sub1       dw       .data1\n")
+    hdrfile.write(".objptr     dwbank   .objdata\n")
     
-    if tv == -1:
-        now=datetime.now()
-        hdrfile.write("; This file was generated by convertmap.py on " + now.strftime("%m/%d/%Y %H:%M:%S") + "\n; DO NOT EDIT!!!\n\n")
-        hdrfile.write("section \"Map_" + inname + "\",romx\n\nMap_" + inname + "::\n")
-        hdrfile.write(".width      db       " + str((map['w'] // 16) - 1) + "\n")
-        #hdrfile.write(".height     db       " + str((map['h'] // 16) - 1) + "\n")
-        hdrfile.write(".startxy    db       " + str((px << 4) | (py + 16)) + "\n")
-        #hdrfile.write(".startsa    db       " + str((pa << 4) | ps) + "\n")
-        hdrfile.write(".music      db       bank(" + music + ")-1\n")
-        hdrfile.write(".tileset    dwbank   " + tileset + "\n")
-        hdrfile.write(".palette    dwbank   " + palette + "\n")
-        hdrfile.write(".objset     db       " + objset + "\n")
-        #hdrfile.write(".background dwbank   " + background + "\n")
-        hdrfile.write(".sub1       dw       .data1\n")
-        #hdrfile.write(".sub2       dw       .data2\n")
-        #hdrfile.write(".sub3       dw       .data3\n")
-        #hdrfile.write(".sub4       dw       .data4\n")
-        hdrfile.write(".objptr     dw       .objdata\n")
-        
-        #sa = (map['h'] // 16)
-        
-        hdrfile.write(".data1      incbin   \"Levels/" + inname + "-01.bin")
-        if argv.compress:
-            hdrfile.write(".wle")
-            hdrfile.write("\"\n")
-        #if sa == 1:
-        #   hdrfile.write(".data2\n.data3\n.data4       db       $ff\n")
-        #if sa == 2:
-        #   hdrfile.write(".data3\n.data4       db       $ff\n")
-        #if sa == 3:
-        #   hdrfile.write(".data4       db       $ff\n")
-        
-        hdrfile.write(".objdata    include  \"Levels/ObjectLayouts/" + inname + "_Objects.inc\"\n")
-        hdrfile.close()
-    else:
-        now=datetime.now()
-        hdrfile.write("; This file was generated by convertmap.py on " + now.strftime("%m/%d/%Y %H:%M:%S") + "\n; DO NOT EDIT!!!\n\n")
-        hdrfile.write("section \"Map_" + inname + "\",romx\n\nMap_" + inname + "::\n")
-        hdrfile.write(".width      db       " + str((mapdata['width'] // 16) - 1) + "\n")
-        #hdrfile.write(".height     db       " + str((mapdata['height'] // 16) - 1) + "\n")
-        hdrfile.write(".startxy    db       " + str((px << 4) | (py + 16)) + "\n")
-        #hdrfile.write(".startsa    db       " + str((pa << 4) | ps) + "\n")
-        hdrfile.write(".music      db       bank(" + music + ")-1\n")
-        hdrfile.write(".tileset    dwbank   " + tileset + "\n")
-        hdrfile.write(".palette    dwbank   " + palette + "\n")
-        hdrfile.write(".objset     db       " + objset + "\n")
-        #hdrfile.write(".background dwbank   " + background + "\n")
-        hdrfile.write(".sub1       dw       .data1\n")
-        #hdrfile.write(".sub2       dw       .data2\n")
-        #hdrfile.write(".sub3       dw       .data3\n")
-        #hdrfile.write(".sub4       dw       .data4\n")
-        hdrfile.write(".objptr     dw       .objdata\n")
-        
-        #sa = (mapdata['height'] // 16)
-        
-        hdrfile.write(".data1      incbin   \"Levels/" + inname + "-01.bin")
-        if argv.compress:
-            hdrfile.write(".wle")
-        hdrfile.write("\"\n")
-        #if sa == 1:
-        #   hdrfile.write(".data2\n.data3\n.data4       db       $ff\n")
-        #if sa == 2:
-        #   hdrfile.write(".data3\n.data4       db       $ff\n")
-        #if sa == 3:
-        #   hdrfile.write(".data4       db       $ff\n")
-        
-        hdrfile.write(".objdata    include  \"Levels/ObjectLayouts/" + inname + "_Objects.inc\"\n")
-        hdrfile.close()
+    hdrfile.write(".data1      incbin   \"Levels/" + inname + "-01.bin.wle\"\n")
+    
+    hdrfile.write(".objdata    include  \"Levels/ObjectLayouts/" + inname + "_Objects.inc\"\n")
+    hdrfile.close()
     
     # write object data
     
@@ -322,12 +203,8 @@ if __name__ == "__main__":
     objfile.write("db      -1 ; end of list\n")
     objfile.close()
     
-    if tv == -1:
-        mw = map['w']
-        md = map['data']
-    else:
-        mw = mapdata['width']
-        md = map
+    mw = mapdata['width']
+    md = map
     
     # write actual map data
     #if sa > 0:
@@ -337,39 +214,14 @@ if __name__ == "__main__":
                 mapfile1.write(bytes([(md[c * (mw) + y] - 1)]))
             except ValueError:
                 mapfile1.write(bytes([0]))
-    #if sa > 1:
-    #   for y in range(0, mw):
-    #       for c in range(16, 32):
-    #           try:
-    #               mapfile2.write(bytes([(md[c * (mw) + y] - 1)]))
-    #           except ValueError:
-    #               mapfile2.write(bytes([0]))
-    #if sa > 2:
-    #   for y in range(0, mw):
-    #       for c in range(32, 48):
-    #           try:
-    #               mapfile3.write(bytes([(md[c * (mw) + y] - 1)]))
-    #           except ValueError:
-    #               mapfile3.write(bytes([0]))
-    #if sa > 3:
-    #   for y in range(0, mw):
-    #       for c in range(48, 64):
-    #           try:
-    #           except ValueError:
-    #               mapfile4.write(bytes([0]))
     
     mapfile1.close()
-    #mapfile2.close()
-    #mapfile3.close()
-    #mapfile4.close()
     infile.close()
-    
-    
-    # compress file if specified
-    if argv.compress:
-        infile = open(inname + "-01.bin", "rb")
-        outfile = open(inname + "-01.bin.wle", "wb")
-        outfile.write(encodeWLE(infile.read()))
-        infile.close()
-        outfile.close()
+        
+    # compress file
+    infile = open(inname + "-01.bin", "rb")
+    outfile = open(inname + "-01.bin.wle", "wb")
+    outfile.write(encodeWLE(infile.read()))
+    infile.close()
+    outfile.close()
             
