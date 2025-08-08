@@ -259,7 +259,6 @@ ErrorScreen:
     jp      nz,.loop
     jr      .stackdump_done
 .stackdump_end
-    ld      b,b
 :   xor     a
     ld      [de],a
     inc     de
