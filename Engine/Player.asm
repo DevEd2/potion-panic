@@ -288,7 +288,22 @@ ProcessPlayer:
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
     jr      nz,.nojump
-:   get_const bc,-PLAYER_JUMP_HEIGHT
+:   bit     BIT_PLAYER_FAT,[hl]
+    jr      nz,.fat
+    bit     BIT_PLAYER_TINY,[hl]
+    jr      nz,.tiny
+.normal
+    ld      e,SFX_JUMP_NORMAL
+    jr      :+
+.fat
+    ld      e,SFX_JUMP_FAT
+    jr      :+
+.tiny
+    ld      e,SFX_JUMP_TINY
+:   push    hl
+    call    DSFX_PlaySound
+    pop     hl
+    get_const bc,-PLAYER_JUMP_HEIGHT
     ld      a,c
     ld      [Player_YVel],a
     ld      a,b

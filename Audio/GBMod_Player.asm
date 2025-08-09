@@ -322,10 +322,6 @@ GBMod_Update:
     jr      z,.skippulse1
     dec     a
     ld      [GBM_Pulse1],a
-    swap    a
-    rla
-    rla
-    ldh     [rNR11],a
 .skippulse1
     push    de
     ; ch1 command
@@ -446,10 +442,6 @@ GBMod_Update:
     jr      z,.skippulse2
     dec     a
     ld      [GBM_Pulse2],a
-    swap    a
-    rla
-    rla
-    ldh     [rNR21],a
 .skippulse2
     push    de
     ; ch2 command
@@ -501,7 +493,7 @@ GBMod_Update:
     jp      .freq2
     
 .ch3
-    ; ch3 note
+:   ; ch3 note
 .note3
     ld      a,[hl+]
     bit     7,h
@@ -1251,7 +1243,25 @@ macro gbm_command_update
 endm
 
 GBMod_UpdateCommands:
-    ld      a,$ff
+    ; set pulse width registers first - moved here from CH1/CH2 pulse update logic to fix pulse width not properly updating after sfx
+    ld      a,[GBM_SkipCH1]
+    and     a
+    jr      nz,:+
+    ld      a,[GBM_Pulse1]
+    swap    a
+    rla
+    rla
+    ldh     [rNR11],a
+:   ld      a,[GBM_SkipCH2]
+    and     a
+    jr      nz,:+
+    ld      a,[GBM_Pulse2]
+    swap    a
+    rla
+    rla
+    ldh     [rNR21],a
+
+:   ld      a,$ff
     ld      [GBM_PanFlags],a
     
     gbm_command_update 1

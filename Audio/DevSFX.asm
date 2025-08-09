@@ -40,6 +40,7 @@ endm
 ; Marks the end of a sound sequence.
 macro s_end
 	db	0
+    purge CHANNEL
 endm
 
 ; usage: s_pitch freq
@@ -599,6 +600,11 @@ _DSFX_KillChannel::
 
 ; @destroy: af, bc, de, hl
 _DSFX_Update::
+    xor     a
+    ld      [GBM_SkipCH1],a
+    ld      [GBM_SkipCH2],a
+    ld      [GBM_SkipCH3],a
+    ld      [GBM_SkipCH4],a
 	ld		a,[DSFX_CH1Priority]
 	add		a,a
 	call	nc,DSFX_UpdateCH1
@@ -641,6 +647,8 @@ _DSFX_Update::
 
 macro dsfx_update_channel
 DSFX_UpdateCH\1:
+    ld      a,1
+    ld      [GBM_SkipCH\1],a
 	; do timer
 	ld		hl,DSFX_CH\1Timer
 	dec		[hl]
