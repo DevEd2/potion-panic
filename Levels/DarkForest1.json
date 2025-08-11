@@ -128,14 +128,14 @@
                 }, 
                 {
                  "height":0,
-                 "id":36,
-                 "name":"Frog",
+                 "id":37,
+                 "name":"JackOLantern",
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":160,
-                 "y":157.333333333333
+                 "x":116,
+                 "y":204.666666666667
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -144,7 +144,7 @@
          "y":0
         }],
  "nextlayerid":7,
- "nextobjectid":37,
+ "nextobjectid":38,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

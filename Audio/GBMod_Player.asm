@@ -312,12 +312,7 @@ GBMod_Update:
     ; ch1 pulse
     ld      a,[hl+]
     bit     7,h
-    call    nz,GBM_HandlePageBoundary 
-    ld      b,a
-    ld      a,[GBM_SkipCH1]
-    and     a
-    jr      nz,.skippulse1
-    ld      a,b
+    call    nz,GBM_HandlePageBoundary
     and     $f
     jr      z,.skippulse1
     dec     a
@@ -433,11 +428,6 @@ GBMod_Update:
     ld      a,[hl+]
     bit     7,h
     call   nz,GBM_HandlePageBoundary 
-    ld      b,a
-    ld      a,[GBM_SkipCH2]
-    and     a
-    jr      nz,.skippulse2
-    ld      a,b
     and     $f
     jr      z,.skippulse2
     dec     a

@@ -6,4 +6,5 @@ ObjPointers:
     objdef  BigText
     objdef  Explosion
     objdef  PuffOfSmoke
-    objdef  EnemySpawnpoint
+    objdef  JackOLantern
+    objdef  Imp

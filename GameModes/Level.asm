@@ -273,7 +273,9 @@ GM_Level:
     ld      [hl],BIGTEXT_GET_READY
     
     call    CopyPalettes
-    call    UpdatePalettes
+    call    ConvertPals
+    ;call    UpdatePalettes
+    call    PalFadeInWhite
     
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16
     ldh     [rLCDC],a
@@ -305,9 +307,14 @@ LevelLoop:
     ld      [Level_ClearTimer],a
     cp      240
     jr      nz,:++
+    call    PalFadeOutWhite
+    ld      a,[sys_FadeState]
+    and     a
+    jp      nz,.doproc
+    call    AllPalsWhite
+    rst     WaitForVBlank
+    call    UpdatePalettes
     ; TODO: go to next level
-    ld      b,b
-    jr      @
 
 :   ; spawn enemies
     ld      a,[Level_EnemySpawnTimer]
@@ -480,14 +487,19 @@ LevelLoop:
 ;    dec     c
 ;    jr      nz,:-
 ;.skipredraw
+.doproc
     pushbank
     farcall ProcessPlayer
     call    Player_ProcessProjectiles
     call    ProcessObjects
     call    GBM_Update
-    call DSFX_Update
+    call    DSFX_Update
     popbank
+    call    Pal_DoFade
     rst     WaitForVBlank
+    ld      a,[sys_FadeState]
+    and     a
+    call    nz,UpdatePalettes
     call    DrawPlayer
     call    Player_DrawProjectiles
     
@@ -679,10 +691,13 @@ Level_LoadObjectGFXSet:
     
 Level_ObjectGFXSetPointers:
     gfxdef  Frog,$30
+    gfxdef  JackOLantern,$46
+    gfxdef  Imp,$56
     db      0
     
 Level_ObjectPaletteSetPointers:
-    paldef  3,Frog,2
+    paldef  3,Frog,1
+    paldef  4,JackOLantern,1
     db      0
 
 
