@@ -153,7 +153,7 @@ InitPlayer:
     ld      de,_VRAM
     ; B = 0 here, which means we copy 256 bytes (16 tiles)
     call    MemCopySmall
-    ; ld      hl,PlayerStarTiles
+    ; farload hl,PlayerStarTiles
     ; ld      de,$8100
     call    DecodeWLE
     ld      a,e
@@ -173,7 +173,7 @@ InitPlayer:
     ; call    LoadPal
     
     player_set_animation Idle
-    ret
+    jp      Player_InitHUD
 
 section fragment "Player ROMX",romx
 
@@ -1112,6 +1112,9 @@ Player_Hitstop:
 section fragment "Player ROM0",rom0
  
 DrawPlayer:
+    ld      a,[sys_FadeState]
+    and     a
+    jr      nz,:+
     ; copy GFX
     ld      a,1
     ldh     [rVBK],a
@@ -1140,7 +1143,7 @@ DrawPlayer:
     ld      a,$0f
     ldh     [rHDMA5],a
     ; put player metasprite in OAM
-    ld      hl,Player_SpriteMasks
+:   ld      hl,Player_SpriteMasks
     ld      d,0
     add     hl,de
     ld      c,[hl]
@@ -1451,6 +1454,66 @@ Player_FindFreeProjectileSlot:
     ret
 
 section fragment "Player ROM0",rom0
+
+Player_InitHUD:
+    xor     a
+    ldh     [rVBK],a
+    ld      de,_SCRN1
+    ld      hl,HUD_TileMap
+    ld      b,HUD_TileMap.row2-HUD_TileMap.row1
+    call    MemCopySmall
+    ld      de,$9c20
+    ld      b,HUD_TileMap.row2-HUD_TileMap.row1
+    call    MemCopySmall
+    
+    ld      a,1
+    ldh     [rVBK],a
+    ld      de,_SCRN1
+    ld      hl,HUD_AttrMap
+    ld      b,HUD_AttrMap.row2-HUD_AttrMap.row1
+    call    MemCopySmall
+    ld      de,$9c20
+    ld      b,HUD_AttrMap.row2-HUD_AttrMap.row1
+    call    MemCopySmall
+    
+    ld      a,low(IntS_HUD)
+    ldh     [hSTATPointer],a
+    ld      a,high(IntS_HUD)
+    ldh     [hSTATPointer+1],a
+    ld      a,144-16
+    ldh     [rLYC],a
+    ld      a,144-16
+    ldh     [rWY],a
+    ld      a,7
+    ldh     [rWX],a
+    ld      a,STATF_LYC
+    ldh     [rSTAT],a
+    ret
+
+IntS_HUD:
+    ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJOFF | LCDCF_BLK21 | LCDCF_OBJ16 | LCDCF_WINON | LCDCF_WIN9C00
+    ldh     [rLCDC],a
+    ret
+    
+HUD_NumberTiles:
+    db  $5e,$70 ; 0
+    db  $5f,$71 ; 1
+    db  $60,$72 ; 2
+    db  $61,$73 ; 3
+    db  $62,$74 ; 4
+    db  $63,$75 ; 5
+    db  $64,$76 ; 6
+    db  $65,$77 ; 7
+    db  $66,$78 ; 8
+    db  $67,$79 ; 9
+
+HUD_TileMap:
+.row1   db  $5c,$5d,$5e,$5e,$6c,$6c,$6c,$6c,$6c,$68,$69,$6a,$6b,$5e,$5e,$5e,$5e,$5e,$5e,$6d
+.row2   db  $6e,$6f,$70,$70,$7e,$7e,$7e,$7e,$7e,$7a,$7b,$7c,$7d,$70,$70,$70,$70,$70,$70,$7f
+
+HUD_AttrMap:
+.row1   db  $0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f
+.row2   db  $0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e
 
 Player_ProcessProjectiles:
     ld      hl,Player_Projectiles
@@ -2050,4 +2113,7 @@ PlayerTiles:
     animframe   shrink_2,%01100110
     animframe   shrink_3,%01100000
     animframe   shrink_4,%01100000
+    
+    animframe   broom_layer1,%11110110
+    animframe   broom_layer2,%11110110
     

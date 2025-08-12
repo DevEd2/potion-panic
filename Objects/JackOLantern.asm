@@ -32,9 +32,9 @@ Obj_JackOLantern_Init:
     ld      [hl+],a         ; y subpixel
     ld      e,[hl]  
     inc     l               ; y position
-    ld      [hl],low(-$100)  ; x velocity low
+    ld      [hl],low(-$80)  ; x velocity low
     inc     l
-    ld      [hl],high(-$100) ; x velocity high
+    ld      [hl],high(-$80) ; x velocity high
     inc     l
     ld      [hl+],a         ; y velocity low
     ld      [hl+],a         ; y velocity high
@@ -69,10 +69,13 @@ Obj_JackOLantern_Float:
     ld      a,[hl]
     add     a
     call    Math_SinCos
-    add     hl,hl
-    add     hl,hl
-    add     hl,hl
-    ld      b,h
+    sra     h
+    rr      l
+    sra     h
+    rr      l
+    sra     h
+    rr      l
+    ld      b,l
     ldobjrp JackOLantern_InitYPos
     ld      a,[hl]
     add     b

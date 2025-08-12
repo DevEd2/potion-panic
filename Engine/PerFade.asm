@@ -11,6 +11,7 @@ sys_ObjPalettes:        ds  (2*4)*8 ; main OBJ palette
 sys_PalBuffersEnd:
 sys_FadeState::         db  ; bit 0 = fading, bit 1 = fade type (0 = white, 1 = black), bit 1 = fade dir (0 = in, 1 = out)
 sys_FadeLevel::         db  ; current intensity level
+sys_PalFadeDone::       db  ; set when fade is finished
 
 section "PerFade routines",rom0
 
@@ -57,23 +58,31 @@ SetColor::
 ;           c = OBJ palette mask
 ; DESTROYS: a
 PalFadeInWhite:
+    xor     a
+    ld      [sys_PalFadeDone],a
     call    AllPalsWhite
     ld      a,%00000001
     ld      e,31
     jr      _InitFade
 
 PalFadeOutWhite:
+    xor     a
+    ld      [sys_PalFadeDone],a
     ld      a,%00000101
     ld      e,0
     jr      _InitFade
     
 PalFadeInBlack:
+    xor     a
+    ld      [sys_PalFadeDone],a
     call    AllPalsBlack
     ld      a,%00000011
     ld      e,31
     jr      _InitFade
     
 PalFadeOutBlack:
+    xor     a
+    ld      [sys_PalFadeDone],a
     ld      a,%00000111
     ld      e,0
     ; fall through
@@ -130,6 +139,8 @@ Pal_DoFade:
 _FinishFade:
     xor     a
     ld      [sys_FadeState],a
+    inc     a
+    ld      [sys_PalFadeDone],a
     jr      UpdatePalsWhite ; doesn't matter which table we use here
 
 _PalFadeInWhite:

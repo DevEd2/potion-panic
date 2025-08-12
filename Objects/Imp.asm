@@ -2,14 +2,20 @@ def IMP_HIT_WIDTH          = 6
 def IMP_HIT_HEIGHT         = 12
 
 rsreset
-def IMP_STATE_INIT     rb
-def IMP_STATE_FLOAT    rb
-def IMP_STATE_DEFEAT   rb
+def IMP_STATE_INIT      rb
+def IMP_STATE_FLOAT     rb
+def IMP_STATE_SHOOT     rb
+def IMP_STATE_DEFEAT    rb
 
 rsreset
-def Imp_Frame          rb
-def Imp_InitYPos       rb
-def Imp_Lifetime       rb
+def Imp_Frame           rb
+def Imp_InitYPos        rb
+def Imp_Lifetime        rb
+def Imp_ShootTimer      rb
+def Imp_ProjectileX     rw
+def Imp_ProjectileY     rw
+def Imp_ProjectileVX    rw
+def Imp_ProjectileVY    rw
 assert _RS <= 16, "Object uses too much RAM! (Max size = $10, got {_RS})"
 
 Obj_Imp:
@@ -18,6 +24,7 @@ Obj_Imp:
 Obj_Imp_RoutinePointers:
     dw  Obj_Imp_Init
     dw  Obj_Imp_Float
+    dw  Obj_Imp_Shoot
     dw  Obj_Imp_Defeat
 
 Obj_Imp_Init:
@@ -80,6 +87,10 @@ Obj_Imp_Float:
     ldobjp  OBJ_Y
     ld      [hl],b
     
+    ; TODO
+    jp      Obj_Imp_Draw
+
+Obj_Imp_Shoot:
     ; TODO
     jp      Obj_Imp_Draw
 

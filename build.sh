@@ -4,16 +4,16 @@ PROJECTNAME=potionpanic
 PYTHON=python3
 BASEDIR=`pwd`
 
-echo "Cleaning up previous build files..."
-find . -type f -name "*.gbc" -delete
-find . -type f -name "*.sym" -delete
-find . -type f -name "*.obj" -delete
-find . -type f -wholename "./Levels/*.inc" -delete
-find . -type f -wholename "./Levels/ObjectLayouts/*.inc" -delete
-find . -type f -wholename "./Levels/*.bin" -delete
-find . -type f -wholename "./Levels/*.bin.wle" -delete
-find . -type f -wholename "./Audio/Modules/*.gbm" -delete
-find . -type f -wholename "./GFX/Player/*.2bpp" -delete
+#echo "Cleaning up previous build files..."
+#find . -type f -name "*.gbc" -delete
+#find . -type f -name "*.sym" -delete
+#find . -type f -name "*.obj" -delete
+#find . -type f -wholename "./Levels/*.inc" -delete
+#find . -type f -wholename "./Levels/ObjectLayouts/*.inc" -delete
+#find . -type f -wholename "./Levels/*.bin" -delete
+#find . -type f -wholename "./Levels/*.bin.wle" -delete
+#find . -type f -wholename "./Audio/Modules/*.gbm" -delete
+#find . -type f -wholename "./GFX/Player/*.2bpp" -delete
 
 echo "Converting maps..."
 cd $BASEDIR/Levels

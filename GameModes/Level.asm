@@ -216,6 +216,16 @@ GM_Level:
     ; ld      hl,Pal_Explosion
     ld      a,14
     call    LoadPal
+    
+    ; load HUD graphics
+    ld      a,1
+    ldh     [rVBK],a
+    ld      de,_SCRN0-$240
+    call    DecodeWLE
+    ld      a,6
+    call    LoadPal
+    ld      a,7
+    call    LoadPal    
     popbank
     
     ; screen setup
@@ -228,6 +238,7 @@ GM_Level:
     ld      [Level_CameraMaxX],a
     
     xor     a
+    ldh     [rVBK],a
     ld      [Level_CameraTargetX],a
     ld      a,[Level_CameraMaxY]
     
@@ -277,9 +288,9 @@ GM_Level:
     ;call    UpdatePalettes
     call    PalFadeInWhite
     
-    ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16
+    ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16 | LCDCF_WINON | LCDCF_WIN9C00
     ldh     [rLCDC],a
-    ld      a,IEF_VBLANK
+    ld      a,IEF_VBLANK | IEF_STAT
     ldh     [rIE],a
     ei
     
@@ -287,7 +298,7 @@ LevelLoop:
     ; level clear logic
     ld      a,[Level_EnemyCount]
     and     a
-    jr      nz,:++
+    jr      nz,.noclear
     ld      a,[Player_LockControls]
     and     a
     jr      nz,:+
@@ -300,23 +311,11 @@ LevelLoop:
     call    CreateObject
     inc     h
     ld      [hl],BIGTEXT_WELL_DONE
-:   ; TODO: score tally
-    ; check if we should go to next level yet
-    ld      a,[Level_ClearTimer]
-    inc     a
-    ld      [Level_ClearTimer],a
-    cp      240
-    jr      nz,:++
-    call    PalFadeOutWhite
-    ld      a,[sys_FadeState]
-    and     a
-    jp      nz,.doproc
-    call    AllPalsWhite
-    rst     WaitForVBlank
-    call    UpdatePalettes
-    ; TODO: go to next level
+:   ; TODO: fadeout + load next level
+    jp      .doproc
 
-:   ; spawn enemies
+.noclear
+    ; spawn enemies
     ld      a,[Level_EnemySpawnTimer]
     dec     a
     ld      [Level_EnemySpawnTimer],a
@@ -496,11 +495,21 @@ LevelLoop:
     call    DSFX_Update
     popbank
     call    Pal_DoFade
+    rst     WaitForSTAT
     rst     WaitForVBlank
+    ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16 | LCDCF_WINON | LCDCF_WIN9C00
+    ldh     [rLCDC],a
     ld      a,[sys_FadeState]
     and     a
     call    nz,UpdatePalettes
-    call    DrawPlayer
+    
+    ld      a,[sys_PalFadeDone]
+    and     a
+    jr      z,:+
+    xor     a
+    ld      [sys_PalFadeDone],a
+    call    UpdatePalettes
+:   call    DrawPlayer
     call    Player_DrawProjectiles
     
     ; do screen shake
@@ -527,7 +536,7 @@ LevelLoop:
     ld      b,a
     ld      a,[Level_CameraOffsetY]
     add     b
-    ldh     [rSCY],a    
+    ldh     [rSCY],a  
     jp      LevelLoop
     
 LoadTileset:
@@ -693,6 +702,7 @@ Level_ObjectGFXSetPointers:
     gfxdef  Frog,$30
     gfxdef  JackOLantern,$46
     gfxdef  Imp,$56
+    gfxdef  Slime,$66
     db      0
     
 Level_ObjectPaletteSetPointers:
@@ -730,12 +740,16 @@ Level_Pointers:
 ; =============================================================================
 
 section "Misc GFX",romx
+
 GFX_BigFont:        incbin  "GFX/bigfont.2bpp.wle"
 Pal_BigFont:        incbin  "GFX/bigfont.pal"
 
 GFX_Explosion:      incbin  "GFX/explosion.2bpp.wle"
 GFX_PuffOfSmoke:    incbin  "GFX/puffofsmoke.2bpp.wle"
 Pal_Explosion:      incbin  "GFX/explosion.pal" ; also used for puff of smoke
+
+GFX_HUD:            incbin  "GFX/hud.2bpp.wle"
+Pal_HUD:            incbin  "GFX/hud.pal"
 
 ; =============================================================================
 
