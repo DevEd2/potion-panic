@@ -167,7 +167,25 @@ GBMod_Update:
 :
     
     ; anything that needs to be updated on a per-frame basis should be put here
-    ld      e,0
+    ld      a,[GBM_ForceWaveRetrig]
+    and     a
+    jr      z,:+
+    xor     a
+    ld      [GBM_ForceWaveRetrig],a
+    ld      a,[GBM_Wave3]
+    call    GBM_LoadWave
+    ld      a,[GBM_Vol3]
+    rra
+    ldh     [rNR32],a
+    ld      a,[GBM_Note3]
+    ld      b,2
+    call    GBMod_GetFreq
+    ld      a,d
+    ldh     [rNR33],a
+    ld      a,e
+    set     7,a
+    ldh     [rNR34],a
+:   ld      e,0
     call    GBMod_DoModulation ; pulse 1 vibrato + tremolo
     inc     e
     call    GBMod_DoModulation ; pulse 2 vibrato + tremolo
@@ -1894,54 +1912,54 @@ VibTableSquare:
 section "GBMod vars",wram0
 GBM_RAM_Start:
 
-GBM_SongID:         ds  1
-GBM_CurrentBank:    ds  1
-GBM_DoPlay:         ds  1
-GBM_CurrentRow:     ds  1
-GBM_CurrentPattern: ds  1
-GBM_ModuleSpeed:    ds  1
-GBM_SpeedChanged:   ds  1
-GBM_ModuleTimer:    ds  1
-GBM_TickSpeed:      ds  1
-GBM_TickTimer:      ds  1
-GBM_PatternCount:   ds  1
-GBM_PatTableSize:   ds  1
-GBM_PatTablePos:    ds  1
-GBM_SongDataOffset: ds  2
+GBM_SongID:             ds  1
+GBM_CurrentBank:        ds  1
+GBM_DoPlay:             ds  1
+GBM_CurrentRow:         ds  1
+GBM_CurrentPattern:     ds  1
+GBM_ModuleSpeed:        ds  1
+GBM_SpeedChanged:       ds  1
+GBM_ModuleTimer:        ds  1
+GBM_TickSpeed:          ds  1
+GBM_TickTimer:          ds  1
+GBM_PatternCount:       ds  1
+GBM_PatTableSize:       ds  1
+GBM_PatTablePos:        ds  1
+GBM_SongDataOffset:     ds  2
 
-GBM_PanFlags:       ds  1
-
-GBM_ArpTick1:       ds  1
-GBM_ArpTick2:       ds  1
-GBM_ArpTick3:       ds  1
-GBM_ArpTick4:       ds  1
-
-GBM_CmdTick1:       ds  1
-GBM_CmdTick2:       ds  1
-GBM_CmdTick3:       ds  1
-GBM_CmdTick4:       ds  1
-
-GBM_Command1:       ds  1
-GBM_Command2:       ds  1
-GBM_Command3:       ds  1
-GBM_Command4:       ds  1
-GBM_Param1:         ds  1
-GBM_Param2:         ds  1
-GBM_Param3:         ds  1
-GBM_Param4:         ds  1
-
-GBM_Note1:          ds  1
-GBM_Note2:          ds  1
-GBM_Note3:          ds  1
-GBM_Note4:          ds  1
-GBM_NewNote1:       ds  1
-GBM_NewNote2:       ds  1
-GBM_NewNote3:       ds  1
-GBM_NewNote4:       ds  1
-
-GBM_FreqOffset1:    ds  2
-GBM_FreqOffset2:    ds  2
-GBM_FreqOffset3:    ds  2
+GBM_PanFlags:           ds  1
+    
+GBM_ArpTick1:           ds  1
+GBM_ArpTick2:           ds  1
+GBM_ArpTick3:           ds  1
+GBM_ArpTick4:           ds  1
+    
+GBM_CmdTick1:           ds  1
+GBM_CmdTick2:           ds  1
+GBM_CmdTick3:           ds  1
+GBM_CmdTick4:           ds  1
+    
+GBM_Command1:           ds  1
+GBM_Command2:           ds  1
+GBM_Command3:           ds  1
+GBM_Command4:           ds  1
+GBM_Param1:             ds  1
+GBM_Param2:             ds  1
+GBM_Param3:             ds  1
+GBM_Param4:             ds  1
+    
+GBM_Note1:              ds  1
+GBM_Note2:              ds  1
+GBM_Note3:              ds  1
+GBM_Note4:              ds  1
+GBM_NewNote1:           ds  1
+GBM_NewNote2:           ds  1
+GBM_NewNote3:           ds  1
+GBM_NewNote4:           ds  1
+    
+GBM_FreqOffset1:        ds  2
+GBM_FreqOffset2:        ds  2
+GBM_FreqOffset3:        ds  2
 
 ; tremolo/vibrato parameters
 GBM_ModulationMode1:   ds  1
@@ -1961,35 +1979,36 @@ GBM_ModulationDepth2:  ds  1
 GBM_ModulationDepth3:  ds  1
 GBM_ModulationDepth4:  ds  1
 
-GBM_Vol1:           ds  1
-GBM_Vol2:           ds  1
-GBM_Vol3:           ds  1
-GBM_Vol4:           ds  1
-GBM_OldVol1:        ds  1
-GBM_OldVol2:        ds  1
-GBM_OldVol3:        ds  1
-GBM_OldVol4:        ds  1
-GBM_Pulse1:         ds  1
-GBM_Pulse2:         ds  1
-GBM_Wave3:          ds  1
-GBM_Mode4:          ds  1
+GBM_Vol1:               ds  1
+GBM_Vol2:               ds  1
+GBM_Vol3:               ds  1
+GBM_Vol4:               ds  1
+GBM_OldVol1:            ds  1
+GBM_OldVol2:            ds  1
+GBM_OldVol3:            ds  1
+GBM_OldVol4:            ds  1
+GBM_Pulse1:             ds  1
+GBM_Pulse2:             ds  1
+GBM_Wave3:              ds  1
+GBM_Mode4:              ds  1
 
-GBM_SkipCH1:        ds  1
-GBM_SkipCH2:        ds  1
-GBM_SkipCH3:        ds  1
-GBM_SkipCH4:        ds  1
+GBM_SkipCH1:            ds  1
+GBM_SkipCH2:            ds  1
+GBM_SkipCH3:            ds  1
+GBM_SkipCH4:            ds  1
 
-GBM_NoteDelay1:     ds  1
-GBM_NoteDelay2:     ds  1
-GBM_NoteDelay3:     ds  1
-GBM_NoteDelay4:     ds  1
+GBM_NoteDelay1:         ds  1
+GBM_NoteDelay2:         ds  1
+GBM_NoteDelay3:         ds  1
+GBM_NoteDelay4:         ds  1
 
-GBM_LastWave:       ds  1
+GBM_LastWave:           ds  1
+GBM_ForceWaveRetrig:    ds  1
 
-GBM_EnableTimer:    ds  1
-GBM_TMA:            ds  1
-GBM_TAC:            ds  1
-GBM_OddTick:        ds  1
+GBM_EnableTimer:        ds  1
+GBM_TMA:                ds  1
+GBM_TAC:                ds  1
+GBM_OddTick:            ds  1
 GBM_RAM_End:
 
 ; Note values

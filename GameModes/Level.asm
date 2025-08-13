@@ -52,6 +52,8 @@ Level_EnemyListPtr:     dw
 
 Level_ClearTimer:       db
 
+Level_Paused:           db
+
 section "Level routines",rom0
 GM_Level:
     call    LCDOff
@@ -74,6 +76,7 @@ GM_Level:
     xor     a
     ldh     [rVBK],a
     ld      [Level_ClearTimer],a
+    ld      [Level_Paused],a
 
     ; get map pointer from ID
     ld      a,[Level_ID]
@@ -225,7 +228,11 @@ GM_Level:
     ld      a,6
     call    LoadPal
     ld      a,7
-    call    LoadPal    
+    call    LoadPal
+    
+    ; load pause text graphics
+    ld      de,$8e00
+    call    DecodeWLE
     popbank
     
     ; screen setup
@@ -295,6 +302,142 @@ GM_Level:
     ei
     
 LevelLoop:
+    ; pause logic
+    ld      a,[Level_Paused]
+    and     a
+    jp      nz,.alreadypaused
+    ld      a,[sys_FadeState]
+    and     a
+    jp      nz,.nopause
+    ldh     a,[hPressedButtons]
+    bit     BIT_START,a
+    jp      z,.nopause
+    ld      a,1
+    ld      [Level_Paused],a
+    ; disable and re-enable sound to kill hanging notes
+    ld      hl,rNR52
+    ld      [hl],0
+    ld      [hl],$80
+    dec     l
+    ld      [hl],%11111111
+    dec     l
+    ld      [hl],$77
+    ld      a,-1
+    ld      [GBM_ForceWaveRetrig],a    ; force wave channel retrigger on resume
+    ; play pause sound effect
+    ld      e,SFX_PAUSE_CH1
+    call    DSFX_PlaySound
+    ld      e,SFX_PAUSE_CH2
+    call    DSFX_PlaySound
+    ld      e,SFX_PAUSE_CH3
+    call    DSFX_PlaySound
+    ; load palette
+    farload hl,Pal_PauseText
+    ld      bc,Pal_PauseTextRare-Pal_PauseText
+    push    hl
+    call    Math_Random
+    pop     hl
+    cp      $fc ; 1/64 chance of getting rare palette
+    jr      c,:+
+    add     hl,bc
+:   rst     WaitForVBlank   ; wait one frame to avoid one-frame palette corruption
+    ld      [hSP],sp
+    di
+    ld      sp,hl
+    ld      a,$80
+    ldh     [rOCPS],a
+    ld      hl,rOCPD
+    rept    4
+        pop     de
+        ld      [hl],e
+        ld      [hl],d
+        pop     de
+        ld      [hl],e
+        ld      [hl],d
+        pop     de
+        ld      [hl],e
+        ld      [hl],d
+        pop     de
+        ld      [hl],e
+        ld      [hl],d
+    endr
+    ld      hl,hSP
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      sp,hl
+    ei
+    jr      :+ ; skip unpause logic so we don't immediately unpause
+.alreadypaused
+    ldh     a,[hPressedButtons]
+    bit     BIT_START,a
+    jr      z,:+
+    ; unpause
+    xor     a
+    ld      [Level_Paused],a
+    rst     WaitForVBlank
+    ld      c,0
+    call    DSFX_KillChannel
+    inc     c
+    call    DSFX_KillChannel
+    inc     c
+    call    DSFX_KillChannel
+    call    UpdatePalettes  ; restore palettes
+    jr      .nopause
+:   ; set pause OAM
+    farload hl,PauseTextOAM
+    ld      b,(PauseTextOAM.end-PauseTextOAM)/4
+    ld      de,OAMBuffer
+:   ; y pos
+    ld      a,[hl+]
+    add     SCRN_Y/2
+    push    bc
+    ld      b,a
+    push    bc
+    ld      a,[hGlobalTick]
+    add     a
+    ld      b,a
+    add     a
+    add     b
+    add     [hl]
+    add     [hl]
+    add     [hl]
+    push    hl
+    push    de
+    call    Math_SinCos
+    add     hl,hl
+    ld      a,h
+    pop     de
+    pop     hl
+    pop     bc
+    add     b
+    pop     bc
+    ld      [de],a
+    inc     e
+    ; x pos
+    ld      a,[hl+]
+    add     SCRN_X/2
+    ld      [de],a
+    inc     e
+    ; tile
+    ld      a,[hl+]
+    ld      [de],a
+    inc     e
+    ; attributes
+    ld      a,[hl+]
+    ld      [de],a
+    inc     e
+    dec     b
+    jr      nz,:-
+    
+    
+    call    DSFX_Update
+    rst     WaitForVBlank
+    ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16 | LCDCF_WINON | LCDCF_WIN9C00
+    ldh     [rLCDC],a
+    jp      LevelLoop
+    ; TODO
+.nopause    
     ; level clear logic
     ld      a,[Level_EnemyCount]
     and     a
@@ -751,6 +894,19 @@ Pal_Explosion:      incbin  "GFX/explosion.pal" ; also used for puff of smoke
 
 GFX_HUD:            incbin  "GFX/hud.2bpp.wle"
 Pal_HUD:            incbin  "GFX/hud.pal"
+
+GFX_PauseText:      incbin  "GFX/pausetext.2bpp.wle"
+Pal_PauseText:      incbin  "GFX/pausetext.pal"         ; default palette (rainbow)
+Pal_PauseTextRare:  incbin  "GFX/pausetext_rare.pal"    ; rare pause text (lesbian pride flag colors)
+
+PauseTextOAM:
+    db  8,-16 + (0 * 8),$e0,$8
+    db  8,-16 + (1 * 8),$e2,$8
+    db  8,-16 + (2 * 8),$e4,$9
+    db  8,-16 + (3 * 8),$e6,$a
+    db  8,-16 + (4 * 8),$e8,$b
+    db  8,-16 + (5 * 8),$ea,$b
+.end
 
 ; =============================================================================
 

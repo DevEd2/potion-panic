@@ -154,10 +154,10 @@ InitPlayer:
     ; B = 0 here, which means we copy 256 bytes (16 tiles)
     call    MemCopySmall
     ; farload hl,PlayerHurtLayer2Tiles
-    ld      de,$8e00
+    ld      de,$8f80
     call    DecodeWLE
     ; farload hl,PlayerBroomLayer2Tiles
-    ld      de,$8f00
+    ld      de,$8fc0
     call    DecodeWLE
     ; farload hl,PlayerStarTiles
     ld      de,$8100
@@ -186,52 +186,6 @@ section fragment "Player ROMX",romx
 ProcessPlayer:
     xor     a
     ld      [Player_AnimFlag],a
-    if BUILD_DEBUG
-        ld      a,[Player_LockControls]
-        and     a
-        jr      nz,.skip
-        ldh     a,[hPressedButtons]
-        bit     BIT_START,a
-        jr      z,.skip
-        ld      hl,Player_Flags
-        ld      a,[hl]
-        and     1<<BIT_PLAYER_FAT | 1<<BIT_PLAYER_TINY
-        jr      nz,:+
-        set     BIT_PLAYER_FAT,[hl]
-        player_set_animation_direct Fatten
-        ld      a,1
-        ld      [Player_LockInPlace],a
-        ld      [FreezeObjects],a
-        dec     a
-        ld      [Player_XVel],a
-        ld      [Player_XVel+1],a
-        ld      [Player_YVel],a
-        ld      [Player_YVel+1],a
-        jr      .skip
-:       bit     BIT_PLAYER_FAT,[hl]
-        jr      z,:+
-        res     BIT_PLAYER_FAT,[hl]
-        set     BIT_PLAYER_TINY,[hl]
-        player_set_animation_direct Shrink
-        ld      a,1
-        ld      [Player_LockInPlace],a
-        ld      [FreezeObjects],a
-        dec     a
-        ld      [Player_XVel],a
-        ld      [Player_XVel+1],a
-        ld      [Player_YVel],a
-        ld      [Player_YVel+1],a
-        jr      .skip
-:       bit     BIT_PLAYER_TINY,[hl]
-        jr      z,:+
-        res     BIT_PLAYER_FAT,[hl]
-        res     BIT_PLAYER_TINY,[hl]
-        jr      .skip
-.skip
-        ld      a,[Player_LockInPlace]
-        and     a
-        jp      nz,.animateplayer
-    endc
     get_const hl,PLAYER_GRAVITY
     ld      a,l
     ld      [Player_Grav],a
@@ -1281,19 +1235,19 @@ DrawPlayerLayers:
 
 Player_OAM_Hurt_Layer2:
     ; normal
-    db -16+16, 8 - 8,$e0, $9
-    db -16+16, 8 + 0,$e2, $9
+    db -16+16, 8 - 8,$f8, $9
+    db -16+16, 8 + 0,$fa, $9
     ; flipped
-    db -16+16, 8 + 0,$e0, $9 | OAMF_XFLIP
-    db -16+16, 8 - 8,$e2, $9 | OAMF_XFLIP
+    db -16+16, 8 + 0,$f8, $9 | OAMF_XFLIP
+    db -16+16, 8 - 8,$fa, $9 | OAMF_XFLIP
 
 Player_OAM_Broom_Layer2:
     ; normal
-    db   0+16, 8 -16,$f0, $a
-    db   0+16, 8 - 8,$f2, $a
+    db   0+16, 8 -16,$fc, $a
+    db   0+16, 8 - 8,$fe, $a
     ; flipped
-    db   0+16, 8 + 8,$f0, $a | OAMF_XFLIP
-    db   0+16, 8 + 0,$f2, $a | OAMF_XFLIP
+    db   0+16, 8 + 8,$fc, $a | OAMF_XFLIP
+    db   0+16, 8 + 0,$fe, $a | OAMF_XFLIP
     
     
 Player_OAM:
