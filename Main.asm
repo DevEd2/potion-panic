@@ -86,6 +86,12 @@ macro dbw
     dw      \2
 endm
 
+macro dbbw
+    db      \1
+    db      \2
+    dw      \3
+endm
+
 macro rgb
     dw      \1 | \2 << 5 | \3 << 10
 endm

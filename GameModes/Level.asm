@@ -510,6 +510,7 @@ LevelLoop:
     ld      [sys_PalFadeDone],a
     call    UpdatePalettes
 :   call    DrawPlayer
+    call    DrawPlayerLayers
     call    Player_DrawProjectiles
     
     ; do screen shake

@@ -153,8 +153,14 @@ InitPlayer:
     ld      de,_VRAM
     ; B = 0 here, which means we copy 256 bytes (16 tiles)
     call    MemCopySmall
+    ; farload hl,PlayerHurtLayer2Tiles
+    ld      de,$8e00
+    call    DecodeWLE
+    ; farload hl,PlayerBroomLayer2Tiles
+    ld      de,$8f00
+    call    DecodeWLE
     ; farload hl,PlayerStarTiles
-    ; ld      de,$8100
+    ld      de,$8100
     call    DecodeWLE
     ld      a,e
     ldh     [hObjGFXPos],a
@@ -171,8 +177,8 @@ InitPlayer:
     ; ld      hl,BorisPalette
     ; ld      a,10
     ; call    LoadPal
-    
-    player_set_animation Idle
+
+    player_set_animation_direct Idle
     jp      Player_InitHUD
 
 section fragment "Player ROMX",romx
@@ -222,9 +228,9 @@ ProcessPlayer:
         res     BIT_PLAYER_TINY,[hl]
         jr      .skip
 .skip
-    ld      a,[Player_LockInPlace]
-    and     a
-    jp      nz,.animateplayer
+        ld      a,[Player_LockInPlace]
+        and     a
+        jp      nz,.animateplayer
     endc
     get_const hl,PLAYER_GRAVITY
     ld      a,l
@@ -1099,22 +1105,9 @@ Player_Wand:
     res     BIT_PLAYER_WAND,[hl]
     ret
 
-Player_Hitstop:
-    ld      b,4
-:   ld      a,[Level_CameraY]
-    xor     1
-    ld      [Level_CameraY],a
-    call    DrawPlayer
-    halt
-    dec     b
-    jr      nz,:-
-
 section fragment "Player ROM0",rom0
  
 DrawPlayer:
-    ld      a,[sys_FadeState]
-    and     a
-    jr      nz,:+
     ; copy GFX
     ld      a,1
     ldh     [rVBK],a
@@ -1122,6 +1115,9 @@ DrawPlayer:
     ld      a,[Player_AnimFrame]
     ld      e,a
     ld      l,a
+    ld      a,[sys_FadeState]
+    and     a
+    jr      nz,:+
     ld      h,0
     add     hl,hl   ; x2
     add     hl,hl   ; x4
@@ -1143,17 +1139,19 @@ DrawPlayer:
     ld      a,$0f
     ldh     [rHDMA5],a
     ; put player metasprite in OAM
-:   ld      hl,Player_SpriteMasks
+:   pushbank
+    farload hl,Player_SpriteMasks
     ld      d,0
     add     hl,de
     ld      c,[hl]
+    popbank
     ld      hl,Player_Flags
     bit     BIT_PLAYER_DIRECTION,[hl]
-    ld      hl,.sprite
+    ld      hl,Player_OAM
     jr      z,:+
-    ld      hl,.spriteflip
+    ld      hl,Player_OAMFlip
 :   ld      de,OAMBuffer
-    ld      b,(.sprite_end-.sprite)/4
+    ld      b,(Player_OAM.end-Player_OAM)/4
 .loop
     rr      c
     jr      nc,.next
@@ -1202,8 +1200,103 @@ DrawPlayer:
     add     hl,bc
     pop     bc
     jr      :-
+
+DrawPlayerLayers:
+    ld      hl,.frames
+.loop
+    ld      a,[hl+]
+    cp      -1
+    ret     z
+    ld      b,a
+    ld      a,[Player_AnimFrame]
+    cp      b
+    jr      z,:+
+    ld      a,l
+    add     3
+    ld      l,a
+    jr      nc,.loop
+    inc     h
+    jr      .loop
+:   ld      a,[hl+]
+    ld      e,a
+    add     a   ; x2
+    add     a   ; x4
+    ld      c,a
+    ld      b,0
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_DIRECTION,a
+    jr      z,:+
+    add     hl,bc
+:   ld      b,e
+    ldh     a,[hOAMPos]
+    ld      e,a
+    ld      d,high(OAMBuffer)
     
-.sprite
+:   ; y position
+    ld      a,[hl+]
+    ld      c,a
+    ld      a,[Player_YPos]
+    add     c
+    ld      c,a
+    ld      a,[Level_CameraY]
+    cpl
+    inc     a
+    add     c
+    ld      [de],a
+    inc     e
+    ; x position
+    ld      a,[hl+]
+    ld      c,a
+    ld      a,[Player_XPos]
+    add     c
+    ld      c,a
+    ld      a,[Level_CameraX]
+    cpl
+    inc     a
+    add     c
+    ld      [de],a
+    inc     e
+    ; sprite
+    ld      a,[hl+]
+    ld      [de],a
+    inc     e
+    ; attribute
+    ld      a,[hl+]
+    ld      [de],a
+    inc     e
+    
+    ld      a,e
+    ldh     [hOAMPos],a
+    dec     b
+    jr      nz,:-
+    ret
+    
+.frames
+    dbbw frame_hurt_layer1,     2,  Player_OAM_Hurt_Layer2
+    dbbw frame_broom_layer1,    2,  Player_OAM_Broom_Layer2
+    db  -1
+
+Player_OAM_Hurt_Layer2:
+    ; normal
+    db -16+16, 8 - 8,$e0, $9
+    db -16+16, 8 + 0,$e2, $9
+    ; flipped
+    db -16+16, 8 + 0,$e0, $9 | OAMF_XFLIP
+    db -16+16, 8 - 8,$e2, $9 | OAMF_XFLIP
+
+Player_OAM_Broom_Layer2:
+    ; normal
+    db   0+16, 8 -16,$f0, $a
+    db   0+16, 8 - 8,$f2, $a
+    ; flipped
+    db   0+16, 8 + 8,$f0, $a | OAMF_XFLIP
+    db   0+16, 8 + 0,$f2, $a | OAMF_XFLIP
+    
+    
+Player_OAM:
     db -16+16, 8 -16, 0, 8
     db -16+16, 8 - 8, 2, 8
     db -16+16, 8 + 0, 4, 8
@@ -1212,8 +1305,8 @@ DrawPlayer:
     db   0+16, 8 - 8,10, 8
     db   0+16, 8 + 0,12, 8
     db   0+16, 8 + 8,14, 8
-.sprite_end
-.spriteflip
+.end
+Player_OAMFlip:
     db -16+16, 8 + 8, 0, 8 | OAMF_XFLIP
     db -16+16, 8 + 0, 2, 8 | OAMF_XFLIP
     db -16+16, 8 - 8, 4, 8 | OAMF_XFLIP
@@ -1222,6 +1315,49 @@ DrawPlayer:
     db   0+16, 8 + 0,10, 8 | OAMF_XFLIP
     db   0+16, 8 - 8,12, 8 | OAMF_XFLIP
     db   0+16, 8 -16,14, 8 | OAMF_XFLIP
+.end
+
+Player_OAM_Layer2:
+    db -16+16, 8 -16, 0, 1
+    db -16+16, 8 - 8, 2, 1
+    db -16+16, 8 + 0, 4, 1
+    db -16+16, 8 + 8, 6, 1
+    db   0+16, 8 -16, 8, 1
+    db   0+16, 8 - 8,10, 1
+    db   0+16, 8 + 0,12, 1
+    db   0+16, 8 + 8,14, 1
+.end
+Player_OAMFlip_Layer2:
+    db -16+16, 8 + 8, 0, 1 | OAMF_XFLIP
+    db -16+16, 8 + 0, 2, 1 | OAMF_XFLIP
+    db -16+16, 8 - 8, 4, 1 | OAMF_XFLIP
+    db -16+16, 8 -16, 6, 1 | OAMF_XFLIP
+    db   0+16, 8 + 8, 8, 1 | OAMF_XFLIP
+    db   0+16, 8 + 0,10, 1 | OAMF_XFLIP
+    db   0+16, 8 - 8,12, 1 | OAMF_XFLIP
+    db   0+16, 8 -16,14, 1 | OAMF_XFLIP
+.end
+
+Player_OAM_Layer3:
+    db -16+16, 8 -16, 0, 2
+    db -16+16, 8 - 8, 2, 2
+    db -16+16, 8 + 0, 4, 2
+    db -16+16, 8 + 8, 6, 2
+    db   0+16, 8 -16, 8, 2
+    db   0+16, 8 - 8,10, 2
+    db   0+16, 8 + 0,12, 2
+    db   0+16, 8 + 8,14, 2
+.end
+Player_OAMFlip_Layer3:
+    db -16+16, 8 + 8, 0, 2 | OAMF_XFLIP
+    db -16+16, 8 + 0, 2, 2 | OAMF_XFLIP
+    db -16+16, 8 - 8, 4, 2 | OAMF_XFLIP
+    db -16+16, 8 -16, 6, 2 | OAMF_XFLIP
+    db   0+16, 8 + 8, 8, 2 | OAMF_XFLIP
+    db   0+16, 8 + 0,10, 2 | OAMF_XFLIP
+    db   0+16, 8 - 8,12, 2 | OAMF_XFLIP
+    db   0+16, 8 -16,14, 2 | OAMF_XFLIP
+.end
 
 Player_Anim_Idle:
     db  16,frame_idle1
@@ -1379,6 +1515,11 @@ Player_Anim_Tiny_WandRight:
     db  1,frame_tiny_wand
     db  $ff
     dw  Player_Anim_Tiny_WandRight
+
+Player_Anim_Broom:
+    db  1,frame_broom_layer1
+    db  $ff
+    dw  Player_Anim_Broom
 
 ; ========
 
@@ -2007,35 +2148,37 @@ rsreset
 def EFFECT_STR_FAT  rb
 def EFFECT_STR_TINY rb
 
-Player_PotionEffectStrings:
-    ;    ####################
-    db  "    UH-OH, BIG!     "  ; fat
-    db  " GOT A MICROSCOPE?  "  ; shrink
-    db  "   DOUBLE DAMAGE!   "  ; double damage
-    db  "DOUBLE JUMP ENABLED!"  ; double jump
-    db  "  SCORE MULTIPLIER! "  ; multiplier
-    db  "  BLACK MAGIC SHOT  "  ; quad damage
-    db  "   WHAT ENEMIES?    "  ; screen nuke
-    db  "     JACKPOT!!      "  ; jackpot
-    db  "  MEGA JACKPOT!!!!  "  ; mega jackpot
-    db  "      SO RETRO      "  ; DMG mode
-    db  " I CAN DRAW I SWEAR "  ; programmer art
-    db  "    iUMOP 3PISdn    "  ; upside down
-    db  "OOPS THAT WAS POISON"  ; poison
-    db  "  LADY LUCK SMILES  "  ; good luck
-    db  "  LADY LUCK FROWNS  "  ; bad luck
-    db  "      SCORE TAX     "  ; score tax
-    db  "   INVERTED COLORS  "  ; inverted colors
-    db  "TOTALLY TRIPPING OUT"  ; trippy mode
-    db  " SLORTNOC SDRAWKCAB "  ; inverted controls (lol slortnoc)
-    db  "   SHE FLIES NOW    "  ; floating
-    db  " FAMILIAR SUMMONED  "  ; summon
+;Player_PotionEffectStrings:
+;    ;    ####################
+;    db  "    UH-OH, BIG!     "  ; fat
+;    db  " GOT A MICROSCOPE?  "  ; shrink
+;    db  "   DOUBLE DAMAGE!   "  ; double damage
+;    db  "DOUBLE JUMP ENABLED!"  ; double jump
+;    db  "  SCORE MULTIPLIER! "  ; multiplier
+;    db  "  BLACK MAGIC SHOT  "  ; quad damage
+;    db  "   WHAT ENEMIES?    "  ; screen nuke
+;    db  "     JACKPOT!!      "  ; jackpot
+;    db  "  MEGA JACKPOT!!!!  "  ; mega jackpot
+;    db  "      SO RETRO      "  ; DMG mode
+;    db  " I CAN DRAW I SWEAR "  ; programmer art
+;    db  "    iUMOP 3PISdn    "  ; upside down
+;    db  "OOPS THAT WAS POISON"  ; poison
+;    db  "  LADY LUCK SMILES  "  ; good luck
+;    db  "  LADY LUCK FROWNS  "  ; bad luck
+;    db  "      SCORE TAX     "  ; score tax
+;    db  "   INVERTED COLORS  "  ; inverted colors
+;    db  "TOTALLY TRIPPING OUT"  ; trippy mode
+;    db  " SLORTNOC SDRAWKCAB "  ; inverted controls (lol slortnoc)
+;    db  "   SHE FLIES NOW    "  ; floating
+;    db  " FAMILIAR SUMMONED  "  ; summon
 
 include "Engine/PotionEffects.asm"
 
 section "Player GFX",romx,align[8]
 
 PlayerPlaceholderTiles: incbin  "GFX/Player/placeholder.png.2bpp"
+PlayerHurtLayer2Tiles:  incbin  "GFX/Player/player_hurt_layer2.png.2bpp.wle"
+PlayerBroomLayer2Tiles: incbin  "GFX/Player/player_broom_layer2.png.2bpp.wle"
 PlayerStarTiles:        incbin  "GFX/star.2bpp.wle"
 PlayerPalette:          incbin  "GFX/player.pal"
                         incbin  "GFX/player2.pal"
@@ -2046,12 +2189,15 @@ macro animframe
 def frame_\1 rb
 section fragment "Player tiles",romx,align[8]
     incbin "GFX/Player/player_\1.png.2bpp"
-section fragment "Player sprite masks",rom0
+section fragment "Player sprite masks",romx
     db  \2
 endm
 
-section fragment "Player sprite masks",rom0
+section fragment "Player sprite masks",romx
 Player_SpriteMasks:
+
+section fragment "Player sprite palette flags",rom0
+Player_SpritePalFlags:
 
 section fragment "Player tiles",romx
 PlayerTiles:
@@ -2115,5 +2261,6 @@ PlayerTiles:
     animframe   shrink_4,%01100000
     
     animframe   broom_layer1,%11110110
-    animframe   broom_layer2,%11110110
+    
+    animframe   hurt_layer1,%11110110
     
