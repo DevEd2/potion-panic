@@ -333,12 +333,12 @@ LevelLoop:
     call    DSFX_PlaySound
     ; load palette
     farload hl,Pal_PauseText
-    ld      bc,Pal_PauseTextRare-Pal_PauseText
     push    hl
     call    Math_Random
     pop     hl
     cp      $fc ; 1/64 chance of getting rare palette
     jr      c,:+
+    ld      bc,Pal_PauseTextRare-Pal_PauseText
     add     hl,bc
 :   rst     WaitForVBlank   ; wait one frame to avoid one-frame palette corruption
     ld      [hSP],sp
