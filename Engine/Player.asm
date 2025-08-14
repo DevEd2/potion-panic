@@ -90,6 +90,7 @@ Player_PotionEffectTimer:               dw
 Player_ControlBitFlipMask:              db
 Player_LockInPlace:                     db
 Player_LockControls:                    db
+Player_PauseTempFrame:                  db
 Player_RAMEnd:
 
 ; Set the player's current animation.

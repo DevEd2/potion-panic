@@ -314,6 +314,8 @@ LevelLoop:
     jp      z,.nopause
     ld      a,1
     ld      [Level_Paused],a
+    ld      a,[Player_AnimFrame]
+    ld      [Player_PauseTempFrame],a
     ; disable and re-enable sound to kill hanging notes
     ld      hl,rNR52
     ld      [hl],0
@@ -338,6 +340,7 @@ LevelLoop:
     pop     hl
     cp      $fc ; 1/64 chance of getting rare palette
     jr      c,:+
+    call    .pausesetwandanim
     ld      bc,Pal_PauseTextRare-Pal_PauseText
     add     hl,bc
 :   rst     WaitForVBlank   ; wait one frame to avoid one-frame palette corruption
@@ -383,7 +386,8 @@ LevelLoop:
     inc     c
     call    DSFX_KillChannel
     call    UpdatePalettes  ; restore palettes
-    jr      .nopause
+    call    .unpausesetanim
+    jp      .nopause
 :   ; set pause OAM
     farload hl,PauseTextOAM
     ld      b,(PauseTextOAM.end-PauseTextOAM)/4
@@ -429,14 +433,63 @@ LevelLoop:
     inc     e
     dec     b
     jr      nz,:-
-    
-    
     call    DSFX_Update
     rst     WaitForVBlank
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16 | LCDCF_WINON | LCDCF_WIN9C00
     ldh     [rLCDC],a
     jp      LevelLoop
-    ; TODO
+.pausesetwandanim
+    ; when rare palette is selected, briefly show wand animation
+    push    hl
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_DIRECTION,a
+    jr      z,.pright
+.pleft
+    bit     BIT_PLAYER_FAT,a
+    jr      nz,.pfat1
+    bit     BIT_PLAYER_TINY,a
+    jr      nz,.ptiny1
+.pnormal1
+    ld      a,frame_wand_left
+    jr      .psetanim
+.pfat1
+    ld      a,frame_fat_wand_left
+    jr      .psetanim
+.ptiny1
+    ld      a,frame_tiny_wand
+    jr      .psetanim
+.pright
+    bit     BIT_PLAYER_FAT,a
+    jr      nz,.pfat2
+    bit     BIT_PLAYER_TINY,a
+    jr      nz,.ptiny2
+.pnormal2
+    ld      a,frame_wand_right
+    jr      .psetanim
+.pfat2
+    ld      a,frame_fat_wand_right
+    jr      .psetanim
+.ptiny2
+    ld      a,frame_tiny_wand
+.psetanim
+    ld      [Player_AnimFrame],a
+    rst     WaitForVBlank
+    pushbank
+    call    DrawPlayer
+    ; player must be visible for 2 frames in order for sprite to display properly
+    ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16 | LCDCF_WINON | LCDCF_WIN9C00
+    ldh     [rLCDC],a
+    rst     WaitForVBlank
+    ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16 | LCDCF_WINON | LCDCF_WIN9C00
+    ldh     [rLCDC],a
+    popbank
+    pop     hl
+    ret
+.unpausesetanim
+    ld      a,[Player_PauseTempFrame]
+    ld      [Player_AnimFrame],a
+    push    hl
+    jr      .psetanim
 .nopause    
     ; level clear logic
     ld      a,[Level_EnemyCount]
