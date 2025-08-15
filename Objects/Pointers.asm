@@ -8,4 +8,5 @@ ObjPointers:
     objdef  PuffOfSmoke
     objdef  JackOLantern
     objdef  Imp
+    objdef  ImpFireball
     objdef  Slime

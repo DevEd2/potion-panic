@@ -12,11 +12,6 @@ def Imp_Frame           rb
 def Imp_InitXPos        rb
 def Imp_InitYPos        rb
 def Imp_Lifetime        rw
-def Imp_ProjectileX     rw
-def Imp_ProjectileVX    rw
-def Imp_ProjectileY     rw
-def Imp_ProjectileVY    rw
-def Imp_ProjectileTTL   rb
 def Imp_StateTimer      rb
 assert _RS <= 16, "Object uses too much RAM! (Max size = $10, got {_RS})"
 
@@ -54,23 +49,20 @@ Obj_Imp_Init:
     ldobjrp Imp_Frame
     ld      [hl],IMP_F_FLOAT_1 ; Imp_Frame
     inc     l
-    ld      [hl],d                      ; Imp_InitXPos
+    ld      [hl],d             ; Imp_InitXPos
     inc     l
-    ld      [hl],e                      ; Imp_InitYPos
+    ld      [hl],e             ; Imp_InitYPos
     inc     l
     xor     a
-    ld      [hl+],a                     ; Imp_Lifetime
-    ld      [hl+],a                     ; Imp_Lifetime
-    ld      [hl+],a                     ; Imp_ProjectileX
-    ld      [hl+],a                     ; Imp_ProjectileX
-    ld      [hl+],a                     ; Imp_ProjectileVX
-    ld      [hl+],a                     ; Imp_ProjectileVX
-    ld      [hl+],a                     ; Imp_ProjectileY
-    ld      [hl+],a                     ; Imp_ProjectileY
-    ld      [hl+],a                     ; Imp_ProjectileVY
-    ld      [hl+],a                     ; Imp_ProjectileVY
-    ld      [hl+],a                     ; Imp_ProjectileTTL
-    
+    ld      [hl+],a            ; Imp_Lifetime
+    ld      [hl+],a            ; Imp_Lifetime
+    push    hl
+    call    Math_Random
+    pop     hl
+    and     $7f
+    add     $80
+    ld      [hl],a            ; Imp_StateTimer
+
     ; fall through
 
 Obj_Imp_Float:
@@ -84,11 +76,11 @@ Obj_Imp_Float:
     rra
     and     1
     ld      [hl],a
-    
+
     ldobjp  OBJ_X
     ld      a,[hl]
     push    af
-    
+
     ldobjrp Imp_Lifetime
     ld      d,h
     ld      e,l
@@ -102,53 +94,6 @@ Obj_Imp_Float:
     ld      a,h
     ld      [de],a
     ld      a,l
-    inc     a
-    jr      nz,:+
-    push    hl
-    ldobjp  OBJ_STATE
-    ld      [hl],IMP_STATE_SHOOT
-    ldobjrp Imp_StateTimer
-    ld      [hl],60
-    ; set projectile position
-    ldobjp  OBJ_X
-    ld      a,[hl+]
-    ld      e,[hl]
-    ld      d,a
-    ldobjrp Imp_ProjectileX
-    ld      [hl],e
-    inc     l
-    ld      [hl],d
-    ldobjp  OBJ_Y
-    ld      a,[hl+]
-    ld      e,[hl]
-    ld      d,a
-    ldobjrp Imp_ProjectileY
-    ld      [hl],e
-    inc     l
-    ld      [hl],d
-    ; get distance from player position to imp position
-    ldobjp  OBJ_X
-    ld      a,[Player_XPos]
-    sub     [hl]
-    ld      b,a
-    ldobjp  OBJ_Y
-    ld      a,[Player_YPos]
-    sub     [hl]
-    ld      c,a
-    call    Math_ATan2  ; calculate angle between points
-    call    Math_SinCos ; get X and Y velocities
-    push    hl
-    ldobjrp Imp_ProjectileVX
-    ld      [hl],e
-    inc     l
-    ld      [hl],d
-    ldobjrp Imp_ProjectileVY
-    pop     de
-    ld      [hl],e
-    inc     l
-    ld      [hl],d    
-    pop     hl
-:   ld      a,l
     add     a
     call    Math_SinCos
     add     hl,hl
@@ -164,6 +109,24 @@ Obj_Imp_Float:
     ldobjp  OBJ_Y
     ld      [hl],b
     
+    ldobjrp Imp_StateTimer
+    dec     [hl]
+    jr      nz,:+
+    ldobjp  OBJ_STATE
+    ld      [hl],IMP_STATE_SHOOT
+    ldobjrp Imp_StateTimer
+    ld      [hl],60
+    ; create projectile
+    ldobjp  OBJ_X
+    ld      a,[hl+]
+    ld      d,a
+    inc     l
+    ld      a,[hl+]
+    ld      e,a
+    ld      b,OBJID_ImpFireball
+    call    CreateObject
+:   
+
     ldobjrp Imp_Lifetime
     ld      a,[hl+]
     ld      h,[hl]
@@ -187,7 +150,7 @@ Obj_Imp_Float:
     ld      b,a
     ldobjp  OBJ_X
     ld      [hl],b
-    
+
     ldobjp  OBJ_FLAGS
     pop     af
     ld      b,a
@@ -196,12 +159,10 @@ Obj_Imp_Float:
     jr      nc,.flip
 .noflip
     res     OBJB_XFLIP,[hl]
-    jr      .skip
+    jr      Obj_Imp_Draw
 .flip
     set     OBJB_XFLIP,[hl]
-.skip
-    ;call    Obj_Imp_UpdateProjectile
-    jp      Obj_Imp_Draw
+    jr      Obj_Imp_Draw
 
 Obj_Imp_Shoot:
     ldobjrp Imp_Frame
@@ -211,7 +172,13 @@ Obj_Imp_Shoot:
     jr      nz,Obj_Imp_Draw
     ldobjp  OBJ_STATE
     ld      [hl],IMP_STATE_FLOAT
-    ;call    Obj_Imp_UpdateProjectile
+    ldobjrp Imp_StateTimer
+    push    hl
+    call    Math_Random
+    pop     hl
+    and     $7f
+    add     $80
+    ld      [hl+],a            ; Imp_StateTimer
     jr      Obj_Imp_Draw
 
 Obj_Imp_Defeat:
@@ -240,50 +207,6 @@ Obj_Imp_Defeat:
     jr      c,Obj_Imp_Draw
     ldobjp  OBJ_ID
     ld      [hl],0
-    ret
-
-Obj_Imp_UpdateProjectile:
-    ; TODO: This is broken
-    ldobjrp Imp_ProjectileX
-    push    hl
-    ld      a,[hl+]
-    ld      e,a
-    ld      a,[hl+]
-    and     a
-    jr      z,.abort    ; bail out if X pos = 0 (denotes inactive projectile)
-    ld      d,a
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    add     hl,de
-    pop     de
-    ld      a,l
-    ld      [de],a
-    inc     e
-    ld      a,h
-    ld      [de],a
-    
-    ldobjrp Imp_ProjectileY
-    push    hl
-    ld      a,[hl+]
-    ld      e,a
-    and     a
-    jr      z,.abort    ; bail out if Y pos = 0 (denotes inactive projectile)
-    ld      a,[hl+]
-    ld      d,a
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
-    add     hl,de
-    pop     de
-    ld      a,l
-    ld      [de],a
-    inc     e
-    ld      a,h
-    ld      [de],a
-    ret
-.abort
-    pop     hl
     ret
 
 Obj_Imp_Draw:
@@ -359,32 +282,10 @@ Obj_Imp_Draw:
 :       ld      [de],a
         inc     e
     endr
-    ; draw projectile
-    ldobjrp Imp_ProjectileY+1
-    ld      a,[hl]
-    and     a
-    jr      z,.skip
-    sub     8
-    ld      [de],a
-    inc     e
-    ldobjrp Imp_ProjectileX+1
-    ld      a,[hl]
-    and     a
-    jr      z,.skip
-    sub     4
-    ld      [de],a
-    inc     e
-    ld      a,$7c
-    ld      [de],a
-    inc     e
-    ld      a,6
-    ld      [de],a
-    inc     e
-.skip
+    ; fall through
     ld      a,e
     ldh     [hOAMPos],a
-    ; fall through
-    
+
 Imp_CheckDefeat:
     ldobjp  OBJ_STATE
     ld      a,[hl]
@@ -505,8 +406,8 @@ SprDef_Imp_Shoot:
     db  8                           ; right X pos
     db  8                           ; right tile ID
     db  4 | OAMF_BANK1 | OAMF_XFLIP ; right attributes
-    
-    
+
+
 SprDef_Imp_Defeat:
     dw  .left,.right
 .left
