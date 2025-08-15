@@ -76,8 +76,6 @@ InitCanvas:
 PlotPixel:
     push    af
     push    bc
-    push    de
-    push    hl
     push    af
     ; set Y position
     ld      a,c
@@ -114,8 +112,6 @@ PlotPixel:
     ld      l,a
     rst     CallHL
 .doneplot
-    pop     hl
-    pop     de
     pop     bc
     pop     af
     ret

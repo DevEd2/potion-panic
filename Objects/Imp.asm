@@ -9,13 +9,15 @@ def IMP_STATE_DEFEAT    rb
 
 rsreset
 def Imp_Frame           rb
+def Imp_InitXPos        rb
 def Imp_InitYPos        rb
-def Imp_Lifetime        rb
-def Imp_ShootTimer      rb
+def Imp_Lifetime        rw
 def Imp_ProjectileX     rw
-def Imp_ProjectileY     rw
 def Imp_ProjectileVX    rw
+def Imp_ProjectileY     rw
 def Imp_ProjectileVY    rw
+def Imp_ProjectileTTL   rb
+def Imp_StateTimer      rb
 assert _RS <= 16, "Object uses too much RAM! (Max size = $10, got {_RS})"
 
 Obj_Imp:
@@ -35,14 +37,13 @@ Obj_Imp_Init:
     ld      [hl+],a         ; flags
     xor     a
     ld      [hl+],a         ; x subpixel
+    ld      d,[hl]
     inc     l               ; x position
     ld      [hl+],a         ; y subpixel
-    ld      e,[hl]  
+    ld      e,[hl]
     inc     l               ; y position
-    ld      [hl],low(-$100)  ; x velocity low
-    inc     l
-    ld      [hl],high(-$100) ; x velocity high
-    inc     l
+    ld      [hl+],a         ; x velocity low
+    ld      [hl+],a         ; x velocity high
     ld      [hl+],a         ; y velocity low
     ld      [hl+],a         ; y velocity high
     ld      a,IMP_HIT_WIDTH
@@ -53,9 +54,22 @@ Obj_Imp_Init:
     ldobjrp Imp_Frame
     ld      [hl],IMP_F_FLOAT_1 ; Imp_Frame
     inc     l
+    ld      [hl],d                      ; Imp_InitXPos
+    inc     l
     ld      [hl],e                      ; Imp_InitYPos
     inc     l
-    ld      [hl],0                      ; Imp_Lifetime
+    xor     a
+    ld      [hl+],a                     ; Imp_Lifetime
+    ld      [hl+],a                     ; Imp_Lifetime
+    ld      [hl+],a                     ; Imp_ProjectileX
+    ld      [hl+],a                     ; Imp_ProjectileX
+    ld      [hl+],a                     ; Imp_ProjectileVX
+    ld      [hl+],a                     ; Imp_ProjectileVX
+    ld      [hl+],a                     ; Imp_ProjectileY
+    ld      [hl+],a                     ; Imp_ProjectileY
+    ld      [hl+],a                     ; Imp_ProjectileVY
+    ld      [hl+],a                     ; Imp_ProjectileVY
+    ld      [hl+],a                     ; Imp_ProjectileTTL
     
     ; fall through
 
@@ -71,11 +85,74 @@ Obj_Imp_Float:
     and     1
     ld      [hl],a
     
-    ldobjrp Imp_Lifetime
-    inc     [hl]
+    ldobjp  OBJ_X
     ld      a,[hl]
+    push    af
+    
+    ldobjrp Imp_Lifetime
+    ld      d,h
+    ld      e,l
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    inc     hl
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
+    ld      a,l
+    inc     a
+    jr      nz,:+
+    push    hl
+    ldobjp  OBJ_STATE
+    ld      [hl],IMP_STATE_SHOOT
+    ldobjrp Imp_StateTimer
+    ld      [hl],60
+    ; set projectile position
+    ldobjp  OBJ_X
+    ld      a,[hl+]
+    ld      e,[hl]
+    ld      d,a
+    ldobjrp Imp_ProjectileX
+    ld      [hl],e
+    inc     l
+    ld      [hl],d
+    ldobjp  OBJ_Y
+    ld      a,[hl+]
+    ld      e,[hl]
+    ld      d,a
+    ldobjrp Imp_ProjectileY
+    ld      [hl],e
+    inc     l
+    ld      [hl],d
+    ; get distance from player position to imp position
+    ldobjp  OBJ_X
+    ld      a,[Player_XPos]
+    sub     [hl]
+    ld      b,a
+    ldobjp  OBJ_Y
+    ld      a,[Player_YPos]
+    sub     [hl]
+    ld      c,a
+    call    Math_ATan2  ; calculate angle between points
+    call    Math_SinCos ; get X and Y velocities
+    push    hl
+    ldobjrp Imp_ProjectileVX
+    ld      [hl],e
+    inc     l
+    ld      [hl],d
+    ldobjrp Imp_ProjectileVY
+    pop     de
+    ld      [hl],e
+    inc     l
+    ld      [hl],d    
+    pop     hl
+:   ld      a,l
     add     a
     call    Math_SinCos
+    add     hl,hl
+    add     hl,hl
     add     hl,hl
     add     hl,hl
     add     hl,hl
@@ -87,12 +164,55 @@ Obj_Imp_Float:
     ldobjp  OBJ_Y
     ld      [hl],b
     
-    ; TODO
+    ldobjrp Imp_Lifetime
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    srl     h
+    rr      l
+    ld      a,l
+    call    Math_SinCos
+    ld      d,h
+    ld      e,l
+    add     hl,hl
+    add     hl,hl
+    add     hl,hl
+    add     hl,hl
+    add     hl,hl
+    add     hl,hl
+    ld      b,h
+    ldobjrp Imp_InitXPos
+    ld      a,[hl]
+    add     b
+    ld      b,a
+    ldobjp  OBJ_X
+    ld      [hl],b
+    
+    ldobjp  OBJ_FLAGS
+    pop     af
+    ld      b,a
+    ld      a,[Player_XPos]
+    cp      b
+    jr      nc,.flip
+.noflip
+    res     OBJB_XFLIP,[hl]
+    jr      .skip
+.flip
+    set     OBJB_XFLIP,[hl]
+.skip
+    ;call    Obj_Imp_UpdateProjectile
     jp      Obj_Imp_Draw
 
 Obj_Imp_Shoot:
-    ; TODO
-    jp      Obj_Imp_Draw
+    ldobjrp Imp_Frame
+    ld      [hl],IMP_F_SHOOT
+    ldobjrp Imp_StateTimer
+    dec     [hl]
+    jr      nz,Obj_Imp_Draw
+    ldobjp  OBJ_STATE
+    ld      [hl],IMP_STATE_FLOAT
+    ;call    Obj_Imp_UpdateProjectile
+    jr      Obj_Imp_Draw
 
 Obj_Imp_Defeat:
     ld      a,[FreezeObjects]
@@ -121,7 +241,50 @@ Obj_Imp_Defeat:
     ldobjp  OBJ_ID
     ld      [hl],0
     ret
-    ; fall through
+
+Obj_Imp_UpdateProjectile:
+    ; TODO: This is broken
+    ldobjrp Imp_ProjectileX
+    push    hl
+    ld      a,[hl+]
+    ld      e,a
+    ld      a,[hl+]
+    and     a
+    jr      z,.abort    ; bail out if X pos = 0 (denotes inactive projectile)
+    ld      d,a
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,de
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
+    
+    ldobjrp Imp_ProjectileY
+    push    hl
+    ld      a,[hl+]
+    ld      e,a
+    and     a
+    jr      z,.abort    ; bail out if Y pos = 0 (denotes inactive projectile)
+    ld      a,[hl+]
+    ld      d,a
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,de
+    pop     de
+    ld      a,l
+    ld      [de],a
+    inc     e
+    ld      a,h
+    ld      [de],a
+    ret
+.abort
+    pop     hl
+    ret
 
 Obj_Imp_Draw:
     ldobjp  OBJ_FLAGS
@@ -196,6 +359,28 @@ Obj_Imp_Draw:
 :       ld      [de],a
         inc     e
     endr
+    ; draw projectile
+    ldobjrp Imp_ProjectileY+1
+    ld      a,[hl]
+    and     a
+    jr      z,.skip
+    sub     8
+    ld      [de],a
+    inc     e
+    ldobjrp Imp_ProjectileX+1
+    ld      a,[hl]
+    and     a
+    jr      z,.skip
+    sub     4
+    ld      [de],a
+    inc     e
+    ld      a,$7c
+    ld      [de],a
+    inc     e
+    ld      a,6
+    ld      [de],a
+    inc     e
+.skip
     ld      a,e
     ldh     [hOAMPos],a
     ; fall through

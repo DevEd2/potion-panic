@@ -216,9 +216,12 @@ GM_Level:
     call    DecodeWLE
     ; ld      hl,GFX_PuffOfSmoke
     call    DecodeWLE
+    ; ld      hl,GFX_Fireball
+    call    DecodeWLE
     ; ld      hl,Pal_Explosion
     ld      a,14
     call    LoadPal
+    
     
     ; load HUD graphics
     ld      a,1
@@ -943,7 +946,8 @@ Pal_BigFont:        incbin  "GFX/bigfont.pal"
 
 GFX_Explosion:      incbin  "GFX/explosion.2bpp.wle"
 GFX_PuffOfSmoke:    incbin  "GFX/puffofsmoke.2bpp.wle"
-Pal_Explosion:      incbin  "GFX/explosion.pal" ; also used for puff of smoke
+GFX_Fireball:       incbin  "GFX/fireball.2bpp.wle"
+Pal_Explosion:      incbin  "GFX/explosion.pal" ; also used for puff of smoke and fireball
 
 GFX_HUD:            incbin  "GFX/hud.2bpp.wle"
 Pal_HUD:            incbin  "GFX/hud.pal"

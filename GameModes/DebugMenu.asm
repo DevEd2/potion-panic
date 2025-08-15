@@ -150,7 +150,7 @@ Debug_JumpTable_Main:
     dw  GM_Title        ; title screen
     dw  .dummy          ; level select
     dw  .dummy          ; sound test
-    dw  GM_CanvasTest   ; canvas test
+    dw  .canvastest     ; canvas test
     dw  .crash
 def DEBUG_MAIN_MENU_NUM_ITEMS = ((@-Debug_JumpTable_Main)/2)
 .dummy
@@ -165,6 +165,10 @@ def DEBUG_MAIN_MENU_NUM_ITEMS = ((@-Debug_JumpTable_Main)/2)
     ldh     [hErrType],a
     pop     af
     jp      ErrorScreen
+.canvastest
+    ld      a,bank(GM_CanvasTest)
+    bankswitch_to_a
+    jp      GM_CanvasTest
 
 Debug_DrawMenuItems:
     ld      a,[hl+]

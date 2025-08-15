@@ -36,7 +36,7 @@
    </properties>
   </object>
   <object id="31" name="Frog" x="86" y="161.333"/>
-  <object id="32" name="Frog" x="124.333" y="162.667"/>
+  <object id="32" name="Imp" x="124.333" y="162.667"/>
   <object id="33" name="Frog" x="35.3333" y="113.667"/>
   <object id="35" name="Frog" x="233.667" y="61"/>
   <object id="37" name="JackOLantern" x="106" y="131"/>
