@@ -141,7 +141,7 @@ DebugLoop:
     ld      [Debug_MenuPos],a
     ; fall through
 :   call    DSFX_Update
-    halt
+    rst     WaitForVBlank
     jr      DebugLoop
 
 

@@ -15,6 +15,12 @@ sys_PalFadeDone::       db  ; set when fade is finished
 
 section "PerFade routines",rom0
 
+; INPUT: e=0 for black, e=$FF for white
+InitPalBuffers:
+    ld      hl,sys_Palettes
+    ld      bc,sys_PalBuffersEnd-sys_Palettes
+    jp      MemFill
+
 ; INPUT:     a = color index to modify
 ;           hl = color 
 ; DESTROYS:  a, b, hl
@@ -95,12 +101,6 @@ _InitFade:
 
 ; Must be run during VBlank, otherwise exits
 UpdatePalettes:
-    ldh     a,[rLCDC]
-    bit     7,a         ; is LCD on?
-    jr      z,.skiply
-    ldh     a,[rLY]
-    cp      144
-    ret     c
     ; bg palettes
 .skiply
     ld      a,$80
@@ -119,6 +119,33 @@ UpdatePalettes:
         ld      a,[hl+]
         ldh     [rOCPD],a
     endr
+    ret
+
+UpdatePalettesSafe:
+    ld      a,$80
+    ldh     [rBCPS],a
+    ld      hl,sys_BGPalTransferBuf
+    ld      b,2*32
+:   ldh     a,[rSTAT]
+    and     STATF_BUSY
+    jr      nz,:-
+    ld      a,[hl+]
+    ldh     [rBCPD],a
+    dec     b
+    jr      nz,:-
+
+    ; obj palettes
+    ld      a,$80
+    ldh     [rOCPS],a
+    ld      hl,sys_ObjPalTransferBuf
+    ld      b,2*32
+:   ldh     a,[rSTAT]
+    and     STATF_BUSY
+    jr      nz,:-
+    ld      a,[hl+]
+    ldh     [rOCPD],a
+    dec     b
+    jr      nz,:-
     ret
 
 Pal_DoFade:
@@ -256,13 +283,29 @@ SyncPalettes:
     push    hl
     push    de
     ld      a,[hl+]
-    ld      e,a
-    ld      a,[hl+]
     ld      b,a
     ld      a,[hl+]
-    ld      c,a
-    ld      a,e
-    call    CombineColors
+    ld      e,a
+    ld      a,[hl+]
+    ld      d,a
+    ld      a,b
+    
+    rlca
+    rlca
+    rlca
+    ld      l,a
+    srl     e
+    rr      l
+    srl     e
+    rr      l
+    srl     e
+    rr      l
+    ld      a,d
+    add     a
+    add     a
+    add     e
+    ld      h,a
+    
     pop     de
     ld      a,l
     ld      [de],a
@@ -389,21 +432,29 @@ ConvertPals:
 .loop
     push    bc
     ld      a,[hl+]
-    ld      b,a
-    ld      a,[hl+]
     push    hl
-    ld      h,a
-    ld      l,b
-    call    SplitColors
-    ld      [de],a
-    inc     de
-    ld      a,b
+    ld      h,[hl]
+    ld      l,a
+    srl     h
+    rr      l
+    srl     h
+    rr      l
+    ld      b,h
+    srl     l
+    srl     l
+    srl     l
+    ld      c,l
+    and     $1f
     ld      [de],a
     inc     de
     ld      a,c
     ld      [de],a
     inc     de
+    ld      a,b
+    ld      [de],a
+    inc     de
     pop     hl
+    inc     hl
     pop     bc
     dec     b
     jr      nz,.loop
@@ -414,62 +465,6 @@ CopyPalettes:
     ld      de,sys_PalTransferBuf
     ld      b,sys_PalBuffersEnd-sys_Palettes
     call    MemCopySmall
-    ret
-
-; Takes a palette color and splits it into its RGB components.
-; INPUT:    hl = color
-; OUTPUT:    a = red
-;            b = green
-;            c = blue
-SplitColors:
-    push    de
-    ld      a,l         ; GGGRRRRR
-    and     %00011111   ; xxxRRRRR
-    ld      e,a
-    ld      a,l
-    and     %11100000   ; GGGxxxxx
-    swap    a           ; xxxxGGGx
-    rra                 ; xxxxxGGG
-    ld      b,a
-    ld      a,h         ; xBBBBBGG
-    and     %00000011   ; xxxxxxGG
-    swap    a           ; xxGGxxxx
-    rra                 ; xxxGGxxx
-    or      b           ; xxxGGGGG
-    ld      b,a
-    ld      a,h         ; xBBBBBGG
-    and     %01111100   ; xBBBBBxx
-    rra                 ; xxBBBBBx
-    rra                 ; xxxBBBBB
-    ld      c,a
-    ld      a,e
-    pop     de
-    ret
-    
-; Takes a set of RGB components and converts it to a palette color.
-; INPUT:     a = red
-;            b = green
-;            c = blue
-; OUTPUT:   hl = color
-; DESTROYS:  a
-CombineColors:
-    ld      l,a         ; hl = ???????? xxxRRRRR
-    ld      a,b         ;  a = xxxGGGGG
-    and     %00000111   ;  a = xxxxxGGG
-    swap    a           ;  a = xGGGxxxx
-    rla                 ;  a = GGGxxxxx
-    or      l           ;  a = GGGRRRRR
-    ld      l,a         ; hl = ???????? GGGRRRRR
-    ld      a,b         ;  a = xxxGGGGG
-    and     %00011000   ;  a = xxxGGxxx
-    rla                 ;  a = xxGGxxxx
-    swap    a           ;  a = xxxxxxGG
-    ld      h,a         ; hl = xxxxxxGG GGGRRRRR
-    ld      a,c         ;  a = xxxBBBBB
-    rla                 ;  a = xxBBBBBx
-    rla                 ;  a = xBBBBBxx
-    or      h           ;  a = xBBBBBGG
-    ld      h,a         ; hl = xBBBBBGG GGGRRRRR
     ret
 
 PalFadeBlackTable:

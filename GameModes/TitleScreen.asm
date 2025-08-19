@@ -1,10 +1,27 @@
 section union "Title screen RAM",wramx,align[8]
 Title_BGTileBuffer: ds  $800
+Title_DoBGAnim:     db
+Title_MenuID:       db
+Title_MenuPos:      db
+Title_MenuMax:      db
+
+section "Game options",hram
+hOptionsFlags:      db
+rsreset
+def OPTION_MUSIC_B  rb
+def OPTION_SFX_B    rb
+
+def OPTIONS_MUSIC_ON    equ 1 << OPTION_MUSIC_B
+def OPTIONS_MUSIC_OFF   equ 0 << OPTION_MUSIC_B
+def OPTIONS_SFX_ON      equ 1 << OPTION_SFX_B
+def OPTIONS_SFX_OFF     equ 0 << OPTION_SFX_B
+
 
 section "Title screen routines",rom0
 GM_Title:
     call    LCDOff
     call    ClearScreen
+    call    InitPalBuffers
     ; decrunch background animation
     farload hl,GFX_TitleBG
     ld      de,Title_BGTileBuffer
@@ -20,7 +37,7 @@ GM_Title:
     ; ld      hl,Attr_TitleBG
     ld      de,_SCRN0
     call    DecodeWLE
-    ; ld      hl,Pal_TitleBG
+    ld      hl,Pal_TitleBG
     xor     a
     call    LoadPal
     ld      a,1
@@ -37,31 +54,53 @@ GM_Title:
     call    LoadPal
     ld      a,7
     call    LoadPal
+    ; ld      hl,Pal_TitleMenu
+    ld      a,8
+    call    LoadPal
+    ; ld      hl,GFX_TitleMenu_StartGame
+    ld      de,$8000
+    call    DecodeWLE
+    ; ld      hl,GFX_TitleMenu_Options
+    call    DecodeWLE
+    ; ld      hl,GFX_OptionsMenu_Music
+    call    DecodeWLE
+    ; ld      hl,GFX_OptionsMenu_SFX
+    call    DecodeWLE
+    ; ld      hl,GFX_OptionsMenu_Credits
+    call    DecodeWLE
+    ; ld      hl,GFX_OptionsMenu_OnOff
+    call    DecodeWLE
+    
+    
     
     xor     a
-    ldh     [rVBK],a    
+    ldh     [rVBK],a
+    ld      [Title_DoBGAnim],a
+    ld      [Title_MenuID],a
+    ld      [Title_MenuPos],a
+    ld      [Title_MenuMax],a
     
     call    CopyPalettes
     call    UpdatePalettes
+    call    PalFadeInWhite
+    call    UpdatePalettes
+    
     call    DeleteAllObjects
     
-    ld      a,bank(Mus_WorldMap)-1 ; TODO: Proper title screen music
-    call    GBM_LoadModule    
+    ; ld      a,bank(Mus_LostInTranslation)-1 ; TODO: Proper title screen music
+    ; call    GBM_LoadModule    
     
     ; TODO: Remaining init stuff
     
-    ld      a,low(IntS_Title)
-    ldh     [hSTATPointer],a
-    ld      a,high(IntS_Title)
-    ldh     [hSTATPointer+1],a
-    ld      a,STATF_MODE00
-    ldh     [rSTAT],a
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_BG8800 | LCDCF_OBJON | LCDCF_OBJ16
     ldh     [rLCDC],a
-    ld      a,IEF_VBLANK | IEF_STAT
+    ld      a,IEF_VBLANK ; | IEF_STAT
     ldh     [rIE],a
-    ei
-
+    ld      a,bank(TitleLoop)
+    bankswitch_to_a
+    jp      TitleLoop
+    
+section "Title screen loop",romx
 TitleLoop:
     xor     a
     ldh     [hOAMPos],a
@@ -85,11 +124,12 @@ TitleLoop:
     xor     a
     ldh     [rHDMA4],a
     rst     WaitForVBlank
-    ld      a,7 | HDMA5F_MODE_HBL
+    ld      a,7
     ld      [rHDMA5],a
-:   ldh     a,[rLY]
-    cp      SCRN_Y/2
-    jr      nz,:-
+    call    UpdatePalettes
+    
+    call    Pal_DoFade
+    
     call    GBM_Update
     
     jr      TitleLoop
@@ -135,39 +175,91 @@ IntS_Title:
 
 section "Title gold table",rom0,align[8]
 Title_GoldTable:
-    rgb8 223,198, 86
-    rgb8 206,183, 74
-    rgb8 190,168, 62
-    rgb8 174,152, 49
-    rgb8 158,137, 37
-    rgb8 141,122, 25
-    rgb8 125,107, 13
-    rgb8 109, 92,  1
-    rgb8 125,107, 13
-    rgb8 141,122, 25
-    rgb8 158,137, 37
-    rgb8 174,152, 49
-    rgb8 190,168, 62
-    rgb8 206,183, 74
-    rgb8 223,198, 86
-    rgb8 239,213, 98
+    rgb8    223,198, 86
+    rgb8    206,183, 74
+    rgb8    190,168, 62
+    rgb8    174,152, 49
+    rgb8    158,137, 37
+    rgb8    141,122, 25
+    rgb8    125,107, 13
+    rgb8    109, 92,  1
+    rgb8    125,107, 13
+    rgb8    141,122, 25
+    rgb8    158,137, 37
+    rgb8    174,152, 49
+    rgb8    190,168, 62
+    rgb8    206,183, 74
+    rgb8    223,198, 86
+    rgb8    239,213, 98
+
+Title_OptionFlashTable:
+    rgb8    $ff,$ff,$00
+    rgb8    $ff,$ff,$22
+    rgb8    $ff,$ff,$44
+    rgb8    $ff,$ff,$66
+    rgb8    $ff,$ff,$88
+    rgb8    $ff,$ff,$aa
+    rgb8    $ff,$ff,$cc
+    rgb8    $ff,$ff,$ee
+    rgb8    $ff,$ff,$ff
+    rgb8    $ff,$ff,$ee
+    rgb8    $ff,$ff,$cc
+    rgb8    $ff,$ff,$aa
+    rgb8    $ff,$ff,$88
+    rgb8    $ff,$ff,$66
+    rgb8    $ff,$ff,$44
+    rgb8    $ff,$ff,$22
 
 ; ================================================================
 
 section "Title screen GFX",romx
-GFX_TitleBG:    incbin  "GFX/menubg.2bpp.wle"
-GFX_TitleLogo:  incbin  "GFX/logo.2bpp.wle"
-Map_TitleBG:    incbin  "GFX/menubg.map.wle"
-Attr_TitleBG:   incbin  "GFX/menubg.atr.wle"
+GFX_TitleBG:        incbin  "GFX/menubg.2bpp.wle"
+GFX_TitleLogo:      incbin  "GFX/logo.2bpp.wle"
+Map_TitleBG:        incbin  "GFX/menubg.map.wle"
+Attr_TitleBG:       incbin  "GFX/menubg.atr.wle"
+
+def r1 equ 0
+def r2 equ 0
+def r3 equ 0
+def r4 equ 0
+def g1 equ 0
+def g2 equ 0
+def g3 equ 0
+def g4 equ 0
+def b1 equ 0
+def b2 equ 0
+def b3 equ 0
+def b4 equ 0
 
 Pal_TitleBG:
     for n,7
-        rgb     0, (0*(7-n))/2, (0*(7-n))
-        rgb     0, (2*(7-n))/2, (2*(7-n))
-        rgb     0, (3*(7-n))/2, (3*(7-n))
-        rgb     0, (4*(7-n))/2, (4*(7-n))
+        redef r1 equ 0
+        redef r2 equ 0
+        redef r3 equ 0
+        redef r4 equ 0
+        redef g1 equ 40 + (0*(8-n))/2
+        redef g2 equ 40 + (5*(8-n))/2
+        redef g3 equ 40 + (10*(8-n))/2
+        redef g4 equ 40 + (15*(8-n))/2
+        redef b1 equ 80 + (0*(8-n))
+        redef b2 equ 80 + (5*(8-n))
+        redef b3 equ 80 + (10*(8-n))
+        redef b4 equ 80 + (15*(8-n))
+        rgb8 r1, g1, b1
+        rgb8 r2, g2, b2
+        rgb8 r3, g3, b3
+        rgb8 r4, g4, b4
     endr
+    purge r1, g1, b1, r2, g2, b2, r3, g3, b3, r4, g4, b4
     rgb      0, 0, 0
-    rgb     31,31,31
+    rgb8     0,40,80
     rgb      0, 0,31
-    rgb     31, 0,31
+    rgb     31,31,31
+
+Pal_TitleMenu:              incbin  "GFX/titlemenu.pal"
+GFX_TitleMenu_StartGame:    incbin  "GFX/startgame.2bpp.wle"
+GFX_TitleMenu_Options:      incbin  "GFX/options.2bpp.wle"
+GFX_OptionsMenu_Music:      incbin  "GFX/music.2bpp.wle"
+GFX_OptionsMenu_SFX:        incbin  "GFX/sfx.2bpp.wle"
+GFX_OptionsMenu_Credits:    incbin  "GFX/credits.2bpp.wle"
+GFX_OptionsMenu_OnOff:      incbin  "GFX/onoff.2bpp.wle"

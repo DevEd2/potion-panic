@@ -658,8 +658,8 @@ DoVBlank:
     ld      h,[hl]
     ld      l,a
     rst     CallHL
-    ld      a,1
-    ldh     [hVBlankFlag],a
+    ld      hl,hVBlankFlag
+    inc     [hl]
     pop     hl    
     pop     af
     reti
