@@ -1,11 +1,14 @@
 rsreset
-def SFX_JUMP_NORMAL rb
-def SFX_JUMP_TINY   rb
-def SFX_JUMP_FAT    rb
-def SFX_MENU_CURSOR rb
-def SFX_PAUSE_CH1   rb
-def SFX_PAUSE_CH2   rb
-def SFX_PAUSE_CH3   rb
+def SFX_JUMP_NORMAL     rb
+def SFX_JUMP_TINY       rb
+def SFX_JUMP_FAT        rb
+def SFX_MENU_CURSOR     rb
+def SFX_PAUSE_CH1       rb
+def SFX_PAUSE_CH2       rb
+def SFX_PAUSE_CH3       rb
+def SFX_BIG_BUMP_CH2    rb
+def SFX_BIG_BUMP_CH4    rb
+def SFX_GET_FAT         rb
 
 DSFX_SFXPointers:
     dw  SFX_JumpNormal
@@ -15,6 +18,9 @@ DSFX_SFXPointers:
     dw  SFX_PauseCH1
     dw  SFX_PauseCH2
     dw  SFX_PauseCH3
+    dw  SFX_BigBump_CH2
+    dw  SFX_BigBump_CH4
+    dw  SFX_GetFat
     
     include "Audio/SFX/MenuCursor.asm"
     include "Audio/SFX/JumpNormal.asm"
@@ -23,3 +29,6 @@ DSFX_SFXPointers:
     include "Audio/SFX/PauseCH1.asm"
     include "Audio/SFX/PauseCH2.asm"
     include "Audio/SFX/PauseCH3.asm"
+    include "Audio/SFX/BigBump_CH2.asm"
+    include "Audio/SFX/BigBump_CH4.asm"
+    include "Audio/SFX/GetFat.asm"

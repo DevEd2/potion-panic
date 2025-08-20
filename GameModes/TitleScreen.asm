@@ -1,9 +1,9 @@
 section union "Title screen RAM",wramx,align[8]
-Title_BGTileBuffer: ds  $800
-Title_DoBGAnim:     db
-Title_MenuID:       db
-Title_MenuPos:      db
-Title_MenuMax:      db
+Title_BGTileBuffer:     ds  $800
+Title_LogoBouncePtr:    dw
+Title_MenuID:           db
+Title_MenuPos:          db
+Title_MenuMax:          db
 
 section "Game options",hram
 hOptionsFlags:      db
@@ -71,34 +71,84 @@ GM_Title:
     ; ld      hl,GFX_OptionsMenu_OnOff
     call    DecodeWLE
     
-    
-    
     xor     a
     ldh     [rVBK],a
-    ld      [Title_DoBGAnim],a
     ld      [Title_MenuID],a
     ld      [Title_MenuPos],a
     ld      [Title_MenuMax],a
     
+    ld      a,low(Title_LogoBounceTable)
+    ld      [Title_LogoBouncePtr],a
+    ld      a,high(Title_LogoBounceTable)
+    ld      [Title_LogoBouncePtr+1],a
+    
     call    CopyPalettes
     call    UpdatePalettes
-    call    PalFadeInWhite
+    call    PalFadeInBlack
     call    UpdatePalettes
     
     call    DeleteAllObjects
+    
+    call    DSFX_Init
     
     ; ld      a,bank(Mus_LostInTranslation)-1 ; TODO: Proper title screen music
     ; call    GBM_LoadModule    
     
     ; TODO: Remaining init stuff
     
+    ld      a,low(IntS_Title)
+    ldh     [hSTATPointer],a
+    ld      a,high(IntS_Title)
+    ldh     [hSTATPointer+1],a
+    ld      a,STATF_MODE00
+    ldh     [rSTAT],a
+    
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_BG8800 | LCDCF_OBJON | LCDCF_OBJ16
     ldh     [rLCDC],a
-    ld      a,IEF_VBLANK ; | IEF_STAT
+    ld      a,IEF_VBLANK | IEF_STAT
     ldh     [rIE],a
     ld      a,bank(TitleLoop)
     bankswitch_to_a
     jp      TitleLoop
+
+IntS_Title:
+    ldh     a,[rLY]
+    cp      72
+    ret     nc
+    push    bc
+    ld      b,a
+    ldh     a,[hGlobalTick]
+    push    af
+    push    bc
+    rra
+    add     b
+    and     $f
+    add     a
+    ld      l,a
+    ld      h,high(Title_GoldTable)
+    ld      a,$3c | BGPIF_AUTOINC
+    ldh     [rBCPS],a
+    
+    ld      a,[hl+]
+    ldh     [rBCPD],a
+    ld      a,[hl+]
+    ldh     [rBCPD],a
+    pop     bc
+    pop     af
+    cpl
+    rra
+    add     b
+    and     $f
+    add     a
+    ld      l,a
+    
+    ld      a,[hl+]
+    ldh     [rBCPD],a
+    ld      a,[hl+]
+    ldh     [rBCPD],a
+
+    pop     bc
+    ret
     
 section "Title screen loop",romx
 TitleLoop:
@@ -128,50 +178,55 @@ TitleLoop:
     ld      [rHDMA5],a
     call    UpdatePalettes
     
-    call    Pal_DoFade
-    
-    call    GBM_Update
+    ld      hl,Title_LogoBouncePtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl+]
+    cp      $80
+    jr      z,:++
+    cp      $7f
+    call    z,Title_LogoLand
+    ldh     [rSCY],a   
+:   ld      a,l
+    ld      [Title_LogoBouncePtr],a
+    ld      a,h
+    ld      [Title_LogoBouncePtr+1],a
+    jr      :++
+:   call    Pal_DoFade
+:   call    GBM_Update
+    call    DSFX_Update
     
     jr      TitleLoop
 
-IntS_Title:
-    ldh     a,[rLY]
-    cp      64
-    ret     nc
-    push    bc
-    ld      b,a
-    ldh     a,[hGlobalTick]
-    push    af
-    push    bc
-    rra
-    add     b
-    and     $f
-    add     a
-    ld      l,a
-    ld      h,high(Title_GoldTable)
-    ld      a,((7 * 2) * 4) + 2 | BGPIF_AUTOINC
-    ldh     [rBCPS],a
-    
+Title_LogoLand:
+    push    hl
+    ld      e,SFX_BIG_BUMP_CH2
+    call    DSFX_PlaySound
+    ld      e,SFX_BIG_BUMP_CH4
+    call    DSFX_PlaySound
+    pop     hl
     ld      a,[hl+]
-    ldh     [rBCPD],a
-    ld      a,[hl+]
-    ldh     [rBCPD],a
-    pop     bc
-    pop     af
-    cpl
-    rra
-    add     b
-    and     $f
-    add     a
-    ld      l,a
-    
-    ld      a,[hl+]
-    ldh     [rBCPD],a
-    ld      a,[hl+]
-    ldh     [rBCPD],a
-
-    pop     bc
     ret
+
+Title_LogoBounceTable:
+    db  112,112,112,112,112,112,112,112
+    db  112,112,112,112,112,112,112,112
+    db  112, 104, 96, 88, 80, 72
+    db  64, 56, 48, 40, 32, 24, 16, 8, 0
+    cp  $7f
+    db  -8,  -2,   5,  -2,  -2,   3,  -1,  -2
+    db   2,   0,  -2,   1,   0,  -1,   1,   1,  -1,   0
+    db   1,  -1,   0,   1,  -1,   0,   1,   0,   0,   1
+    db   0,   0,   1,   0,  -1,   0,   0,  -1,   0,   0
+    db   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+    db   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+    db   0,   0,   0,   0
+    db  $80
+
+
+
+
 
 section "Title gold table",rom0,align[8]
 Title_GoldTable:
@@ -232,6 +287,7 @@ def b3 equ 0
 def b4 equ 0
 
 Pal_TitleBG:
+    ; if I don't do it like this rgbasm complains about "value is not 16-bit" for no discernable reason
     for n,7
         redef r1 equ 0
         redef r2 equ 0

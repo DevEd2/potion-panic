@@ -57,7 +57,31 @@ Obj_PuffOfSmoke_Idle:
     ldobjp  OBJ_ID
     ld      [hl],0
     ret
-:   ; fall through
+:   ldobjp  OBJ_VX
+    push    hl
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    bit     7,h
+    push    af
+    call    Math_Abs16
+    srl     h
+    rr      l
+    ld      d,h
+    ld      e,a
+    srl     h
+    rr      l
+    add     hl,de    
+    pop     af
+    jr      nz,:+
+    call    Math_Neg16
+:   ld      d,h
+    ld      e,l
+    pop     hl
+    ld      a,e
+    ld      [hl+],a
+    ld      [hl],d
+    ; fall through
 Obj_PuffOfSmoke_Draw:
     ldobjp  OBJ_FLAGS
     bit     OBJB_VISIBLE,[hl]
