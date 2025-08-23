@@ -9,7 +9,7 @@ Title_MenuItemPos2:     db
 Title_MenuItemPos3:     db
 Title_MenuSlideDir:     db
 Title_EnableMenu:       db
-Title_LogoXPos:         db
+Title_LogoYPos:         db
 
 section "Game options",hram
 hOptionsFlags:      db
@@ -91,7 +91,7 @@ GM_Title:
     ld      [Title_MenuMax],a
     ld      [Title_MenuSlideDir],a
     ld      [Title_EnableMenu],a
-    ld      [Title_LogoXPos],a
+    ld      [Title_LogoYPos],a
     ld      [Title_MenuItemPos1],a
     ld      a,-MENU_ITEM_2_MOVE_DELAY
     ld      [Title_MenuItemPos2],a
@@ -172,10 +172,12 @@ IntS_Title:
     ldh     [rBCPD],a
     ld      a,[hl+]
     ldh     [rBCPD],a
+    ld      a,[Title_LogoYPos]
+    ldh     [rSCY],a
 
     pop     bc
     ret
-:   xor     a
+:   ld      a,(SCRN_Y+8) -64
     ldh     [rSCY],a
     ret
     
@@ -256,7 +258,7 @@ TitleLoop:
     jr      z,:++
     cp      $7f
     call    z,Title_LogoLand
-    ldh     [rSCY],a   
+    ld      [Title_LogoYPos],a
 :   ld      a,l
     ld      [Title_LogoBouncePtr],a
     ld      a,h
@@ -282,7 +284,7 @@ Title_UpdateMenu:
     ld      a,[hl+]
     cp      $80
     jr      z,:+
-    ld      [Title_LogoXPos],a
+    ld      [Title_LogoYPos],a
     ld      a,l
     ld      [Title_LogoBouncePtr],a
     ld      a,h
@@ -345,10 +347,16 @@ Title_UpdateMenu:
     ret     nz
     ld      a,[sys_FadeState]
     and     a
-    jp      z,PalFadeOutWhite
+    jr      nz,Title_ExecuteMenuItem
+    ld      a,low(IntS_Dummy)
+    ldh     [hSTATPointer],a
+    ld      a,high(IntS_Dummy)
+    ldh     [hSTATPointer+1],a
+    ld      a,(SCRN_VY-24)-SCRN_Y
+    ldh     [rSCY],a
+    jp      PalFadeOutWhite
 
 Title_ExecuteMenuItem:
-    ld      b,b
     ld      a,[Title_MenuPos]
     and     7
     rla
@@ -495,7 +503,12 @@ Title_DrawMenuItem:
     ret    
 
 Title_StartGame:
-    ; TODO
+    rst     WaitForVBlank
+    xor     a
+    ldh     [rLCDC],a
+    ld      a,1
+    ld      [Level_ID],a
+    jp      GM_Level
     jr      @
 
 Title_GotoOptionsMenu:
@@ -566,12 +579,7 @@ Title_LogoSlideOutTable:
     db    1
     db    1,     2,     4,     6,     7,    10,    12
     db   15,    18,    22,    25,    29,    33,    37
-    db   42,    47,    52,    57,    62,    68,    73
-    db   79,    85,    91,    97,   103,   109,   115
-    db  122,   127
-    rept    60
-        db      32
-    endr
+    db   42,    47,    52,    57,    62,    64
     db  $80
 
 Title_OptionFlashTable:
