@@ -186,6 +186,13 @@ macro s_repeat
 	db	\2
 endm
 
+; Jump to a different section of sound data.
+; @param lbl: label to jump to
+macro s_jump
+    db  12
+    dw  \1
+endm
+
 ; really wish i didn't have to do this...
 def nC_2 equ $2c
 def nC#2 equ $9d
@@ -686,6 +693,8 @@ DSFX_CH\1_CommandTable:
 	dw		.restart
 	dw		.pitchrange
 	dw		.resetpitch
+    dw      .repeat
+    dw      .jump
 
 .end
 	pop		hl
@@ -862,6 +871,18 @@ DSFX_CH\1_CommandTable:
 	endc
 	pop		hl
 	jp		DSFX_CH\1_GetByte
+
+.repeat
+    ; NYI
+    pop     hl
+    jp      DSFX_CH1_GetByte
+
+.jump
+    pop     hl
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    jp      DSFX_CH\1_GetByte
 
 .done
 	ld		a,l

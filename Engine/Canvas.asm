@@ -2,7 +2,7 @@ section union "Canvas",vram,bank[1]
 vCanvas: ds (16 * 16) * 16
 .end
 
-section "Canvas routines",rom0
+section "Canvas routines",romx
 
 ; INPUT: de = destination Y,X in background map coordinates for canvas
 ; WARNING: Assumes LCD is off!

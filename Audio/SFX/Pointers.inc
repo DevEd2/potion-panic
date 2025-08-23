@@ -9,6 +9,8 @@ def SFX_PAUSE_CH3       rb
 def SFX_BIG_BUMP_CH2    rb
 def SFX_BIG_BUMP_CH4    rb
 def SFX_GET_FAT         rb
+def SFX_MENU_SELECT_CH2 rb
+def SFX_MENU_SELECT_CH1 rb
 
 DSFX_SFXPointers:
     dw  SFX_JumpNormal
@@ -21,6 +23,8 @@ DSFX_SFXPointers:
     dw  SFX_BigBump_CH2
     dw  SFX_BigBump_CH4
     dw  SFX_GetFat
+    dw  SFX_MenuSelect_CH2
+    dw  SFX_MenuSelect_CH1
     
     include "Audio/SFX/MenuCursor.asm"
     include "Audio/SFX/JumpNormal.asm"
@@ -32,3 +36,4 @@ DSFX_SFXPointers:
     include "Audio/SFX/BigBump_CH2.asm"
     include "Audio/SFX/BigBump_CH4.asm"
     include "Audio/SFX/GetFat.asm"
+    include "Audio/SFX/MenuSelect.asm"

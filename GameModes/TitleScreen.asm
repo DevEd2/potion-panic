@@ -1,9 +1,15 @@
 section union "Title screen RAM",wramx,align[8]
 Title_BGTileBuffer:     ds  $800
 Title_LogoBouncePtr:    dw
-Title_MenuID:           db
+Title_MenuPtr:          dw
 Title_MenuPos:          db
 Title_MenuMax:          db
+Title_MenuItemPos1:     db
+Title_MenuItemPos2:     db
+Title_MenuItemPos3:     db
+Title_MenuSlideDir:     db
+Title_EnableMenu:       db
+Title_LogoXPos:         db
 
 section "Game options",hram
 hOptionsFlags:      db
@@ -16,6 +22,14 @@ def OPTIONS_MUSIC_OFF   equ 0 << OPTION_MUSIC_B
 def OPTIONS_SFX_ON      equ 1 << OPTION_SFX_B
 def OPTIONS_SFX_OFF     equ 0 << OPTION_SFX_B
 
+def MENU_ITEM_1_MOVE_DELAY  equ 0
+def MENU_ITEM_2_MOVE_DELAY  equ 8
+def MENU_ITEM_3_MOVE_DELAY  equ 16
+
+rsreset
+def MENU_DIR_NONE   rb  ; denotes unused menu option
+def MENU_DIR_UP     rb  ; for menu options that do not have an on/off toggle
+def MENU_DIR_LR     rb  ; for menu options that have an on/off toggle
 
 section "Title screen routines",rom0
 GM_Title:
@@ -73,9 +87,21 @@ GM_Title:
     
     xor     a
     ldh     [rVBK],a
-    ld      [Title_MenuID],a
     ld      [Title_MenuPos],a
     ld      [Title_MenuMax],a
+    ld      [Title_MenuSlideDir],a
+    ld      [Title_EnableMenu],a
+    ld      [Title_LogoXPos],a
+    ld      [Title_MenuItemPos1],a
+    ld      a,-MENU_ITEM_2_MOVE_DELAY
+    ld      [Title_MenuItemPos2],a
+    ld      a,-MENU_ITEM_3_MOVE_DELAY
+    ld      [Title_MenuItemPos3],a
+    
+    ld      a,low(Title_Menu_Main)
+    ld      [Title_MenuPtr],a
+    ld      a,high(Title_Menu_Main)
+    ld      [Title_MenuPtr+1],a
     
     ld      a,low(Title_LogoBounceTable)
     ld      [Title_LogoBouncePtr],a
@@ -113,8 +139,8 @@ GM_Title:
 
 IntS_Title:
     ldh     a,[rLY]
-    cp      72
-    ret     nc
+    cp      63
+    jr      nc,:+
     push    bc
     ld      b,a
     ldh     a,[hGlobalTick]
@@ -149,6 +175,9 @@ IntS_Title:
 
     pop     bc
     ret
+:   xor     a
+    ldh     [rSCY],a
+    ret
     
 section "Title screen loop",romx
 TitleLoop:
@@ -173,11 +202,51 @@ TitleLoop:
     ldh     [rHDMA3],a
     xor     a
     ldh     [rHDMA4],a
-    rst     WaitForVBlank
+    call    Title_UpdateMenu
+    ld      a,[Title_EnableMenu]
+    and     a
+    jr      z,.skipmenu
+    cp      2
+    jr      z,.skipmenu
+    ldh     a,[hPressedButtons]
+    and     BTN_START | BTN_A
+    jr      z,:+
+    ld      a,-MENU_ITEM_3_MOVE_DELAY
+    ld      [Title_MenuItemPos1],a
+    ld      a,-MENU_ITEM_2_MOVE_DELAY
+    ld      [Title_MenuItemPos2],a
+    xor     a
+    ld      [Title_MenuItemPos3],a
+    inc     a
+    ld      [Title_MenuSlideDir],a
+    ld      e,SFX_MENU_SELECT_CH2
+    call    DSFX_PlaySound
+    ld      e,SFX_MENU_SELECT_CH1
+    call    DSFX_PlaySound
+    ld      a,low(Title_LogoSlideOutTable)
+    ld      [Title_LogoBouncePtr],a
+    ld      a,high(Title_LogoSlideOutTable)
+    ld      [Title_LogoBouncePtr+1],a
+    ld      a,2
+    ld      [Title_EnableMenu],a
+    jr      :++
+:   ldh     a,[hPressedButtons]
+    and     BTN_UP | BTN_DOWN | BTN_SELECT
+    jr      z,.skipmenu
+    ld      a,[Title_MenuPos]
+    xor     1
+    ld      [Title_MenuPos],a
+    ld      e,SFX_MENU_CURSOR
+    call    DSFX_PlaySound
+.skipmenu
+:   rst     WaitForVBlank
     ld      a,7
     ld      [rHDMA5],a
-    call    UpdatePalettes
+:   call    UpdatePalettes
     
+    ld      a,[Title_EnableMenu]
+    cp      2
+    jr      z,:++
     ld      hl,Title_LogoBouncePtr
     ld      a,[hl+]
     ld      h,[hl]
@@ -195,9 +264,281 @@ TitleLoop:
     jr      :++
 :   call    Pal_DoFade
 :   call    GBM_Update
-    call    DSFX_Update
-    
-    jr      TitleLoop
+    call    DSFX_Update    
+    jp      TitleLoop
+
+Title_UpdateMenu:
+    ld      a,[Title_EnableMenu]
+    cp      2
+    jr      z,:+
+    ld      a,[sys_FadeState]
+    and     a
+    ret     nz
+    jr      .skip
+:   ld      hl,Title_LogoBouncePtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    ld      a,[hl+]
+    cp      $80
+    jr      z,:+
+    ld      [Title_LogoXPos],a
+    ld      a,l
+    ld      [Title_LogoBouncePtr],a
+    ld      a,h
+    ld      [Title_LogoBouncePtr+1],a
+:   ld      a,[Title_MenuItemPos1]
+    cp      20
+    jr      nz,.skip
+    ld      a,[sys_FadeState]
+    and     a
+    jr      z,Title_ExecuteMenuItem
+    ret
+.skip
+    ld      hl,Title_MenuItemPos1
+    lb      bc,3,0
+.loop
+    ld      a,[hl]
+    bit     7,a
+    jr      z,:+
+    xor     a
+:   ld      e,a
+    ld      d,0
+    ld      a,[Title_MenuSlideDir]
+    and     a
+    push    hl
+    ld      hl,Title_MenuItemScrollInTable
+    jr      z,:+
+    ld      hl,Title_MenuItemScrollOutTable
+:   add     hl,de
+    ld      a,[hl]
+    cp      $80
+    jr      nz,:+
+    inc     hl
+    ld      a,[hl-]
+    push    bc
+    call    Title_DrawMenuItem
+    pop     bc
+    pop     hl
+    inc     hl
+    inc     c
+    dec     b
+    jr      nz,.loop
+    ld      hl,Title_EnableMenu
+    ld      a,[hl]
+    cp      2
+    jr      z,:++
+    ld      [hl],1
+    ret
+:   push    bc
+    call    Title_DrawMenuItem
+    pop     bc
+    pop     hl
+    inc     [hl]
+    inc     hl
+    inc     c
+    dec     b
+    jr      nz,.loop
+    ret
+:   ld      a,[Title_MenuItemPos1]
+    cp      20
+    ret     nz
+    ld      a,[sys_FadeState]
+    and     a
+    jp      z,PalFadeOutWhite
+
+Title_ExecuteMenuItem:
+    ld      b,b
+    ld      a,[Title_MenuPos]
+    and     7
+    rla
+    rla
+    rla
+    ld      e,a
+    ld      d,0
+    ld      hl,Title_MenuPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,de
+    ld      de,5
+    add     hl,de
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    rst     CallHL
+    ret
+
+Title_DrawMenuItem:
+    ldh     [hTemp1],a
+    ld      a,c
+    and     3
+    rla
+    rla
+    rla
+    ld      e,a
+    ld      d,0
+    ld      hl,Title_MenuPtr
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,de
+    ld      a,[hl+]
+    and     a   ; MENU_DIR_NONE
+    ret     z
+    ; dec     a   ; MENU_DIR_UP
+    ; jr      nz,.slidelr
+    ; fall through
+.slideup
+    ld      a,[Title_MenuPos]
+    cp      c
+    call    .getpointer
+    ldh     a,[hOAMPos]
+    ld      e,a
+    ld      d,high(OAMBuffer)
+:   ld      a,[hl+]
+    cp      -1
+    jr      z,:+
+    ld      b,a
+    ldh     a,[hTemp1]
+    add     b
+    ld      [de],a
+    inc     e
+    rept    3
+        ld      a,[hl+]
+        ld      [de],a
+        inc     e
+    endr
+    jr      :-
+:   ld      a,e
+    ldh     [hOAMPos],a
+    ret
+;.slidelr
+;    ld      a,[Title_MenuPos]
+;    cp      c
+;    call    .getpointer
+;    ldh     a,[hOAMPos]
+;    ld      e,a
+;    ld      d,high(OAMBuffer)
+;:   ld      a,[hl+]
+;    cp      -1
+;    jr      z,:+
+;    ld      [de],a
+;    inc     e
+;    ldh     a,[hTemp1]
+;    sub     [hl]
+;    ld      [de],a
+;    inc     e
+;    rept    2
+;        ld      a,[hl+]
+;        ld      [de],a
+;        inc     e
+;    endr
+;    jr      :-
+;:   ld      hl,hTempPtr1
+;    ld      a,[hl+]
+;    ld      h,[hl]
+;    ld      l,a
+;    ld      a,[Title_MenuPos]
+;    cp      c
+;    call    .getpointer
+;    ldh     a,[hOAMPos]
+;    ld      e,a
+;    ld      d,high(OAMBuffer)
+;:   ld      a,[hl+]
+;    cp      -1
+;    jr      z,:+
+;    ld      [de],a
+;    inc     e
+;    ldh     a,[hTemp1]
+;    add     [hl]
+;    ld      [de],a
+;    inc     e
+;    rept    2
+;        ld      a,[hl+]
+;        ld      [de],a
+;        inc     e
+;    endr
+;    jr      :-
+;:   ld      a,e
+;    ldh     [hOAMPos],a
+;    ret
+.getpointer
+    jr      nz,.unselected
+.selected
+    ld      a,[hl+]
+    ld      d,[hl]
+    ld      e,a
+    inc     hl
+    inc     hl
+    inc     hl
+    ld      a,l
+    ldh     [hTempPtr1],a
+    ld      a,h
+    ldh     [hTempPtr1+1],a
+    ld      h,d
+    ld      l,e
+    ret
+.unselected
+    inc     hl
+    inc     hl
+    ld      a,[hl+]
+    ld      d,[hl]
+    ld      e,a
+    inc     hl
+    ld      a,l
+    ldh     [hTempPtr1],a
+    ld      a,h
+    ldh     [hTempPtr1+1],a
+    ld      h,d
+    ld      l,e
+    ret    
+
+Title_StartGame:
+    ; TODO
+    jr      @
+
+Title_GotoOptionsMenu:
+    ; TODO
+    jr      @
+
+Title_ToggleMusic:
+    ; TODO
+    jr      @
+
+Title_ToggleSFX:
+    ; TODO
+    jr      @
+
+Title_GotoCredits:
+    ; TODO
+    jr      @
+
+Title_DummyOption:
+    ; TODO
+    ret
+
+macro menu_entry
+    db  \1  ; appear/disappear animation (or dummy if zero)
+    dw  \2  ; selected OAM pointer
+    dw  \3  ; unselected OAM pointer
+;    dw  \4  ; on selected OAM pointer
+;    dw  \5  ; on unselected OAM pointer
+;    dw  \6  ; off selected OAM pointer
+;    dw  \7  ; off unselected OAM pointer
+    dw  \4  ; selection routine pointer
+    db  0   ; padding
+endm
+
+Title_Menu_Main:
+    menu_entry  MENU_DIR_UP,   Title_StartGameSelectedOAM, Title_StartGameUnselectedOAM, Title_StartGame
+    menu_entry  MENU_DIR_UP,     Title_OptionsSelectedOAM,   Title_OptionsUnselectedOAM, Title_GotoOptionsMenu
+    menu_entry  MENU_DIR_NONE,             Title_DummyOAM,               Title_DummyOAM, Title_DummyOption
+
+;Title_Menu_Options:
+;    menu_entry  MENU_DIR_LR,   Title_MusicSelectedOAM,   Title_MusicUnselectedOAM, Title_MusicOnSelectedOAM, Title_MusicOnUnselectedOAM, Title_MusicOffSelectedOAM, Title_MusicOffUnselectedOAM, Title_ToggleMusic
+;    menu_entry  MENU_DIR_LR,     Title_SFXSelectedOAM,     Title_SFXUnselectedOAM,   Title_SFXOnSelectedOAM,   Title_SFXOnUnselectedOAM,   Title_SFXOffSelectedOAM,   Title_SFXOffUnselectedOAM, Title_ToggleSFX
+;    menu_entry  MENU_DIR_UP, Title_CreditsSelectedOAM, Title_CreditsUnselectedOAM,           Title_DummyOAM,             Title_DummyOAM,            Title_DummyOAM,              Title_DummyOAM, Title_GotoCredits
 
 Title_LogoLand:
     push    hl
@@ -214,19 +555,148 @@ Title_LogoBounceTable:
     db  112,112,112,112,112,112,112,112
     db  112, 104, 96, 88, 80, 72
     db  64, 56, 48, 40, 32, 24, 16, 8, 0
-    cp  $7f
-    db  -8,  -2,   5,  -2,  -2,   3,  -1,  -2
-    db   2,   0,  -2,   1,   0,  -1,   1,   1,  -1,   0
-    db   1,  -1,   0,   1,  -1,   0,   1,   0,   0,   1
-    db   0,   0,   1,   0,  -1,   0,   0,  -1,   0,   0
-    db   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
-    db   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
-    db   0,   0,   0,   0
+    db  $7f
+    db   -4,-4, 3, 3,-3,-2, 2, 2,-2,-2, 2, 2,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1, 1, 1,-1,-1
+    db   0, 0, 0, 0, 0, 0, 0, 0
+    db   0, 0, 0, 0, 0, 0, 0, 0
+    db   0, 0, 0, 0, 0, 0, 0, 0
     db  $80
 
+Title_LogoSlideOutTable:
+    db    1
+    db    1,     2,     4,     6,     7,    10,    12
+    db   15,    18,    22,    25,    29,    33,    37
+    db   42,    47,    52,    57,    62,    68,    73
+    db   79,    85,    91,    97,   103,   109,   115
+    db  122,   127
+    rept    60
+        db      32
+    endr
+    db  $80
 
+Title_OptionFlashTable:
+    rgb8    $ff,$ff,$00
+    rgb8    $ff,$ff,$22
+    rgb8    $ff,$ff,$44
+    rgb8    $ff,$ff,$66
+    rgb8    $ff,$ff,$88
+    rgb8    $ff,$ff,$aa
+    rgb8    $ff,$ff,$cc
+    rgb8    $ff,$ff,$ee
+    rgb8    $ff,$ff,$ff
+    rgb8    $ff,$ff,$ee
+    rgb8    $ff,$ff,$cc
+    rgb8    $ff,$ff,$aa
+    rgb8    $ff,$ff,$88
+    rgb8    $ff,$ff,$66
+    rgb8    $ff,$ff,$44
+    rgb8    $ff,$ff,$22
 
+Title_MenuItemScrollInTable:
+    db      127,121,115,108,101, 95, 88, 82, 76, 70, 64, 58, 53, 47, 42, 37
+    db       33, 29, 24, 21, 17, 14, 11,  9,  6,  4,  3,  2,  1,  0,  0,  0
+    db      $80,0
+Title_MenuItemScrollOutTable:
+    db         0, 0,  1,  2,  3,  4,  6,  9, 11, 14, 17, 21, 24, 29, 33, 37
+    db       42, 47, 53, 58, 64, 70, 76, 82, 88, 95,101,108,115,121,127,127
+    db      $80,127
 
+Title_DummyOAM:
+    db      -1
+
+Title_StartGameSelectedOAM:
+    for n,10
+        oam_entry    92, 40+(n*8), $00+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_StartGameUnselectedOAM:
+    for n,10
+        oam_entry    92, 40+(n*8), $14+(n*2), OAMF_BANK1
+    endr
+    db      -1
+
+Title_OptionsSelectedOAM:
+    for n,8
+        oam_entry   115, 48+(n*8), $28+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_OptionsUnselectedOAM:
+    for n,8
+        oam_entry   115, 48+(n*8), $38+(n*2), OAMF_BANK1
+    endr
+    db      -1
+
+Title_MusicSelectedOAM:
+    for n,5
+        oam_entry    72, 16+(n*8), $48+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_MusicUnselectedOAM:
+    for n,5
+        oam_entry    72, 16+(n*8), $52+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_MusicOnSelectedOAM:
+    for n,3
+        oam_entry    72,120+(n*8), $88+(n*2), OAMF_BANK1
+    endr
+Title_MusicOnUnselectedOAM:
+    for n,3
+        oam_entry    72,120+(n*8), $8e+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_MusicOffSelectedOAM:
+    for n,3
+        oam_entry    72,120+(n*8), $94+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_MusicOffUnselectedOAM:
+    for n,3
+        oam_entry    72,120+(n*8), $9a+(n*2), OAMF_BANK1
+    endr
+    db      -1
+
+Title_SFXSelectedOAM:
+    for n,4
+        oam_entry    96, 16+(n*8), $5c+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_SFXUnselectedOAM:
+    for n,4
+        oam_entry    96, 16+(n*8), $64+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_SFXOnSelectedOAM:
+    for n,3
+        oam_entry    96,120+(n*8), $88+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_SFXOnUnselectedOAM:
+    for n,3
+        oam_entry    96,120+(n*8), $8e+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_SFXOffSelectedOAM:
+    for n,3
+        oam_entry    96,120+(n*8), $94+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_SFXOffUnselectedOAM:
+    for n,3
+        oam_entry    96,120+(n*8), $9a+(n*2), OAMF_BANK1
+    endr
+    db      -1
+    
+Title_CreditsSelectedOAM:
+    for n,4
+        oam_entry    120, 52+(n*8), $6c+(n*2), OAMF_BANK1
+    endr
+    db      -1
+Title_CreditsUnselectedOAM:
+    for n,7
+        oam_entry    120, 52+(n*8), $7a+(n*2), OAMF_BANK1
+    endr
+    db      -1
 
 section "Title gold table",rom0,align[8]
 Title_GoldTable:
@@ -246,24 +716,6 @@ Title_GoldTable:
     rgb8    206,183, 74
     rgb8    223,198, 86
     rgb8    239,213, 98
-
-Title_OptionFlashTable:
-    rgb8    $ff,$ff,$00
-    rgb8    $ff,$ff,$22
-    rgb8    $ff,$ff,$44
-    rgb8    $ff,$ff,$66
-    rgb8    $ff,$ff,$88
-    rgb8    $ff,$ff,$aa
-    rgb8    $ff,$ff,$cc
-    rgb8    $ff,$ff,$ee
-    rgb8    $ff,$ff,$ff
-    rgb8    $ff,$ff,$ee
-    rgb8    $ff,$ff,$cc
-    rgb8    $ff,$ff,$aa
-    rgb8    $ff,$ff,$88
-    rgb8    $ff,$ff,$66
-    rgb8    $ff,$ff,$44
-    rgb8    $ff,$ff,$22
 
 ; ================================================================
 

@@ -100,6 +100,14 @@ macro rgb8
     dw (\1 >> 3) | (\2 >> 3) << 5 | (\3 >> 3) << 10
 endm
 
+; y, x, tile, attributes
+macro oam_entry
+    db  \1+16
+    db  \2+8
+    db  \3
+    db  \4
+endm
+
 ; =============================================================================
 
 section "Reset $00",rom0[$00]
@@ -354,28 +362,28 @@ CopyTiles1BPP:
     jr      nz,CopyTiles1BPP
     ret
 
-CopyTiles1BPPLight:
-    ld      a,[hl+]
-    ld      [de],a
-    inc     de
-    inc     de
-    dec     bc
-    ld      a,b
-    or      c
-    jr      nz,CopyTiles1BPPLight
-    ret
+;CopyTiles1BPPLight:
+;    ld      a,[hl+]
+;    ld      [de],a
+;    inc     de
+;    inc     de
+;    dec     bc
+;    ld      a,b
+;    or      c
+;    jr      nz,CopyTiles1BPPLight
+;    ret
 
 
-CopyTiles1BPPDark:
-    ld      a,[hl+]
-    inc     de
-    ld      [de],a
-    inc     de
-    dec     bc
-    ld      a,b
-    or      c
-    jr      nz,CopyTiles1BPPDark
-    ret
+;CopyTiles1BPPDark:
+;    ld      a,[hl+]
+;    inc     de
+;    ld      [de],a
+;    inc     de
+;    dec     bc
+;    ld      a,b
+;    or      c
+;    jr      nz,CopyTiles1BPPDark
+;    ret
 
 CopyTiles1BPPInverted:
     ld      a,[hl+]

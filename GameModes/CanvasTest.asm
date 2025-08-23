@@ -25,7 +25,7 @@ GM_CanvasTest:
     di
     
     lb      de,1,2
-    call    InitCanvas
+    farcall    InitCanvas
     
     xor     a
     ld      b,CanvasTestRAMEnd-CanvasTestRAMStart
@@ -52,7 +52,7 @@ GM_CanvasTest:
     
     ;lb      hl,0,0
     ;lb      de,128,128
-    ;call    DrawLine
+    ;farcall DrawLine
     
 CanvasTestLoop:
     halt
