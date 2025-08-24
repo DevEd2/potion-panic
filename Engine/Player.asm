@@ -93,6 +93,7 @@ Player_LockControls:                    db
 Player_PauseTempFrame:                  db
 Player_HitboxPointTL:                   dw ; x, y
 Player_HitboxPointBR:                   dw ; x, y
+Player_Health:                          db
 Player_RAMEnd:
 
 ; Set the player's current animation.
@@ -1625,12 +1626,12 @@ HUD_NumberTiles:
     db  $67,$79 ; 9
 
 HUD_TileMap:
-.row1   db  $5c,$5d,$5e,$5e,$6c,$6c,$6c,$6c,$6c,$68,$69,$6a,$6b,$5e,$5e,$5e,$5e,$5e,$5e,$6d
-.row2   db  $6e,$6f,$70,$70,$7e,$7e,$7e,$7e,$7e,$7a,$7b,$7c,$7d,$70,$70,$70,$70,$70,$70,$7f
+.row1   db  $5a,$5b,$5c,$5c,$6a,$6c,$6c,$6c,$6a,$66,$67,$68,$69,$5c,$5c,$5c,$5c,$5c,$5c,$6b
+.row2   db  $6d,$6e,$6f,$6f,$7d,$7f,$7f,$7f,$7d,$79,$7a,$7b,$7c,$6f,$6f,$6f,$6f,$6f,$6f,$7d
 
 HUD_AttrMap:
-.row1   db  $0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f
-.row2   db  $0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e
+.row1   db  $0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e
+.row2   db  $0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f
 
 Player_ProcessProjectiles:
     ld      hl,Player_Projectiles

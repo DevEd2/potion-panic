@@ -25,7 +25,7 @@ GM_CanvasTest:
     di
     
     lb      de,1,2
-    farcall    InitCanvas
+    farcall InitCanvas
     
     xor     a
     ld      b,CanvasTestRAMEnd-CanvasTestRAMStart

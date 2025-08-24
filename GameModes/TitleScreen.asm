@@ -183,6 +183,8 @@ IntS_Title:
     
 section "Title screen loop",romx
 TitleLoop:
+    call    Math_Random ; constantly tick RNG while title screen is active to improve randomness once game actually starts
+
     xor     a
     ldh     [hOAMPos],a
     ldh     a,[hGlobalTick]

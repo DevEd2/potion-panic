@@ -1,11 +1,12 @@
 ; =============================================================================
-; Untitled GBCompo 2025 entry
+; POTION PANIC
 ; Copyright (C) 2025 DevEd
 ;
 ; This project is licensed under the terms of the MIT License. See the LICENSE
 ; file in the root directory of this repository for the full license terms.
 ; =============================================================================
 
+    def percent equs "* $ff / 100"
     charmap "©",$a9
 
     include "hardware.inc/hardware.inc"
@@ -777,6 +778,8 @@ include "GameModes/CanvasTest.asm"
 include "GameModes/Level.asm"
 include "GameModes/TitleScreen.asm"
 include "GameModes/Credits.asm"
+include "GameModes/GBCompo25Splash.asm"
+include "GameModes/Copyright.asm"
 
 ; =============================================================================
 

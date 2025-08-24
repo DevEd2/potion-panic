@@ -226,7 +226,7 @@ GM_Level:
     ; load HUD graphics
     ld      a,1
     ldh     [rVBK],a
-    ld      de,_SCRN0-$240
+    ld      de,_SCRN0-$260
     call    DecodeWLE
     ld      a,6
     call    LoadPal
@@ -277,16 +277,8 @@ GM_Level:
     
     call    DeleteAllObjects
     ; create test object (TEMP REMOVE ME)
-    ld      b,OBJID_Potion
-    lb      de,140,140
-    call    CreateObject
-    
-    ; ld      b,OBJID_Explosion
-    ; ld      de,$20c0
-    ; call    CreateObject
-    
-    ; ld      b,OBJID_PuffOfSmoke
-    ; ld      de,$40c0
+    ; ld      b,OBJID_Potion
+    ; lb      de,140,140
     ; call    CreateObject
     
     ld      a,low(ScreenShake_Dummy)

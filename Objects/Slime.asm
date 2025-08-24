@@ -319,7 +319,7 @@ Slime_CheckDefeat:
     set     OBJB_YFLIP,[hl]
     ld      hl,Level_EnemyCount
     dec     [hl]
-    ret
+    jp      Object_ProcessDrops
 
 rsreset
 def SLIME_F_IDLE1        rb

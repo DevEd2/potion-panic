@@ -7,6 +7,8 @@ assert _RS <= 16, "Object uses too much RAM! (Max size = $10, got {_RS})"
 def POTION_HIT_WIDTH = 8
 def POTION_HIT_HEIGHT = 12
 
+def POTION_DROP_CHANCE = 20 percent
+
 Obj_Potion:
 ; Routine pointers.
 ; OBJ_STATE is used as an index into this
@@ -34,6 +36,41 @@ Obj_Potion_Init:
     ld      [hl+],a ; object hitbox width (from center)
     ld      a,POTION_HIT_HEIGHT
     ld      [hl+],a ; object hitbox height (from bottom center)
+    
+    ; floor check
+:   ldobjp  OBJ_X
+    ld      a,[hl]
+    and     $f0
+    ld      b,a
+    inc     l
+    inc     l
+    ld      a,[hl]
+    add     8
+    and     $f0
+    ldh     [hTemp1],a
+    swap    a
+    or      b
+    ld      l,a
+    ld      h,high(Level_Map)
+    ld      a,[hl]
+    ld      c,a
+    ld      b,0
+    call    GetCollisionIndex
+    ld      a,b
+    and     a                   ; is tile nonsolid?
+    jr      z,.skipfloor        ; if yes, skip
+    
+    cp      COLLISION_SOLID     ; is tile solid?
+    jr      z,.floor            ; if yes, run floor reset routine
+    cp      COLLISION_TOPSOLID  ; is tile topsolid?
+    jr      nz,.skipfloor       ; if not, skip
+.floor
+    ldobjp  OBJ_Y
+    ld      a,[hl]
+    dec     a
+    ld      [hl],a
+    jr      :-
+.skipfloor
     
     ; fall through
 

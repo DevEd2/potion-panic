@@ -223,7 +223,7 @@ JackOLantern_CheckDefeat:
     dec     [hl]
     ldobjrp JackOLantern_Frame
     ld      [hl],JACKOLANTERN_F_DEFEAT
-    ret
+    jp      Object_ProcessDrops
 
 rsreset
 def JACKOLANTERN_F_FLOAT_1      rb

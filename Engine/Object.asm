@@ -367,6 +367,18 @@ Object_CheckPlayerIntersecting:
     and     a
     ret
 
+Object_ProcessDrops:
+    call    Math_Random
+    cp      POTION_DROP_CHANCE
+    ret     nc
+    ldobjp  OBJ_X
+    ld      d,[hl]
+    inc     l
+    inc     l
+    ld      e,[hl]
+    ld      b,OBJID_Potion
+    jp      CreateObject
+
 ; ================================================================
 
     include "Objects/Pointers.asm"

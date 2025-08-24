@@ -317,7 +317,7 @@ Imp_CheckDefeat:
     dec     [hl]
     ldobjrp Imp_Frame
     ld      [hl],IMP_F_DEFEAT
-    ret
+    jp      Object_ProcessDrops
 
 rsreset
 def IMP_F_FLOAT_1      rb
