@@ -1,6 +1,6 @@
 section fragment "Object pointer table",rom0
 ObjPointers:
-    objdef  Test
+    objdef  Template
     objdef  Sparkle
     objdef  Frog
     objdef  BigText
@@ -10,3 +10,4 @@ ObjPointers:
     objdef  Imp
     objdef  ImpFireball
     objdef  Slime
+    objdef  Potion

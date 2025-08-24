@@ -91,6 +91,8 @@ Player_ControlBitFlipMask:              db
 Player_LockInPlace:                     db
 Player_LockControls:                    db
 Player_PauseTempFrame:                  db
+Player_HitboxPointTL:                   dw ; x, y
+Player_HitboxPointBR:                   dw ; x, y
 Player_RAMEnd:
 
 ; Set the player's current animation.
@@ -567,6 +569,25 @@ ProcessPlayer:
     set     BIT_PLAYER_AIRBORNE,[hl]    ; set airborne flag
     ; animate player
 .animateplayer
+    ; actually, set collision points first
+    get_const   b,PLAYER_WIDTH
+    ld      a,[Player_XPos]
+    sub     b
+    ld      [Player_HitboxPointTL],a
+    ;ld      [Player_HitboxPointBL],a
+    add     b
+    add     b
+    ;ld      [Player_HitboxPointTR],a
+    ld      [Player_HitboxPointBR],a
+    ld      a,[Player_YPos]
+    ;ld      [Player_HitboxPointBL+1],a
+    ld      [Player_HitboxPointBR+1],a
+    get_const b,PLAYER_HEIGHT
+    ld      a,[Player_YPos]
+    sub     b
+    ld      [Player_HitboxPointTL+1],a
+    ;ld      [Player_HitboxPointTR+1],a
+    ; *NOW* animate the player
     ld      a,[Player_AnimTimer]
     dec     a
     ld      [Player_AnimTimer],a

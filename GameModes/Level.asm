@@ -236,6 +236,14 @@ GM_Level:
     ; load pause text graphics
     ld      de,$8e00
     call    DecodeWLE
+    
+    ; load potion graphics
+    xor     a
+    ldh     [rVBK],a
+    ld      hl,GFX_Potion
+    ld      de,$84a0
+    call    DecodeWLE
+    
     popbank
     
     ; screen setup
@@ -269,9 +277,9 @@ GM_Level:
     
     call    DeleteAllObjects
     ; create test object (TEMP REMOVE ME)
-    ; ld      b,OBJID_Frog
-    ; lb      de,128,224
-    ; call    CreateObject
+    ld      b,OBJID_Potion
+    lb      de,140,140
+    call    CreateObject
     
     ; ld      b,OBJID_Explosion
     ; ld      de,$20c0
@@ -955,6 +963,8 @@ Pal_HUD:            incbin  "GFX/hud.pal"
 GFX_PauseText:      incbin  "GFX/pausetext.2bpp.wle"
 Pal_PauseText:      incbin  "GFX/pausetext.pal"         ; default palette (rainbow)
 Pal_PauseTextRare:  incbin  "GFX/pausetext_rare.pal"    ; rare pause text (lesbian pride flag colors)
+
+GFX_Potion:         incbin  "GFX/potion.2bpp.wle"
 
 PauseTextOAM:
     db  8,-16 + (0 * 8),$e0,$8

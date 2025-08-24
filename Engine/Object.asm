@@ -330,6 +330,43 @@ Obj_CheckProjectileIntersecting:
     pop     bc
     ret
 
+; Returns carry flag if the player intersects with current object.
+; INPUT:    none
+; OUTPUT:   zero flag on collision
+; DESTROYS: ?
+Object_CheckPlayerIntersecting:
+    ldobjp  OBJ_HIT_WIDTH
+    ld      b,[hl]
+    ldobjp  OBJ_X
+    ld      a,[hl]
+    sub     b
+    ld      e,a
+    ld      a,[Player_HitboxPointTL]
+    cp      e
+    jr      c,.nocollision
+    ld      a,[hl]
+    add     b
+    ld      e,a
+    ld      a,[Player_HitboxPointBR]
+    cp      e
+    jr      nc,.nocollision
+    
+    ldobjp  OBJ_HIT_HEIGHT
+    ld      b,[hl]
+    ldobjp  OBJ_Y
+    ld      a,[hl]
+    sub     b
+    ld      e,a
+    ld      a,[Player_HitboxPointTL+1]
+    cp      e
+    jr      nc,.nocollision
+    ld      a,[Player_HitboxPointBR+1]
+    cp      [hl]
+    ret
+.nocollision
+    and     a
+    ret
+
 ; ================================================================
 
     include "Objects/Pointers.asm"
