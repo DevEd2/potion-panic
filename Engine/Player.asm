@@ -1,3 +1,12 @@
+; Random facts about the player character!
+; - Name: Natalie
+; - Age: 24
+; - Height: 5'11" (180cm)
+; - She started as a stage magician, but later realized she actually has magical powers
+; - Her in-game outfit is actually her stage outfit
+; - She is a lesbian
+; - Her broom is named Boris, he was accidentally brought to life due to a failed magic spell
+
 ; !!! KNOWN ISSUES:
 ; - When tiny, level top boundary is 16 pixels lower than it should be
 ; - Player projectiles can get stuck or clip through collision if they hit corners
@@ -55,15 +64,6 @@ if BUILD_DEBUG
 def BIT_PLAYER_NOCLIP       rb
 endc
 
-rsreset
-def POTION_TYPE_POSITIVE            rb
-def POTION_TYPE_RISKY               rb
-def POTION_TYPE_NEGATIVE            rb
-def POTION_TYPE_ONESHOT_POSITIVE    rb
-def POTION_TYPE_ONESHOT_RISKY       rb
-def POTION_TYPE_ONESHOT_NEGATIVE    rb
-def POTION_TYPE_COSMETIC            rb
-
 Player_RAMStart:
 Player_XPos:    ds  2   ; x position (Q16.8)
 Player_YPos:    ds  2   ; y position (Q8.8)
@@ -85,8 +85,6 @@ Player_AnimCurrent:                     dw
 Player_AnimFlag:                        db
 Player_WandTimer:                       db
 Player_Projectiles: ds  MAX_PROJECTILES * SIZEOF_PROJECTILE
-Player_CurrentPotionEffect:             db
-Player_PotionEffectTimer:               dw
 Player_ControlBitFlipMask:              db
 Player_LockInPlace:                     db
 Player_LockControls:                    db
@@ -2108,23 +2106,7 @@ Player_SetAnimation:
     ld      [Player_AnimTimer],a
     ret
 
-macro potion_effect_def
-    db      \1                          ; potion type
-    db      \2                          ; string ID
-    db      bank(PotionEffect_\3_Start) ; bank of effect start code
-    dw      PotionEffect_\3_Start       ; pointer to effect start code
-    db      bank(PotionEffect_\3_End)   ; bank of effect end code
-    dw      PotionEffect_\3_End         ; pointer to effect end code
-endm
     
-Player_PotionEffectList:
-    potion_effect_def   POTION_TYPE_RISKY, EFFECT_STR_FAT, Fat
-    potion_effect_def   POTION_TYPE_RISKY, EFFECT_STR_TINY, Tiny
-
-rsreset
-def EFFECT_STR_FAT  rb
-def EFFECT_STR_TINY rb
-
 ;Player_PotionEffectStrings:
 ;    ;    ####################
 ;    db  "    UH-OH, BIG!     "  ; fat

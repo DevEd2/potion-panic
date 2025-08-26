@@ -134,16 +134,14 @@ Obj_Potion_Idle:
     inc     e
     ld      a,h
     ld      [de],a
-    ; TODO
 .skipfloor
     call    Object_CheckPlayerIntersecting
     jr      nc,Obj_Potion_Draw
     ; delete object
     ldobjp  OBJ_ID
     ld      [hl],0
-    ; TODO: Give potion effect
+    jp      Potion_GiveEffect
 
-    ; fall through
 Obj_Potion_Draw:
     ldobjp  OBJ_FLAGS
     bit     OBJB_VISIBLE,[hl]

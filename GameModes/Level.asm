@@ -276,6 +276,7 @@ GM_Level:
     ld      [Level_CameraTargetY],a
     
     call    DeleteAllObjects
+    call    Potion_InitEffects
     ; create test object (TEMP REMOVE ME)
     ; ld      b,OBJID_Potion
     ; lb      de,140,140

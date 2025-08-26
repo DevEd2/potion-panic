@@ -104,7 +104,7 @@ if INC_DIV
 Math_Div16:
     ld      a,b
     and     a
-    jr      z,.error
+    jr      z,.error ; cannot divide by zero!
     ld      c,16
     xor     a
 .loop
@@ -247,10 +247,10 @@ if INC_ATAN2
 Math_ATan2:
     ld      de,$8000
     ld      a,c
-    add     a,d
+    add     d
     rl      e           ; y-
     ld      a,b
-    add     a,d
+    add     d
     rl      e           ; x-
     dec     e
     jr      z,.q1
@@ -263,9 +263,9 @@ Math_ATan2:
     ld      a,[hl]      ; 32*log2(x)
     ld      l,c
     sub     [hl]        ; 32*log2(x/y)
-    jr      nc,.1       ; |x|>|y|
+    jr      nc,:+       ; |x|>|y|
     neg                 ; |x|<|y|   A = 32*log2(y/x)
-.1  ld      l,a
+:   ld      l,a
     ld      h,Math_ATanTable / 256
     ld      a,[hl]
     ret     c           ; |x|<|y|
@@ -294,7 +294,7 @@ Math_ATan2:
     neg
     ld      c,a
     call    .q0
-    add     a,128
+    add     128
     ret
 endc
 
@@ -315,6 +315,7 @@ Math_InitRandSeed:
 ; Returns a random number in HL.
 ; INPUT:    none
 ; OUTPUT:   hl = result (16-bit)
+;           de = previous result (16-bit)
 ;            a = result (8-bit)
 ; DESTROYS: af, bc
 Math_Random:
@@ -322,6 +323,8 @@ Math_Random:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
+    ld      d,h
+    ld      e,l
     ld      c,l
     ld      b,h
     add     hl,hl

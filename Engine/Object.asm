@@ -333,7 +333,8 @@ Obj_CheckProjectileIntersecting:
 ; Returns carry flag if the player intersects with current object.
 ; INPUT:    none
 ; OUTPUT:   zero flag on collision
-; DESTROYS: ?
+; DESTROYS: a b e hl
+; !!! KNOWN ISSUE: Actual collision area is offset
 Object_CheckPlayerIntersecting:
     ldobjp  OBJ_HIT_WIDTH
     ld      b,[hl]
@@ -367,6 +368,10 @@ Object_CheckPlayerIntersecting:
     and     a
     ret
 
+; Determine whether or not to drop an item.
+; INPUT:    none
+; OUTPUT:   none
+; DESTROYS: af bc de hl
 Object_ProcessDrops:
     call    Math_Random
     cp      POTION_DROP_CHANCE
