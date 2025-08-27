@@ -9,7 +9,6 @@
 
 ; !!! KNOWN ISSUES:
 ; - When tiny, level top boundary is 16 pixels lower than it should be
-; - Player projectiles can get stuck or clip through collision if they hit corners
 
 section "Player RAM",wram0
 
@@ -1904,7 +1903,7 @@ Player_ProcessProjectiles:
     xor     a
     ld      [hl+],a
     ld      a,[hl]
-    and     $f0
+    ;and     $f0
     add     2
     ld      [hl+],a
     push    hl
@@ -1966,8 +1965,8 @@ Player_ProcessProjectiles:
     xor     a
     ld      [hl+],a
     ld      a,[hl]
-    and     $f0
-    add     $e
+    ;and     $f0
+    sub     2
     ld      [hl+],a
     push    hl
     ld      a,[hl+]
