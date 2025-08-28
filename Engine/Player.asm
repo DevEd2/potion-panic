@@ -747,7 +747,7 @@ Player_CollisionResponseVertical:
     ld      a,[Player_YPos]
     and     $f0
     push    af
-    get_const b,-16+PLAYER_HEIGHT
+    get_const b,PLAYER_HEIGHT
     pop     af
     add     b
     ld      [Player_YPos],a

@@ -1,6 +1,3 @@
-; !!! KNOWN ISSUES:
-; - Fireballs can sometimes expire prematurely due to possible level collision mishap
-
 def FIREBALL_HIT_WIDTH      = 6
 def FIREBALL_HIT_HEIGHT     = 12
 
@@ -76,7 +73,6 @@ Obj_Fireball_Float:
     inc     l
     inc     l
     ld      a,[hl]
-    add     c
     and     $f0
     ldh     [hTemp1],a
     swap    a
