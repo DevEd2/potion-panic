@@ -102,7 +102,7 @@ Potion_EffectPointers:
     effect_def  Nothing
     effect_def  Fat
     effect_def  Tiny
-    ;effect_def  ReverseControls
+    effect_def  ReverseControls
 .end
 
 def NUM_POTION_EFFECTS equ (Potion_EffectPointers.end-Potion_EffectPointers)/4
@@ -117,6 +117,7 @@ PotionEffect_Nothing_End:
 
 PotionEffect_Fat_Start:
     ld      hl,Player_Flags
+    res     BIT_PLAYER_TINY,[hl]
     set     BIT_PLAYER_FAT,[hl]
     ret
 
@@ -127,6 +128,7 @@ PotionEffect_Fat_End:
 
 PotionEffect_Tiny_Start:
     ld      hl,Player_Flags
+    res     BIT_PLAYER_FAT,[hl]
     set     BIT_PLAYER_TINY,[hl]
     ret
 

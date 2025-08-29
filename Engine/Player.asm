@@ -41,6 +41,8 @@ def PLAYER_HEIGHT_FAT           = 24
 def PLAYER_WIDTH_TINY           = 1
 def PLAYER_HEIGHT_TINY          = 3
 
+def PLAYER_INVULNERABILITY_TIME = 60 * 2
+
 def SIZEOF_PROJECTILE = 10
 def MAX_PROJECTILES = 2
 
@@ -91,6 +93,8 @@ Player_PauseTempFrame:                  db
 Player_HitboxPointTL:                   dw ; x, y
 Player_HitboxPointBR:                   dw ; x, y
 Player_Health:                          db
+Player_InvulnerabilityTimer:            db
+Player_DoHurtAnim:                      db  ; if 1, hurt animation is playing; if 2, death animation is playing
 Player_RAMEnd:
 
 ; Set the player's current animation.
@@ -112,6 +116,62 @@ macro player_set_animation
     ld      de,Player_Anim_Tiny_\1
 .setanim\@
     call    Player_SetAnimation
+endm
+
+macro player_set_animation_no_fat
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_TINY,a
+    jr      nz,.tiny\@
+.normal\@
+    ld      de,Player_Anim_\1
+    jr      .setanim\@
+.tiny\@
+    ld      de,Player_Anim_Tiny_\1
+.setanim\@
+    call    Player_SetAnimation
+endm
+
+macro player_set_animation_no_tiny
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_FAT,a
+    jr      nz,.fat\@
+.normal\@
+    ld      de,Player_Anim_\1
+    jr      .setanim\@
+.fat\@
+    ld      de,Player_Anim_Fat_\1
+    jr      .setanim\@
+.setanim\@
+    call    Player_SetAnimation
+endm
+
+macro player_set_animation_normal_only
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_FAT,a
+    jr      nz,.notnormal\@
+    bit     BIT_PLAYER_TINY,a
+    jr      nz,.notnormal\@
+    ld      de,Player_Anim_\1
+    call    Player_SetAnimation
+.notnormal\@
+endm
+
+macro player_set_animation_fat_only
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_FAT,a
+    jr      z,.notfat\@
+    ld      de,Player_Anim_Fat_\1
+    call    Player_SetAnimation
+.notfat\@
+endm
+
+macro player_set_animation_tiny_only
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_TINY,a
+    jr      z,.nottiny\@
+    ld      de,Player_Anim_Tiny_\1
+    call    Player_SetAnimation
+.nottiny\@
 endm
 
 macro player_set_animation_direct
@@ -178,6 +238,9 @@ InitPlayer:
     ; ld      hl,BorisPalette
     ; ld      a,10
     ; call    LoadPal
+    
+    ld      a,3
+    ld      [Player_Health],a
 
     player_set_animation_direct Idle
     jp      Player_InitHUD
@@ -1080,9 +1143,45 @@ Player_Wand:
     ret
 
 section fragment "Player ROM0",rom0
- 
+
+KillPlayer:
+    player_set_animation Death
+    ; TODO
+    ret
+    
+HurtPlayer:
+    ld      a,[Player_InvulnerabilityTimer]
+    and     a
+    ret     nz
+    ld      a,[Player_Health]
+    and     a
+    jr      z,KillPlayer
+    dec     a
+    ld      [Player_Health],a
+    ld      a,PLAYER_INVULNERABILITY_TIME
+    ld      [Player_InvulnerabilityTimer],a
+    ld      e,SFX_HURT
+    call    DSFX_PlaySound
+    ; play hurt animation
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_TINY,a
+    ret     nz ; skip if player is tiny
+    ld      a,1
+    ld      [Player_DoHurtAnim],a
+    player_set_animation_no_tiny Hurt
+    ret
+
 DrawPlayer:
-    ; copy GFX
+    ; flash if player has mercy invincibility
+    ld      a,[Player_InvulnerabilityTimer]
+    and     a
+    jr      z,:+
+    dec     a
+    ld      [Player_InvulnerabilityTimer],a
+    ldh     a,[hGlobalTick]
+    bit     0,a
+    ret     z
+:   ; copy GFX
     ld      a,1
     ldh     [rVBK],a
     farload bc,PlayerTiles
@@ -1251,6 +1350,7 @@ DrawPlayerLayers:
 .frames
     dbbw frame_hurt_layer1,     2,  Player_OAM_Hurt_Layer2
     dbbw frame_broom_layer1,    2,  Player_OAM_Broom_Layer2
+    dbbw frame_death_layer1,    2,  Player_OAM_Death_Layer2
     db  -1
 
 Player_OAM_Hurt_Layer2:
@@ -1268,6 +1368,14 @@ Player_OAM_Broom_Layer2:
     ; flipped
     db   0+16, 8 + 8,$fc, $a | OAMF_XFLIP
     db   0+16, 8 + 0,$fe, $a | OAMF_XFLIP
+    
+Player_OAM_Death_Layer2:
+    ; normal
+    db -16+16, 7 - 8,$f8, $9
+    db -16+16, 7 + 0,$fa, $9
+    ; flipped
+    db -16+16, 7 + 0,$f8, $9 | OAMF_XFLIP
+    db -16+16, 7 - 8,$fa, $9 | OAMF_XFLIP
     
     
 Player_OAM:
@@ -1494,6 +1602,36 @@ Player_Anim_Broom:
     db  1,frame_broom_layer1
     db  $ff
     dw  Player_Anim_Broom
+
+Player_Anim_Hurt:
+    db  1,frame_hurt_layer1
+    db  $ff
+    dw  Player_Anim_Hurt
+    
+Player_Anim_Fat_Hurt:
+    db  1,frame_hurt_fat_layer1
+    db  $ff
+    dw  Player_Anim_Tiny_Hurt
+    
+Player_Anim_Tiny_Hurt:
+    db  1,frame_tiny_1
+    db  $ff
+    dw  Player_Anim_Tiny_Hurt
+
+Player_Anim_Death:
+    db  1,frame_death_layer1
+    db  $ff
+    dw  Player_Anim_Death
+    
+Player_Anim_Fat_Death:
+    db  1,frame_death_fat_layer1
+    db  $ff
+    dw  Player_Anim_Tiny_Death
+    
+Player_Anim_Tiny_Death:
+    db  1,frame_tiny_1
+    db  $ff
+    dw  Player_Anim_Tiny_Death
 
 ; ========
 
@@ -2221,4 +2359,8 @@ PlayerTiles:
     animframe   broom_layer1,%11110110
     
     animframe   hurt_layer1,%11110110
+    animframe   hurt_fat_layer1,%11111111
+    
+    animframe   death_layer1,%11101111
+    animframe   death_fat_layer1,%11111111
     

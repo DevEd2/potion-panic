@@ -332,37 +332,42 @@ Obj_CheckProjectileIntersecting:
 
 ; Returns carry flag if the player intersects with current object.
 ; INPUT:    none
-; OUTPUT:   zero flag on collision
-; DESTROYS: a b e hl
-; !!! KNOWN ISSUE: Actual collision area is offset
+; OUTPUT:   carry on collision
 Object_CheckPlayerIntersecting:
-    ldobjp  OBJ_HIT_WIDTH
-    ld      b,[hl]
-    ldobjp  OBJ_X
-    ld      a,[hl]
-    sub     b
-    ld      e,a
-    ld      a,[Player_HitboxPointTL]
-    cp      e
-    jr      c,.nocollision
-    ld      a,[hl]
-    add     b
-    ld      e,a
-    ld      a,[Player_HitboxPointBR]
-    cp      e
-    jr      nc,.nocollision
-    
-    ldobjp  OBJ_HIT_HEIGHT
-    ld      b,[hl]
     ldobjp  OBJ_Y
     ld      a,[hl]
-    sub     b
     ld      e,a
+    ; check if object is above player
+    ldobjp  OBJ_HIT_HEIGHT
+    ld      a,e
+    sub     [hl]
+    ld      b,a
+    ld      a,[Player_HitboxPointBR+1]
+    cp      b
+    jr      c,.nocollision
+    ; check if object is below player
     ld      a,[Player_HitboxPointTL+1]
     cp      e
-    jr      nc,.nocollision
-    ld      a,[Player_HitboxPointBR+1]
-    cp      [hl]
+    ret     nc
+    
+    ldobjp  OBJ_X
+    ld      a,[hl]
+    ld      e,a
+    ; check if object is to left of player
+    ldobjp  OBJ_HIT_WIDTH
+    ld      a,e
+    add     [hl]
+    ld      b,a
+    ld      a,[Player_HitboxPointTL]
+    cp      b
+    ret     nc
+    ; check if object is to right of player
+    ld      a,e
+    sub     [hl]
+    ld      b,a
+    ld      a,[Player_HitboxPointBR]
+    cp      b
+    ccf
     ret
 .nocollision
     and     a

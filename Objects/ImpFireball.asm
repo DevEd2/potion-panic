@@ -1,5 +1,5 @@
-def FIREBALL_HIT_WIDTH      = 6
-def FIREBALL_HIT_HEIGHT     = 12
+def FIREBALL_HIT_WIDTH      = 3
+def FIREBALL_HIT_HEIGHT     = 6
 
 rsreset
 def FIREBALL_STATE_INIT     rb
@@ -55,9 +55,9 @@ Obj_Fireball_Init:
     inc     c
     ld      h,b
     ld      l,c
-    xor     a
+    ld      a,FIREBALL_HIT_WIDTH
     ld      [hl+],a     ; object hitbox width (from center)
-    ld      [hl+],a     ; object hitbox height (from center)
+    ld      [hl],FIREBALL_HIT_HEIGHT ; object hitbox height (from center)
 
     ; fall through
 
@@ -85,7 +85,15 @@ Obj_Fireball_Float:
     call    GetCollisionIndex
     ld      a,b
     dec     a                       ; have we collided with a solid tile?
-    jr      nz,Obj_Fireball_Draw    ; if not, skip ahead
+    jr      nz,:+                   ; if not, skip ahead
+    ldobjp  OBJ_ID
+    ld      [hl],OBJID_Explosion    ; turn this object into an explosion
+    inc     l
+    ld      [hl],0                  ; force object to reinitialize itself on the next tick
+    ret
+:   call    Object_CheckPlayerIntersecting
+    jr      nc,Obj_Fireball_Draw
+    call    HurtPlayer
     ldobjp  OBJ_ID
     ld      [hl],OBJID_Explosion    ; turn this object into an explosion
     inc     l
