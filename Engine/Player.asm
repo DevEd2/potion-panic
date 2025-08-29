@@ -248,6 +248,26 @@ InitPlayer:
 section fragment "Player ROMX",romx
 
 ProcessPlayer:
+    ; reset level if player goes below screen
+    ld      a,[Player_DoHurtAnim]
+    cp      3
+    jr      z,.restart
+    cp      2
+    jr      nz,.notdead
+    ld      a,[Player_YPos]
+    cp      $10
+    jr      nc,.notdead
+    call    PalFadeOutWhite
+    ld      a,3
+    ld      [Player_DoHurtAnim],a
+.restart
+    ld      a,[sys_FadeState]
+    and     a
+    ret     nz
+    ld      a,1
+    ld      [Level_ResetFlag],a
+    ret
+.notdead
     xor     a
     ld      [Player_AnimFlag],a
     get_const hl,PLAYER_GRAVITY
@@ -263,9 +283,9 @@ ProcessPlayer:
     endc
     
     ; wand fire check
-    ;ld      hl,Player_Flags
-    ;bit     BIT_PLAYER_WAND,[hl]
-    ;jr      nz,.nowand
+    ld      a,[Player_DoHurtAnim]
+    and     a
+    jr      nz,.nowand
     ld      a,[Player_LockControls]
     and     a
     jr      nz,.nowand
@@ -303,6 +323,9 @@ ProcessPlayer:
     ld      a,[Player_LockControls]
     and     a
     jr      nz,.nojump
+    ld      a,[Player_DoHurtAnim]
+    and     a
+    jp      nz,.skipcontrols
     ldh     a,[hPressedButtons]
     bit     BIT_A,a
     jr      z,.nojump
@@ -475,7 +498,7 @@ ProcessPlayer:
     ; gravity
     ld      hl,Player_Flags
     bit     BIT_PLAYER_AIRBORNE,[hl]
-    jr      z,:+ ; prevent erroneous speed build up
+    jr      z,:++ ; prevent erroneous speed build up
     ld      hl,Player_YVel
     ld      a,[hl+]
     ld      b,[hl]
@@ -490,13 +513,16 @@ ProcessPlayer:
     ld      a,h
     ld      [Player_YVel+1],a
     bit     7,h
-    jr      nz,:+
+    jr      nz,:++
     ;ld      a,[Player_Flags]
     ;bit     BIT_PLAYER_WAND,a
-    ;jr      nz,:+
+    ;jr      nz,:++
+    ld      a,[Player_DoHurtAnim]
+    and     a
+    jr      nz,:+
     player_set_animation Fall
     ; terminal velocity
-    push    de
+:   push    de
     ld      d,h
     ld      e,l
     ld      bc,PLAYER_TERMINAL_VELOCITY
@@ -700,6 +726,9 @@ Player_GetColMapIndex:
     ret
 
 Player_CollisionResponseVertical:
+    ld      a,[Player_DoHurtAnim]
+    cp      2
+    ret     z
     pushbank
     ld      a,[Level_ColMapBank]
     bankswitch_to_a
@@ -805,6 +834,12 @@ Player_CollisionResponseVertical:
     ld      [Player_CoyoteTimer],a
     ld      [Player_YVel],a
     ld      [Player_YVel+1],a
+    ld      a,[Player_DoHurtAnim]
+    and     a
+    jr      z,:+
+    xor     a
+    ld      [Player_LockInPlace],a
+    ld      [Player_DoHurtAnim],a
     jr      :+
 .solidceiling
     ld      a,[Player_YPos]
@@ -820,6 +855,9 @@ Player_CollisionResponseVertical:
     ret
   
 Player_CollisionResponseHorizontal:
+    ld      a,[Player_DoHurtAnim]
+    cp      2
+    ret     z
     pushbank
     ld      a,[Level_ColMapBank]
     bankswitch_to_a
@@ -1145,10 +1183,30 @@ Player_Wand:
 section fragment "Player ROM0",rom0
 
 KillPlayer:
-    player_set_animation Death
-    ; TODO
+    player_set_animation Death; play hurt animation
+    ld      a,2
+    ld      [Player_DoHurtAnim],a
+    dec     a
+    ld      [Player_LockInPlace],a
+    ld      hl,Player_XVel
+    ld      [Player_InvulnerabilityTimer],a
+    ld      [hl],0
+    inc     hl
+    ld      [hl],0
+    inc     hl
+    ld      [hl],low(-$300)
+    inc     hl
+    ld      [hl],high(-$300)
+    ld      hl,Player_YPos
+    dec     [hl]
+    ld      hl,Player_Flags
+    set     BIT_PLAYER_AIRBORNE,[hl]
+    ld      a,low(PLAYER_GRAVITY)
+    ld      [Player_Grav],a
+    ld      a,high(PLAYER_GRAVITY)
+    ld      [Player_Grav],a
     ret
-    
+
 HurtPlayer:
     ld      a,[Player_InvulnerabilityTimer]
     and     a
@@ -1169,10 +1227,30 @@ HurtPlayer:
     ld      a,1
     ld      [Player_DoHurtAnim],a
     player_set_animation_no_tiny Hurt
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_TINY,a
+    ret     nz
+    ld      a,1
+    ld      [Player_LockInPlace],a
+    ld      hl,Player_XVel
+    ld      [hl],0
+    inc     hl
+    ld      [hl],0
+    inc     hl
+    ld      [hl],low(-$200)
+    inc     hl
+    ld      [hl],high(-$200)
+    ld      hl,Player_YPos
+    dec     [hl]
+    ld      hl,Player_Flags
+    set     BIT_PLAYER_AIRBORNE,[hl]
     ret
 
 DrawPlayer:
     ; flash if player has mercy invincibility
+    ld      a,[Player_DoHurtAnim]
+    and     a
+    jr      nz,:+
     ld      a,[Player_InvulnerabilityTimer]
     and     a
     jr      z,:+
@@ -1374,8 +1452,8 @@ Player_OAM_Death_Layer2:
     db -16+16, 7 - 8,$f8, $9
     db -16+16, 7 + 0,$fa, $9
     ; flipped
-    db -16+16, 7 + 0,$f8, $9 | OAMF_XFLIP
-    db -16+16, 7 - 8,$fa, $9 | OAMF_XFLIP
+    db -16+16, 9 + 0,$f8, $9 | OAMF_XFLIP
+    db -16+16, 9 - 8,$fa, $9 | OAMF_XFLIP
     
     
 Player_OAM:

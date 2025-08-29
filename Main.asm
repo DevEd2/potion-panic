@@ -278,6 +278,8 @@ ProgramStart:
     
     call    Math_InitRandSeed
     
+    ld      a,bank(GM_Debug)
+    bankswitch_to_a
     jp      GM_Debug
     
     jr      @
@@ -788,11 +790,6 @@ include "Engine/ErrorHandler.asm"
 ; =============================================================================
 
 include "Audio/Audio.asm"
-
-; =============================================================================
-
-Font:   incbin  "GFX/font.1bpp"
-.end
 
 ; =============================================================================
 

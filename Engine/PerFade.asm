@@ -24,40 +24,40 @@ InitPalBuffers:
 ; INPUT:     a = color index to modify
 ;           hl = color 
 ; DESTROYS:  a, b, hl
-SetColor::
-    push    de
-    and     15
-    bit     3,a
-    jr      nz,.obj
-    add     a   ; x2
-    ld      b,a
-    ld      de,sys_BGPalTransferBuf
-    add     e
-    ld      e,a
+;_SetColor::
+;    push    de
+;    and     15
+;    bit     3,a
+;    jr      nz,.obj
+;    add     a   ; x2
+;    ld      b,a
+;    ld      de,sys_BGPalTransferBuf
+;    add     e
+;    ld      e,a
     
-    ld      a,h
-    ld      [de],a
-    inc     e
-    ld      a,l
-    ld      [de],a
-    pop     de
-    ret
-.obj
-    add     a   ; x2
-    add     a   ; x4
-    add     a   ; x8
-    ld      b,a
-    ld      de,sys_ObjPalTransferBuf
-    add     e
-    ld      e,a
+;    ld      a,h
+;    ld      [de],a
+;    inc     e
+;    ld      a,l
+;    ld      [de],a
+;    pop     de
+;    ret
+;.obj
+;    add     a   ; x2
+;    add     a   ; x4
+;    add     a   ; x8
+;    ld      b,a
+;    ld      de,sys_ObjPalTransferBuf
+;    add     e
+;    ld      e,a
 
-    ld      a,h
-    ld      [de],a
-    inc     e
-    ld      a,l
-    ld      [de],a
-    pop     de
-    ret
+;    ld      a,h
+;    ld      [de],a
+;    inc     e
+;    ld      a,l
+;    ld      [de],a
+;    pop     de
+;    ret
 
 ; Routines to initialize palette fading
 ; INPUT:    b = BG palette mask

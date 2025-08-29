@@ -5,7 +5,7 @@ Debug_MenuMax:          db
 Debug_MenuCursorOffset: db
 Debug_MenuJumpTablePtr: dw
 
-section "Debug menu routines",rom0
+section "Debug menu routines",romx
 
 GM_Debug:
     call    LCDOff
@@ -144,36 +144,6 @@ DebugLoop:
     rst     WaitForVBlank
     jr      DebugLoop
 
-
-Debug_JumpTable_Main:
-    dw  .startgame      ; start game
-    dw  .testmap        ; test map
-    dw  .dummy          ; level select
-    dw  .dummy          ; sound test
-    dw  .canvastest     ; canvas test
-    dw  .crash
-def DEBUG_MAIN_MENU_NUM_ITEMS = ((@-Debug_JumpTable_Main)/2)
-.dummy
-    ret
-.startgame
-    ld      a,bank(GM_Copyright)
-    bankswitch_to_a
-    jp      GM_Copyright
-.testmap
-    ld      a,1
-    ld      [Level_ID],a
-    jp      GM_Level
-.crash
-    push    af
-    ld      a,ERR_MANUAL_TRIG
-    ldh     [hErrType],a
-    pop     af
-    jp      ErrorScreen
-.canvastest
-    ld      a,bank(GM_CanvasTest)
-    bankswitch_to_a
-    jp      GM_CanvasTest
-
 Debug_DrawMenuItems:
     ld      a,[hl+]
     ld      c,a
@@ -214,6 +184,15 @@ Debug_DrawCursor:
     ld      [hl+],a
     ld      [hl],">"-" "
     ret
+    
+Debug_JumpTable_Main:
+    dw  Debug_StartGame      ; start game
+    dw  Debug_TestMap        ; test map
+    dw  Debug_Dummy          ; level select
+    dw  Debug_Dummy          ; sound test
+    dw  Debug_CanvasTest     ; canvas test
+    dw  Debug_Crash
+def DEBUG_MAIN_MENU_NUM_ITEMS = ((@-Debug_JumpTable_Main)/2)
 
 Pal_DebugMenu:
     rgb  0, 0,31
@@ -256,3 +235,29 @@ Debug_MainMenuItemText:
     dw  Debug_String_CanvasTest
     dw  Debug_String_Crash
     dw  0
+
+Font:   incbin  "GFX/font.1bpp"
+.end
+
+section "Debug menu ROM0",rom0
+
+Debug_Dummy:
+    ret
+Debug_StartGame:
+    ld      a,bank(GM_Copyright)
+    bankswitch_to_a
+    jp      GM_Copyright
+Debug_TestMap:
+    ld      a,1
+    ld      [Level_ID],a
+    jp      GM_Level
+Debug_Crash:
+    push    af
+    ld      a,ERR_MANUAL_TRIG
+    ldh     [hErrType],a
+    pop     af
+    jp      ErrorScreen
+Debug_CanvasTest:
+    ld      a,bank(GM_CanvasTest)
+    bankswitch_to_a
+    jp      GM_CanvasTest

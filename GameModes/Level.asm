@@ -35,7 +35,7 @@ Level_CameraXPrev:      db
 Level_ScrollDir:        db
 Level_ScreenShakePtr:   dw
 Level_HitstopTimer:     db
-
+Level_ResetFlag:        db
 Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 1 = ???
                             ; bit 2 = ???
@@ -79,6 +79,7 @@ GM_Level:
     ld      [Level_ClearTimer],a
     ld      [Level_Paused],a
     ld      [Level_HitstopTimer],a
+    ld      [Level_ResetFlag],a
 
     ; get map pointer from ID
     ld      a,[Level_ID]
@@ -701,6 +702,11 @@ LevelLoop:
     and     a
     jr      nz,:+
     farcall ProcessPlayer
+    
+    ld      a,[Level_ResetFlag]
+    and     a
+    jp      nz,GM_Level
+    
     call    Player_ProcessProjectiles
 :   call    ProcessObjects
     call    GBM_Update
@@ -762,7 +768,7 @@ LevelLoop:
     ld      b,a
     ld      a,[Level_CameraOffsetY]
     add     b
-    ldh     [rSCY],a  
+    ldh     [rSCY],a
     jp      LevelLoop
     
 LoadTileset:
