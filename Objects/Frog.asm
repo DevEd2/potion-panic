@@ -406,13 +406,72 @@ Obj_Frog_Draw:
     endr
     ld      a,e
     ldh     [hOAMPos],a
+    
+    ld      a,[FreezeObjects]
+    and     a
+    ret     nz
     ; fall through
+
+Frog_CheckHurtPlayer:
+    ldobjp  OBJ_STATE
+    ld      a,[hl]
+    cp      FROG_STATE_DEFEAT
+    ret     z
+    call    Object_CheckPlayerIntersecting
+    jr      nc,Frog_CheckDefeat
+    ld      a,[Player_Flags]
+    bit     BIT_PLAYER_FAT,a
+    jr      z,:+
+    
+    ld      hl,Player_XVel
+    ld      a,[hl+]
+    ld      h,[hl]
+    ld      l,a
+    add     hl,hl
+    add     hl,hl
+    ld      d,h
+    ld      e,l
+    ldobjp  OBJ_VX
+    ld      [hl],e
+    inc     l
+    ld      [hl],d
+    
+    ld      de,-$400
+    ldobjp  OBJ_VY
+    ld      [hl],e
+    inc     l
+    ld      [hl],d
+    
+    ld      e,SFX_BELLY_BUMP_CH2
+    call    DSFX_PlaySound
+    ld      e,SFX_BELLY_BUMP_CH4
+    call    DSFX_PlaySound
+    
+    ldobjp  OBJ_STATE
+    ld      [hl],FROG_STATE_DEFEAT
+    inc     l
+    set     OBJB_YFLIP,[hl]
+    ld      hl,Level_EnemyCount
+    dec     [hl]
+    ld      hl,Player_XVel
+    xor     a
+    ld      [hl+],a
+    ld      [hl],a
+    ld      a,4
+    ld      [Level_HitstopTimer],a
+    ld      a,low(ScreenShake_Fat_HitEnemy)
+    ld      [Level_ScreenShakePtr],a
+    ld      a,high(ScreenShake_Fat_HitEnemy)
+    ld      [Level_ScreenShakePtr+1],a
+    ret
+:   call    HurtPlayer
     
 Frog_CheckDefeat:
     ldobjp  OBJ_STATE
     ld      a,[hl]
     cp      FROG_STATE_DEFEAT
     ret     z
+    
     call    Obj_CheckProjectileIntersecting
     ret     nc
     ld      a,l

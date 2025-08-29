@@ -33,7 +33,8 @@ Level_CameraMaxX:       dw
 Level_CameraMaxY:       db
 Level_CameraXPrev:      db
 Level_ScrollDir:        db
-Level_ScreenShakePtr:   db
+Level_ScreenShakePtr:   dw
+Level_HitstopTimer:     db
 
 Level_Flags:            db  ; bit 0 = horizontaL/vertical
                             ; bit 1 = ???
@@ -77,6 +78,7 @@ GM_Level:
     ldh     [rVBK],a
     ld      [Level_ClearTimer],a
     ld      [Level_Paused],a
+    ld      [Level_HitstopTimer],a
 
     ; get map pointer from ID
     ld      a,[Level_ID]
@@ -494,8 +496,11 @@ LevelLoop:
     ld      [Player_AnimFrame],a
     push    hl
     jr      .psetanim
-.nopause    
+.nopause
     ; level clear logic
+    ld      a,[Level_HitstopTimer]
+    and     a
+    jr      nz,.noclear
     ld      a,[Level_EnemyCount]
     and     a
     jr      nz,.noclear
@@ -516,6 +521,9 @@ LevelLoop:
 
 .noclear
     ; spawn enemies
+    ld      a,[Level_HitstopTimer]
+    and     a
+    jr      nz,:+
     ld      a,[Level_EnemySpawnTimer]
     dec     a
     ld      [Level_EnemySpawnTimer],a
@@ -688,12 +696,17 @@ LevelLoop:
 ;.skipredraw
 .doproc
     pushbank
+    
+    ld      a,[Level_HitstopTimer]
+    and     a
+    jr      nz,:+
     farcall ProcessPlayer
     call    Player_ProcessProjectiles
-    call    ProcessObjects
+:   call    ProcessObjects
     call    GBM_Update
     call    DSFX_Update
     popbank
+    
     call    Pal_DoFade
     rst     WaitForSTAT
     rst     WaitForVBlank
@@ -712,6 +725,18 @@ LevelLoop:
 :   call    DrawPlayer
     call    DrawPlayerLayers
     call    Player_DrawProjectiles
+    
+    ; do hitstop
+    xor     a
+    ld      [FreezeObjects],a
+    ld      a,[Level_HitstopTimer]
+    and     a
+    jr      z,:+
+    dec     a
+    ld      [Level_HitstopTimer],a
+    ld      a,1
+    ld      [FreezeObjects],a
+:
     
     ; do screen shake
     ld      hl,Level_ScreenShakePtr
@@ -795,6 +820,22 @@ LoadTileset:
 
 ScreenShake_Dummy:
     db  0,0
+    db  $80
+    
+ScreenShake_Fat_HitEnemy:
+    db   2, 0
+    db   2, 0
+    db   2, 0
+    db  -2, 0
+    db  -2, 0
+    db  -2, 0
+    db   1, 0
+    db   1, 0
+    db   1, 0
+    db  -1, 0
+    db  -1, 0
+    db  -1, 0
+    db   0, 0
     db  $80
 
 ; =============================================================================

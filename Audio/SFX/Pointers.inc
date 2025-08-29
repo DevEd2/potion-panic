@@ -12,6 +12,8 @@ def SFX_GET_FAT         rb
 def SFX_MENU_SELECT_CH2 rb
 def SFX_MENU_SELECT_CH1 rb
 def SFX_HURT            rb
+def SFX_BELLY_BUMP_CH2  rb
+def SFX_BELLY_BUMP_CH4  rb
 
 DSFX_SFXPointers:
     dw  SFX_JumpNormal
@@ -27,6 +29,8 @@ DSFX_SFXPointers:
     dw  SFX_MenuSelect_CH2
     dw  SFX_MenuSelect_CH1
     dw  SFX_Hurt
+    dw  SFX_BellyBump_CH2
+    dw  SFX_BellyBump_CH4
     
     include "Audio/SFX/MenuCursor.asm"
     include "Audio/SFX/JumpNormal.asm"
@@ -40,3 +44,5 @@ DSFX_SFXPointers:
     include "Audio/SFX/GetFat.asm"
     include "Audio/SFX/MenuSelect.asm"
     include "Audio/SFX/Hurt.asm"
+    include "Audio/SFX/BellyBump_CH2.asm"
+    include "Audio/SFX/BellyBump_CH4.asm"

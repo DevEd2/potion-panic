@@ -343,10 +343,12 @@ Object_CheckPlayerIntersecting:
     sub     [hl]
     ld      b,a
     ld      a,[Player_HitboxPointBR+1]
+    add     18
     cp      b
     jr      c,.nocollision
     ; check if object is below player
     ld      a,[Player_HitboxPointTL+1]
+    add     18
     cp      e
     ret     nc
     
