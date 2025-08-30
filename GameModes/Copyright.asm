@@ -3,7 +3,7 @@ CopyrightSplashRAMStart:
 Copyright_Timer:  dw
 CopyrightSplashRAMEnd:
 
-def COPYRIGHT_TIME equ   5 * 60
+def COPYRIGHT_TIME equ   5 seconds
 
 section "Copyright splash routines",romx
 GM_Copyright:

@@ -3,67 +3,70 @@ def LEVEL_MAX_SCREENS = 1
 def LEVEL_ROW_SIZE = 16
 def LEVEL_COLUMN_SIZE = 16
 
-def LEVEL_TIME_BETWEEN_ENEMY_SPAWNS = 20
+def LEVEL_TIME_BETWEEN_ENEMY_SPAWNS = (1 second) / 3
 
 def SIZEOF_LEVELMAP_RAM = (LEVEL_ROW_SIZE * LEVEL_COLUMN_SIZE) * LEVEL_MAX_SCREENS
 
 Level_Map:  ds SIZEOF_LEVELMAP_RAM
 
 section "Level RAM",wram0
-Level_ID:               db
+Level_ID:                   db
 
-Level_BlockMapBank:     db
-Level_BlockMapPtr:      dw
-Level_ColMapBank:       db
-Level_ColMapPtr:        dw
-;Level_ColHeightBank:    db
-;Level_ColHeightPtr:     dw
-;Level_ColAnglePtr:      db
-;Level_ColAngleBank:     db
+Level_BlockMapBank:         db
+Level_BlockMapPtr:          dw
+Level_ColMapBank:           db
+Level_ColMapPtr:            dw
+;Level_ColHeightBank:        db
+;Level_ColHeightPtr:         dw
+;Level_ColAnglePtr:          db
+;Level_ColAngleBank:         db
 
-Level_CameraX:          dw
-Level_CameraY:          db
-Level_CameraSubX:       db
-Level_CameraSubY:       db
-Level_CameraTargetX:    db
-Level_CameraTargetY:    db
-Level_CameraOffsetX:    db
-Level_CameraOffsetY:    db
-Level_CameraMaxX:       dw
-Level_CameraMaxY:       db
-Level_CameraXPrev:      db
-Level_ScrollDir:        db
-Level_ScreenShakePtr:   dw
-Level_HitstopTimer:     db
-Level_ResetFlag:        db
-Level_Flags:            db  ; bit 0 = horizontaL/vertical
-                            ; bit 1 = ???
-                            ; bit 2 = ???
-                            ; bit 3 = ???
-                            ; bit 4 = ???
-                            ; bit 5 = ???
-                            ; bit 6 = ???
-                            ; bit 7 = ???
-Level_Size:             db  ; 0-15
+Level_CameraX:              dw
+Level_CameraY:              db
+Level_CameraSubX:           db
+Level_CameraSubY:           db
+Level_CameraTargetX:        db
+Level_CameraTargetY:        db
+Level_CameraOffsetX:        db
+Level_CameraOffsetY:        db
+Level_CameraMaxX:           dw
+Level_CameraMaxY:           db
+Level_CameraXPrev:          db
+Level_ScrollDir:            db
+Level_ScreenShakePtr:       dw
+Level_HitstopTimer:         db
+Level_ResetFlag:            db
+Level_Flags:                db  ; bit 0 = horizontaL/vertical
+                                ; bit 1 = ???
+                                ; bit 2 = ???
+                                ; bit 3 = ???
+                                ; bit 4 = ???
+                                ; bit 5 = ???
+                                ; bit 6 = ???
+                                ; bit 7 = ???
+Level_Size:                 db  ; 0-15
 
-Level_EnemyCount:       db
-Level_EnemySpawnTimer:  db
-Level_EnemyListBank:    db
-Level_EnemyListPtr:     dw
+Level_EnemyCount:           db
+Level_EnemiesPerWave:       db
+Level_EnemiesLeftInWave:    db
+Level_CurrentWaveCount:     db
+Level_EnemySpawnTimer:      db
+Level_EnemyListBank:        db
+Level_EnemyListPtr:         dw
 
-Level_ClearTimer:       db
+Level_ClearTimer:           db
 
-Level_Paused:           db
+Level_Paused:               db
 
 section "Level routines",rom0
 GM_Level:
     call    LCDOff
     call    ClearScreen
-    
+
     ; HACK
     xor     a
     ldh     [hPressedButtons],a
-    
+
     ; clear level map
     ld      a,bank(Level_Map)
     ldh     [rSVBK],a
@@ -80,6 +83,7 @@ GM_Level:
     ld      [Level_Paused],a
     ld      [Level_HitstopTimer],a
     ld      [Level_ResetFlag],a
+    ld      [Level_CurrentWaveCount],a
 
     ; get map pointer from ID
     ld      a,[Level_ID]
@@ -166,11 +170,15 @@ GM_Level:
     ld      a,[hl+]
     call    Level_LoadObjectGFXSet
     popbank
-    
+
     ; enemy count
     ld      a,[hl+]
     ld      [Level_EnemyCount],a
-    
+    ; enemies per wave
+    ld      a,[hl+]
+    ld      [Level_EnemiesPerWave],a
+    ld      [Level_EnemiesLeftInWave],a
+
     ; actual level layout
     ld      a,[hl+]
     push    hl
@@ -189,10 +197,10 @@ GM_Level:
     ld      [Level_EnemyListPtr],a
     ld      a,[hl+]
     ld      [Level_EnemyListPtr+1],a
-    
+
     ld      a,200
     ld      [Level_EnemySpawnTimer],a
-    
+
     ; fill background map with first 16 columns of level map
     xor     a
     ld      hl,Level_Map
@@ -201,7 +209,7 @@ GM_Level:
     call    DrawMetatile
     inc     a
     jr      nz,:-
-    
+
     ; load bigfont
     pushbank
     xor     a
@@ -212,7 +220,7 @@ GM_Level:
     ; ld      hl,Pal_BigFont
     ld      a,15
     call    LoadPal
-    
+
     ; load puff of smoke and explosion graphics
     ; ld      hl,GFX_Explosion
     ld      de,_VRAM + ($60 * 16)
@@ -224,8 +232,8 @@ GM_Level:
     ; ld      hl,Pal_Explosion
     ld      a,14
     call    LoadPal
-    
-    
+
+
     ; load HUD graphics
     ld      a,1
     ldh     [rVBK],a
@@ -235,79 +243,79 @@ GM_Level:
     call    LoadPal
     ld      a,7
     call    LoadPal
-    
+
     ; load pause text graphics
     ld      de,$8e00
     call    DecodeWLE
-    
+
     ; load potion graphics
     xor     a
     ldh     [rVBK],a
     ld      hl,GFX_Potion
     ld      de,$84a0
     call    DecodeWLE
-    
+
     popbank
-    
+
     ; screen setup
     ld      a,256-SCRN_Y
     ld      [Level_CameraMaxY],a
-    
+
     ld      a,[Level_Size]
     ld      [Level_CameraMaxX+1],a
     ld      a,256-SCRN_X
     ld      [Level_CameraMaxX],a
-    
+
     xor     a
     ldh     [rVBK],a
     ld      [Level_CameraTargetX],a
     ld      a,[Level_CameraMaxY]
-    
+
     ldh     [rSCX],a
     ld      [Level_CameraX],a
     ld      [Level_CameraX+1],a
     ld      [Level_CameraSubX],a
-    
+
     ldh     [rSCY],a
     ld      [Level_CameraY],a
     ld      [Level_CameraSubY],a
-    
+
     ld      [Level_ScrollDir],a
-    
+
     ld      a,256-SCRN_Y
     ld      [Level_CameraY],a
     ld      [Level_CameraTargetY],a
-    
+
     call    DeleteAllObjects
     call    Potion_InitEffects
     ; create test object (TEMP REMOVE ME)
     ; ld      b,OBJID_Potion
     ; lb      de,140,140
     ; call    CreateObject
-    
+
     ld      a,low(ScreenShake_Dummy)
     ld      [Level_ScreenShakePtr],a
     ld      a,high(ScreenShake_Dummy)
     ld      [Level_ScreenShakePtr+1],a
-    
+
     ; create level intro text object
     ld      b,OBJID_BigText
     lb      de,0,0
     call    CreateObject
     inc     h
     ld      [hl],BIGTEXT_GET_READY
-    
+
     call    CopyPalettes
     call    ConvertPals
     ;call    UpdatePalettes
     call    PalFadeInWhite
-    
+
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJON | LCDCF_BLK21 | LCDCF_OBJ16 | LCDCF_WINON | LCDCF_WIN9C00
     ldh     [rLCDC],a
     ld      a,IEF_VBLANK | IEF_STAT
     ldh     [rIE],a
     ei
-    
+
 LevelLoop:
     ; pause logic
     ld      a,[Level_Paused]
@@ -522,13 +530,28 @@ LevelLoop:
 
 .noclear
     ; spawn enemies
-    ld      a,[Level_HitstopTimer]
+    ld      a,[Level_EnemiesLeftInWave]
+    and     a
+    jr      nz,:+
+    ld      a,[Level_CurrentWaveCount]
+    and     a
+    jr      nz,:+
+    xor     a
+    ld      [Level_CurrentWaveCount],a
+    ld      a,1 second
+    ld      [Level_EnemySpawnTimer],a
+:   ld      a,[Level_HitstopTimer]
     and     a
     jr      nz,:+
     ld      a,[Level_EnemySpawnTimer]
     dec     a
     ld      [Level_EnemySpawnTimer],a
     jr      nz,:+
+    ld      a,[Level_EnemiesPerWave]
+    ld      b,a
+    ld      a,[Level_CurrentWaveCount]
+    cp      b
+    jr      z,:+
     ld      a,[Level_EnemyListBank]
     bankswitch_to_a
     ld      hl,Level_EnemyListPtr
@@ -559,11 +582,13 @@ LevelLoop:
     ld      [Level_EnemyListPtr+1],a
     ld      a,LEVEL_TIME_BETWEEN_ENEMY_SPAWNS
     ld      [Level_EnemySpawnTimer],a
+    ld      hl,Level_CurrentWaveCount
+    inc     [hl]
 :   ; debug builds only: noclip logic
     if BUILD_DEBUG
         ldh     a,[hPressedButtons]
         bit     BIT_SELECT,a
-        jr      z,:+       
+        jr      z,:+
         ld      a,[Player_Flags]
         xor     1 << BIT_PLAYER_NOCLIP
         ld      [Player_Flags],a
@@ -589,14 +614,14 @@ LevelLoop:
 :   ld      [Level_CameraTargetX],a
     ld      a,h
     ld      [Level_CameraX+1],a
-    
-    ld      a,[Level_CameraX]    
+
+    ld      a,[Level_CameraX]
     ld      b,a
     ld      [Level_CameraXPrev],a
 
     ld      a,[Level_CameraTargetX]
     ld      [Level_CameraX],a
-    
+
     sub     b
     jr      z,:+
     jr      nc,.scrollright
@@ -653,7 +678,7 @@ LevelLoop:
 :   ld      [Level_CameraY],a
     ld      a,l
     ld      [Level_CameraSubY],a
-    
+
     ; level redraw logic
 ;    ld      a,[Level_ScrollDir]
 ;    ld      e,a
@@ -672,11 +697,11 @@ LevelLoop:
 ;    ld      l,a
 ;    jr      nc,:+
 ;    inc     h
-;    
+;
 ;:   ld      a,[Level_CameraX+1]
 ;    add     h
 ;    ld      h,a
-;    
+;
 ;    bit     7,e
 ;    jr      z,:+
 ;    dec     h
@@ -685,7 +710,7 @@ LevelLoop:
 ;    ld      l,a
 ;    jr      nc,:+
 ;    inc     h
-;    
+;
 ;:   ld      a,l
 ;    ld      c,16
 ;:   ld      b,[hl]
@@ -697,22 +722,22 @@ LevelLoop:
 ;.skipredraw
 .doproc
     pushbank
-    
+
     ld      a,[Level_HitstopTimer]
     and     a
     jr      nz,:+
     farcall ProcessPlayer
-    
+
     ld      a,[Level_ResetFlag]
     and     a
     jp      nz,GM_Level
-    
+
     call    Player_ProcessProjectiles
 :   call    ProcessObjects
     call    GBM_Update
     call    DSFX_Update
     popbank
-    
+
     call    Pal_DoFade
     rst     WaitForSTAT
     rst     WaitForVBlank
@@ -721,7 +746,7 @@ LevelLoop:
     ld      a,[sys_FadeState]
     and     a
     call    nz,UpdatePalettes
-    
+
     ld      a,[sys_PalFadeDone]
     and     a
     jr      z,:+
@@ -731,7 +756,7 @@ LevelLoop:
 :   call    DrawPlayer
     call    DrawPlayerLayers
     call    Player_DrawProjectiles
-    
+
     ; do hitstop
     xor     a
     ld      [FreezeObjects],a
@@ -743,7 +768,7 @@ LevelLoop:
     ld      a,1
     ld      [FreezeObjects],a
 :
-    
+
     ; do screen shake
     ld      hl,Level_ScreenShakePtr
     ld      a,[hl+]
@@ -770,7 +795,7 @@ LevelLoop:
     add     b
     ldh     [rSCY],a
     jp      LevelLoop
-    
+
 LoadTileset:
     ; load GFX
     ld      a,[hl+]
@@ -821,13 +846,13 @@ LoadTileset:
     ; ld      [Level_ColAnglePtr],a
     ; ld      a,[hl+]
     ; ld      [Level_ColAnglePtr+1],a
-    
+
     ret
 
 ScreenShake_Dummy:
     db  0,0
     db  $80
-    
+
 ScreenShake_Fat_HitEnemy:
     db   2, 0
     db   2, 0
@@ -945,14 +970,14 @@ Level_LoadObjectGFXSet:
     jr      :-
 :   pop     hl
     ret
-    
+
 Level_ObjectGFXSetPointers:
     gfxdef  Frog,$30
     gfxdef  JackOLantern,$46
     gfxdef  Imp,$56
     gfxdef  Slime,$66
     db      0
-    
+
 Level_ObjectPaletteSetPointers:
     paldef  3,Frog,1
     paldef  4,JackOLantern,1

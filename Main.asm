@@ -7,6 +7,8 @@
 ; =============================================================================
 
     def percent equs "* $ff / 100"
+    def seconds equs "* 60"
+    def second equs "* 60"
     charmap "©",$a9
 
     include "hardware.inc/hardware.inc"

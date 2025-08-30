@@ -115,7 +115,7 @@ Obj_Imp_Float:
     ldobjp  OBJ_STATE
     ld      [hl],IMP_STATE_SHOOT
     ldobjrp Imp_StateTimer
-    ld      [hl],60
+    ld      [hl],1 second
     ; create projectile
     ldobjp  OBJ_X
     ld      a,[hl+]
@@ -331,6 +331,8 @@ Imp_CheckHurtPlayer:
     set     OBJB_YFLIP,[hl]
     ld      hl,Level_EnemyCount
     dec     [hl]
+    inc     hl  ; Level_EnemiesLeftInWave
+    dec     [hl]
     ld      hl,Player_XVel
     xor     a
     ld      [hl+],a
@@ -372,6 +374,8 @@ Imp_CheckDefeat:
     inc     l
     set     OBJB_YFLIP,[hl]
     ld      hl,Level_EnemyCount
+    dec     [hl]
+    inc     hl  ; Level_EnemiesLeftInWave
     dec     [hl]
     ldobjrp Imp_Frame
     ld      [hl],IMP_F_DEFEAT

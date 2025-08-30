@@ -237,6 +237,8 @@ JackOLantern_CheckHurtPlayer:
     set     OBJB_YFLIP,[hl]
     ld      hl,Level_EnemyCount
     dec     [hl]
+    inc     hl  ; Level_EnemiesLeftInWave
+    dec     [hl]
     ld      hl,Player_XVel
     xor     a
     ld      [hl+],a
@@ -278,6 +280,8 @@ JackOLantern_CheckDefeat:
     inc     l
     set     OBJB_YFLIP,[hl]
     ld      hl,Level_EnemyCount
+    dec     [hl]
+    inc     hl  ; Level_EnemiesLeftInWave
     dec     [hl]
     ldobjrp JackOLantern_Frame
     ld      [hl],JACKOLANTERN_F_DEFEAT

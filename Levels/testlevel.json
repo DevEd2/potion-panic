@@ -51,6 +51,11 @@
                  "name":"LevelProperties",
                  "properties":[
                         {
+                         "name":"EnemiesPerWave",
+                         "type":"string",
+                         "value":"2"
+                        }, 
+                        {
                          "name":"EnemyCount",
                          "type":"string",
                          "value":"4"

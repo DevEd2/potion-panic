@@ -28,6 +28,7 @@
   <object id="14" name="PlayerStart" x="16" y="208" width="32" height="32"/>
   <object id="15" name="LevelProperties" x="0" y="0" width="16" height="16">
    <properties>
+    <property name="EnemiesPerWave" value="2"/>
     <property name="EnemyCount" value="4"/>
     <property name="Music" value="Mus_LostInTranslation"/>
     <property name="Objset" value="0"/>

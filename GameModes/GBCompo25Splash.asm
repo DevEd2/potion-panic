@@ -3,7 +3,7 @@ GBCompo25SplashRAMStart:
 GBCompo25_SplashTimer:  dw
 GBCompo25SplashRAMEnd:
 
-def GBCOMPO25_SPLASH_TIME equ   5 * 60
+def GBCOMPO25_SPLASH_TIME equ   5 seconds
 
 section "GBCompo25 splash trampoline",rom0
 _GM_GBCompo25Splash:

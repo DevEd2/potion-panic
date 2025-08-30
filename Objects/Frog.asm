@@ -1,8 +1,8 @@
-def FROG_IDLE_TIME_MIN      = 30
-def FROG_IDLE_TIME_MAX      = 60
-def FROG_CROAK_TIME_MIN     = 30
-def FROG_CROAK_TIME_MAX     = 90
-def FROG_PREHOP_TIME        = 16
+def FROG_IDLE_TIME_MIN      = (1 second) / 2
+def FROG_IDLE_TIME_MAX      = 1 second
+def FROG_CROAK_TIME_MIN     = (1 second)
+def FROG_CROAK_TIME_MAX     = (1 second) * 1.5
+def FROG_PREHOP_TIME        = (1 second) / 4
 
 def FROG_HIT_WIDTH          = 6
 def FROG_HIT_HEIGHT         = 8
@@ -453,6 +453,8 @@ Frog_CheckHurtPlayer:
     set     OBJB_YFLIP,[hl]
     ld      hl,Level_EnemyCount
     dec     [hl]
+    inc     hl  ; Level_EnemiesLeftInWave
+    dec     [hl]
     ld      hl,Player_XVel
     xor     a
     ld      [hl+],a
@@ -495,6 +497,8 @@ Frog_CheckDefeat:
     inc     l
     set     OBJB_YFLIP,[hl]
     ld      hl,Level_EnemyCount
+    dec     [hl]
+    inc     hl  ; Level_EnemiesLeftInWave
     dec     [hl]
     jp      Object_ProcessDrops
 

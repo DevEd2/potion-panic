@@ -6,11 +6,11 @@
  <tileset firstgid="1" source="DarkForest.tsx"/>
  <layer id="1" name="Tile Layer 1" width="16" height="16">
   <data encoding="csv">
-8,81,81,50,33,17,49,65,17,97,1,33,65,65,49,7,
-54,49,97,66,65,49,1,65,1,1,97,65,49,49,97,5,
-6,49,33,1,81,65,81,49,1,17,49,65,65,97,50,21,
-22,33,1,33,97,65,23,24,33,17,33,33,49,49,66,37,
-38,97,49,51,81,33,15,16,49,97,50,81,81,1,33,53,
+8,81,81,50,33,17,7,8,17,97,1,33,65,65,49,7,
+54,49,97,66,65,49,5,6,1,1,97,65,49,49,97,5,
+6,49,33,1,81,65,21,22,1,17,49,65,65,97,50,21,
+22,33,1,33,97,65,37,38,33,17,33,33,49,49,66,37,
+38,97,49,51,81,33,53,54,49,97,50,81,81,1,33,53,
 54,65,65,67,49,97,31,32,49,49,66,97,39,40,41,5,
 6,1,17,1,65,65,47,48,1,97,65,65,49,65,33,21,
 22,17,17,1,81,1,63,64,49,81,33,97,81,49,97,37,
@@ -28,6 +28,7 @@
   <object id="14" name="PlayerStart" x="32" y="192" width="32" height="32"/>
   <object id="15" name="LevelProperties" x="0" y="0" width="16" height="16">
    <properties>
+    <property name="EnemiesPerWave" value="3"/>
     <property name="EnemyCount" value="5"/>
     <property name="Music" value="Mus_DarkForest"/>
     <property name="Objset" value="0"/>
@@ -36,9 +37,9 @@
    </properties>
   </object>
   <object id="31" name="Frog" x="86" y="161.333"/>
-  <object id="32" name="Imp" x="124.333" y="162.667"/>
-  <object id="33" name="Frog" x="35.3333" y="113.667"/>
-  <object id="35" name="Frog" x="233.667" y="61"/>
-  <object id="37" name="JackOLantern" x="106" y="131"/>
+  <object id="32" name="Frog" x="124.333" y="162.667"/>
+  <object id="33" name="Frog" x="206.667" y="180"/>
+  <object id="35" name="Frog" x="167.334" y="209"/>
+  <object id="37" name="Frog" x="106" y="131"/>
  </objectgroup>
 </map>
