@@ -67,34 +67,34 @@ Potion_GiveEffect:
     pop     af
     
     ld      c,a
-    ld      l,a
-    ld      h,0
-    add     hl,hl   ; x2
-    add     hl,hl   ; x4
-    ld      de,Potion_EffectPointers
-    add     hl,de
-    ld      a,[hl+]
-    ld      h,[hl]
-    ld      l,a
+;    ld      l,a
+;    ld      h,0
+;    add     hl,hl   ; x2
+;    add     hl,hl   ; x4
+;    ld      de,Potion_EffectPointers
+;    add     hl,de
+;    ld      a,[hl+]
+;    ld      h,[hl]
+;    ld      l,a
     
-    ld      hl,Potion_ActiveEffectList
-    ld      b,(Potion_ActiveEffectList.end-Potion_ActiveEffectList)/2
-:   ld      a,[hl+]
-    inc     hl
-    inc     hl
-    and     a
-    jr      z,:+
-    dec     b
-    jr      nz,:-
-    ret
-:   dec     hl
-    dec     hl
-    dec     hl
-    ld      [hl],c
-    inc     hl
-    ld      [hl],low(30 * 60)
-    inc     hl
-    ld      [hl],high(30 * 60)
+;    ld      hl,Potion_ActiveEffectList
+;    ld      b,(Potion_ActiveEffectList.end-Potion_ActiveEffectList)/2
+;:   ld      a,[hl+]
+;    inc     hl
+;    inc     hl
+;    and     a
+;    jr      z,:+
+;    dec     b
+;    jr      nz,:-
+;    ret
+;:   dec     hl
+;    dec     hl
+;    dec     hl
+;    ld      [hl],c
+;    inc     hl
+;    ld      [hl],low(30 * 60)
+;    inc     hl
+;    ld      [hl],high(30 * 60)
     
     pushbank
     ld      a,bank(Potion_EffectHandlers)
@@ -118,6 +118,8 @@ Potion_EffectPointers:
     effect_def  Fat
     effect_def  Tiny
     effect_def  ReverseControls
+    effect_def  1Up
+    effect_def  Heal
 .end
 
 def NUM_POTION_EFFECTS equ (Potion_EffectPointers.end-Potion_EffectPointers)/4
