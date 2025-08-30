@@ -6,7 +6,6 @@ GM_Lockout:
 
 section "Lockout  routines",romx
 _GM_Lockout:
-    ld      b,b
 :   ldh     a,[rLY]
     cp      $90
     jr      nz,:-
