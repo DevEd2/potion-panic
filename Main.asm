@@ -792,6 +792,7 @@ include "GameModes/Credits.asm"
 include "GameModes/GBCompo25Splash.asm"
 include "GameModes/Copyright.asm"
 include "GameModes/Lockout.asm"
+include "GameModes/DevEdPresentsSplash.asm"
 
 ; =============================================================================
 

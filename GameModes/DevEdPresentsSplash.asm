@@ -1,36 +1,36 @@
-section "GBCompo25 splash RAM",wram0
-GBCompo25SplashRAMStart:
-GBCompo25_SplashTimer:  dw
-GBCompo25SplashRAMEnd:
+section "DevEdPresents splash RAM",wram0
+DevEdPresentsSplashRAMStart:
+DevEdPresents_SplashTimer:  dw
+DevEdPresentsSplashRAMEnd:
 
-def GBCOMPO25_SPLASH_TIME equ   5 seconds
+def DEVED_SPLASH_SPLASH_TIME equ   5 seconds
 
-section "GBCompo25 splash trampoline",rom0
-_GM_GBCompo25Splash:
-    ld      a,bank(GM_GBCompo25Splash)
+section "DevEdPresents splash trampoline",rom0
+_GM_DevEdPresentsSplash:
+    ld      a,bank(GM_DevEdPresentsSplash)
     bankswitch_to_a
-    jp      GM_GBCompo25Splash
+    jp      GM_DevEdPresentsSplash
 
-section "GBCompo25 splash routines",romx
-GM_GBCompo25Splash:
+section "DevEdPresents splash routines",romx
+GM_DevEdPresentsSplash:
     call    LCDOff
     di
     
     xor     a
     ldh     [rVBK],a
-    ld      b,GBCompo25SplashRAMEnd-GBCompo25SplashRAMStart
-    ld      hl,GBCompo25SplashRAMStart
+    ld      b,DevEdPresentsSplashRAMEnd-DevEdPresentsSplashRAMStart
+    ld      hl,DevEdPresentsSplashRAMStart
     call    MemFillSmall
     
     ; load gfx
-    ld      hl,GFX_GBCompo25
+    ld      hl,GFX_DevEdPresents
     ld      de,_VRAM
     call    DecodeWLE
-    ; ld      hl,Map_GBCompo25
+    ; ld      hl,Map_DevEdPresents
     ld      de,_SCRN0
     lb      bc,SCRN_X_B,SCRN_Y_B
     call    LoadTilemapAttr
-    ; ld      hl,Pal_GBCompo25
+    ; ld      hl,Pal_DevEdPresents
     xor     a
     call    LoadPal
     ld      a,1
@@ -49,10 +49,10 @@ GM_GBCompo25Splash:
     call    LoadPal
     call    PalFadeInWhite
     
-    ld      a,low(GBCOMPO25_SPLASH_TIME)
-    ld      [GBCompo25_SplashTimer],a
-    ld      a,high(GBCOMPO25_SPLASH_TIME)
-    ld      [GBCompo25_SplashTimer+1],a
+    ld      a,low(DEVED_SPLASH_SPLASH_TIME)
+    ld      [DevEdPresents_SplashTimer],a
+    ld      a,high(DEVED_SPLASH_SPLASH_TIME)
+    ld      [DevEdPresents_SplashTimer+1],a
     
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_BLK01 | LCDCF_BG9800
     ldh     [rLCDC],a
@@ -60,12 +60,12 @@ GM_GBCompo25Splash:
     ldh     [rIE],a
     ei
     
-GBCompo25SplashLoop:
+DevEdPresentsSplashLoop:
     call    Pal_DoFade
     rst     WaitForVBlank
     call    UpdatePalettes
     
-    ld      hl,GBCompo25_SplashTimer
+    ld      hl,DevEdPresents_SplashTimer
     ld      d,h
     ld      e,l
     ld      a,[hl+]
@@ -85,9 +85,9 @@ GBCompo25SplashLoop:
     bit     BIT_START,a
     jr      nz,:+
     
-    jr      GBCompo25SplashLoop
+    jr      DevEdPresentsSplashLoop
     
-:   call    PalFadeOutWhite
+:   call    PalFadeOutBlack
     ; fall through
 :   call    Pal_DoFade
     rst     WaitForVBlank
@@ -95,8 +95,8 @@ GBCompo25SplashLoop:
     ld      a,[sys_FadeState]
     and     a
     jr      nz,:-
-    jp      _GM_DevEdPresentsSplash
+    jp      GM_Title
 
-GFX_GBCompo25:  incbin  "GFX/gbcompo25.2bpp.wle"
-Map_GBCompo25:  incbin  "GFX/gbcompo25.map"
-Pal_GBCompo25:  incbin  "GFX/gbcompo25.pal"
+GFX_DevEdPresents:  incbin  "GFX/DevEdPresents.2bpp.wle"
+Map_DevEdPresents:  incbin  "GFX/DevEdPresents.map"
+Pal_DevEdPresents:  incbin  "GFX/DevEdPresents.pal"
