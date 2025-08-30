@@ -1426,9 +1426,11 @@ DrawPlayerLayers:
     ret
     
 .frames
-    dbbw frame_hurt_layer1,     2,  Player_OAM_Hurt_Layer2
-    dbbw frame_broom_layer1,    2,  Player_OAM_Broom_Layer2
-    dbbw frame_death_layer1,    2,  Player_OAM_Death_Layer2
+    dbbw frame_hurt_layer1,         2,  Player_OAM_Hurt_Layer2
+    dbbw frame_hurt_fat_layer1,     2,  Player_OAM_Hurt_Layer2
+    dbbw frame_broom_layer1,        2,  Player_OAM_Broom_Layer2
+    dbbw frame_death_layer1,        2,  Player_OAM_Death_Layer2
+    dbbw frame_death_fat_layer1,    2,  Player_OAM_Death_Layer2
     db  -1
 
 Player_OAM_Hurt_Layer2:
@@ -1689,7 +1691,7 @@ Player_Anim_Hurt:
 Player_Anim_Fat_Hurt:
     db  1,frame_hurt_fat_layer1
     db  $ff
-    dw  Player_Anim_Tiny_Hurt
+    dw  Player_Anim_Fat_Hurt
     
 Player_Anim_Tiny_Hurt:
     db  1,frame_tiny_1
@@ -1704,7 +1706,7 @@ Player_Anim_Death:
 Player_Anim_Fat_Death:
     db  1,frame_death_fat_layer1
     db  $ff
-    dw  Player_Anim_Tiny_Death
+    dw  Player_Anim_Fat_Death
     
 Player_Anim_Tiny_Death:
     db  1,frame_tiny_1
