@@ -242,7 +242,7 @@ ProgramStart:
     ; GBC check
     ldh     a,[hIsGBC]
     cp      $11
-    jr      nz,@ ; TODO: Lockout screen
+    jp      nz,GM_Lockout
     ; Very Bad Amulator™ check
     ld      a,5
     add     a
@@ -250,7 +250,7 @@ ProgramStart:
     push    af
     pop     hl
     bit     5,l
-    jr      nz,@ ; TODO: Lockout screen
+    jp      nz,GM_Lockout
     
     ; enable double speed mode
     xor     a
@@ -782,6 +782,7 @@ include "GameModes/TitleScreen.asm"
 include "GameModes/Credits.asm"
 include "GameModes/GBCompo25Splash.asm"
 include "GameModes/Copyright.asm"
+include "GameModes/Lockout.asm"
 
 ; =============================================================================
 
