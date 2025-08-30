@@ -61,7 +61,7 @@ Potion_GiveEffect:
     lb      de,0,0
     call    CreateObject
     pop     af
-    add     BIGTEXT_POTIONS-1
+    add     BIGTEXT_POTIONS
     inc     h
     ld      [hl],a
     pop     af

@@ -298,7 +298,7 @@ def BIGTEXT_POTIONS     rb
 BigText_Pointers:
     dw      .getready
     dw      .welldone
-;    dw      .timeup
+    dw      .timeup
     dw      .toobad
     dw      .gameover
 :   dw      .potion_nothing
@@ -318,9 +318,9 @@ BigText_Pointers:
 .welldone               db  88 - ((:++ - :+) * 4)
 :                       db  "WELL DONE"
 :                       db  -1
-;.timeup                 db  88 - ((:++ - :+) * 4)
-;:                       db  "TIME UP"
-;:                       db  -1
+.timeup                 db  88 - ((:++ - :+) * 4)
+:                       db  "TIME UP"
+:                       db  -1
 .toobad                 db  88 - ((:++ - :+) * 4)
 :                       db  "TOO BAD"
 :                       db  -1
