@@ -518,14 +518,37 @@ LevelLoop:
     jr      nz,:+
     ld      a,1
     ld      [Player_LockControls],a
-    xor     a
-    ld      [ObjList],a ; delete existing bigtext object
+    ld      a,[BigText_ObjectID]
+    ld      l,a
+    ld      h,high(ObjList)
+    ld      [hl],0
     ld      b,OBJID_BigText
     lb      de,0,0
     call    CreateObject
     inc     h
     ld      [hl],BIGTEXT_WELL_DONE
-:   ; TODO: fadeout + load next level
+    xor     a
+    ld      [BigText_Done],a
+:   ld      a,[BigText_Done]
+    cp      2
+    jr      z,:+
+    and     a
+    jp      z,.doproc
+    ld      a,2
+    ld      [BigText_Done],a
+    call    PalFadeOutWhite
+    call    GBM_Stop
+:   ld      a,[sys_FadeState]
+    and     a
+    jr      nz,:+
+    ld      a,[Level_ID]
+    inc     a
+    ; TODO: check for last level
+    ld      [Level_ID],a
+    ld      a,1
+    ld      [Level_ResetFlag],a
+    jp      .doproc
+:   call    Pal_DoFade
     jp      .doproc
 
 .noclear
@@ -725,14 +748,24 @@ LevelLoop:
 
     ld      a,[Level_HitstopTimer]
     and     a
-    jr      nz,:+
+    jr      nz,:++
     farcall ProcessPlayer
-
-    ld      a,[Level_ResetFlag]
-    and     a
-    jp      nz,GM_Level
-
     call    Player_ProcessProjectiles
+    
+    ld      a,[Level_ResetFlag]
+    dec     a
+    jp      nz,:+
+    ld      hl,Player_Lives
+    dec     [hl]
+    jp      GM_Level
+:   dec     a
+    jr      nz,:+
+    ld      a,[hIsGBA]
+    ld      b,a
+    ld      a,$11
+    jp      ProgramStart
+
+    
 :   call    ProcessObjects
     call    GBM_Update
     call    DSFX_Update
@@ -1009,6 +1042,7 @@ GetCollisionIndex:
 Level_Pointers:
     dwbank  Map_testlevel
     dwbank  Map_DarkForest1
+    dwbank  Map_DarkForest2
 
 ; =============================================================================
 
@@ -1090,6 +1124,7 @@ Pal_TestTileset:    incbin  "Tilesets/TestTileset.pal"
 
     include "Levels/testlevel.inc"
     include "Levels/DarkForest1.inc"
+    include "Levels/DarkForest2.inc"
 
 ; =============================================================================
 

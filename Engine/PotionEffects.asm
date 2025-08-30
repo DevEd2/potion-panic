@@ -51,6 +51,21 @@ Potion_GiveEffect:
     cp      NUM_POTION_EFFECTS
     jr      nc,:-
     
+    push    af
+    push    af
+    ld      a,[BigText_ObjectID]
+    ld      l,a
+    ld      h,high(ObjList)
+    ld      [hl],0
+    ld      b,OBJID_BigText
+    lb      de,0,0
+    call    CreateObject
+    pop     af
+    add     BIGTEXT_POTIONS-1
+    inc     h
+    ld      [hl],a
+    pop     af
+    
     ld      c,a
     ld      l,a
     ld      h,0
@@ -113,6 +128,8 @@ Potion_EffectHandlers:
 
 PotionEffect_Nothing_Start:
 PotionEffect_Nothing_End:
+PotionEffect_1Up_End:
+PotionEffect_Heal_End:
     ret
 
 PotionEffect_Fat_Start:
@@ -142,4 +159,16 @@ PotionEffect_ReverseControls_End:
     ld      a,[Player_ControlBitFlipMask]
     xor     BTN_LEFT | BTN_RIGHT
     ld      [Player_ControlBitFlipMask],a
+    ret
+
+PotionEffect_1Up_Start:
+    ld      hl,Player_Lives
+    inc     [hl]
+    ; TODO: Update HUD
+    ret
+
+PotionEffect_Heal_Start:
+    ld      hl,Player_Health
+    ld      [hl],3
+    ; TODO: Update HUD
     ret

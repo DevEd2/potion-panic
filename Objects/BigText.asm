@@ -17,6 +17,9 @@ Obj_BigText_RoutinePointers:
 
 Obj_BigText_Init:
     ldobjp  OBJ_STATE
+    ld      a,l
+    dec     a
+    ld      [BigText_ObjectID],a
     ld      a,BIGTEXT_STATE_IDLE
     ld      [hl+],a ; object state
     ; ld      a,1<<OBJB_VISIBLE ; BIGTEXT_STATE_IDLE and 1<<OBJB_VISIBLE both resolve to 1
@@ -38,6 +41,7 @@ Obj_BigText_Init:
     
     ld      hl,BigText_RAM
     xor     a
+    ld      [BigText_Done],a
     ld      b,10
 :   ld      [hl],0
     inc     hl
@@ -244,6 +248,29 @@ Obj_BigText_Draw:
     inc     l
     jp      .next
 .done
+    
+    ld      hl,BigText_RAM.end-2
+    ld      b,11
+:   dec     b
+    jr      z,:+
+    ld      a,[hl-]
+    dec     hl
+    and     a   ; a=0
+    jr      z,:-
+    dec     a   ; a=1
+    jr      z,:+
+    dec     a   ; a=2
+    jr      z,:+
+    dec     a   ; a=3
+    jr      z,:+
+    dec     a   ; a=4
+    jr      nz,:+
+    ld      a,1
+    ld      [BigText_Done],a
+    ldobjp  OBJ_ID
+    ld      [hl],0
+:   
+
     ld      a,e
     ldh     [hOAMPos],a
     ret
@@ -266,28 +293,67 @@ def BIGTEXT_TIME_UP     rb
 def BIGTEXT_TOO_BAD     rb
 def BIGTEXT_GAME_OVER   rb
 
+def BIGTEXT_POTIONS     rb
+
 BigText_Pointers:
     dw      .getready
     dw      .welldone
-    dw      .timeup
+;    dw      .timeup
     dw      .toobad
     dw      .gameover
+:   dw      .potion_nothing
+    dw      .potion_fat
+    dw      .potion_tiny
+    dw      .potion_reverse
+    dw      .potion_1up
+    dw      .potion_heal
+    dw      .potion_dmgmode
+    dw      .potion_tripping
+    dw      .potion_familiar
+:
 
-.getready   db  88 - ((:++ - :+) * 4)
-:           db  "GET READY"
-:           db  -1
-.welldone   db  88 - ((:++ - :+) * 4)
-:           db  "WELL DONE"
-:           db  -1
-.timeup     db  88 - ((:++ - :+) * 4)
-:           db  "TIME UP"
-:           db  -1
-.toobad     db  88 - ((:++ - :+) * 4)
-:           db  "TOO BAD"
-:           db  -1
-.gameover   db  88 - ((:++ - :+) * 4)
-:           db  "GAME OVER"
-:           db  -1
+.getready               db  88 - ((:++ - :+) * 4)
+:                       db  "GET READY"
+:                       db  -1
+.welldone               db  88 - ((:++ - :+) * 4)
+:                       db  "WELL DONE"
+:                       db  -1
+;.timeup                 db  88 - ((:++ - :+) * 4)
+;:                       db  "TIME UP"
+;:                       db  -1
+.toobad                 db  88 - ((:++ - :+) * 4)
+:                       db  "TOO BAD"
+:                       db  -1
+.gameover               db  88 - ((:++ - :+) * 4)
+:                       db  "GAME OVER"
+:                       db  -1
+.potion_fat             db  88 - ((:++ - :+) * 4)
+:                       db  "UH OH BIG"
+:                       db  -1
+.potion_tiny            db  88 - ((:++ - :+) * 4)
+:                       db  "UH OH TINY"
+:                       db  -1
+.potion_nothing         db  88 - ((:++ - :+) * 4)
+:                       db  "NOTHING"
+:                       db  -1
+.potion_1up             db  88 - ((:++ - :+) * 4)
+:                       db  "EXTRA LIFE"
+:                       db  -1
+.potion_reverse         db  88 - ((:++ - :+) * 4)
+:                       db  "SDRAWKCAB"
+:                       db  -1
+.potion_heal            db  88 - ((:++ - :+) * 4)
+:                       db  "FULL HEAL"
+:                       db  -1
+.potion_dmgmode         db  88 - ((:++ - :+) * 4)
+:                       db  "SO RETRO"
+:                       db  -1
+.potion_tripping        db  88 - ((:++ - :+) * 4)
+:                       db  "TRIPPING"
+:                       db  -1
+.potion_familiar        db  88 - ((:++ - :+) * 4)
+:                       db  "FAMILIAR"
+:                       db  -1
     popc
 
 BigText_EaseInTable:
@@ -323,7 +389,10 @@ BigText_SineEaseOutTable:
 
 section "Bigtext RAM",wram0
 
-BigText_RAM:    ds  2*10
+BigText_RAM:        ds  2*10
+.end
+BigText_Done:       db
+BigText_ObjectID:   db
 rsreset
 def BIGTEXT_CHAR_MODE   rb
 def BIGTEXT_CHAR_OFFSET rb

@@ -255,6 +255,9 @@ ProgramStart:
     jp      nz,GM_Lockout
     
     ; enable double speed mode
+    ldh     a,[rKEY1]
+    bit     SPDB_DBLSPEED,a
+    jr      nz,:+
     xor     a
     ldh     [rIE],a
     ld      a,$30
@@ -262,13 +265,14 @@ ProgramStart:
     ld      a,1
     ldh     [rKEY1],a
     stop
-    
-    ; ld      a,1
+:   ld      a,1
     bankswitch_to_a
     call    GBM_Stop
     call    DSFX_Init
     
     xor     a
+    ldh     [rSCX],a
+    ldh     [rSCY],a
     
     ldh     [hPressedButtons],a
     ldh     [hHeldButtons],a
@@ -279,6 +283,9 @@ ProgramStart:
     ld      [Level_CameraY],a
     
     call    Math_InitRandSeed
+    
+    ld      a,3
+    ld      [Player_Lives],a
     
     ld      a,bank(GM_Debug)
     bankswitch_to_a

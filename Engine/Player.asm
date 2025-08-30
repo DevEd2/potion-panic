@@ -96,6 +96,7 @@ Player_Health:                          db
 Player_InvulnerabilityTimer:            db
 Player_DoHurtAnim:                      db  ; if 1, hurt animation is playing; if 2, death animation is playing
 Player_RAMEnd:
+Player_Lives:                           db  ; needs to be separate from rest of player RAM so it isn't overwritten
 
 ; Set the player's current animation.
 ; INPUT:    arg1 = animation name
@@ -257,6 +258,9 @@ ProcessPlayer:
     ld      a,[Player_YPos]
     cp      $10
     jr      nc,.notdead
+    ld      a,[BigText_Done]
+    and     a
+    ret     z
     call    PalFadeOutWhite
     ld      a,3
     ld      [Player_DoHurtAnim],a
@@ -265,6 +269,11 @@ ProcessPlayer:
     and     a
     ret     nz
     ld      a,1
+    ld      [Level_ResetFlag],a
+    ld      a,[Player_Lives]
+    and     a
+    ret     nz
+    ld      a,2
     ld      [Level_ResetFlag],a
     ret
 .notdead
@@ -1183,6 +1192,18 @@ Player_Wand:
 section fragment "Player ROM0",rom0
 
 KillPlayer:
+    ld      b,OBJID_BigText
+    lb      de,0,0
+    call    CreateObject
+    inc     h
+    ld      a,[Player_Lives]
+    and     a
+    jr      nz,:+
+    ld      [hl],BIGTEXT_GAME_OVER
+    jr      :++
+:   ld      [hl],BIGTEXT_TOO_BAD
+:
+
     player_set_animation Death; play hurt animation
     ld      a,2
     ld      [Player_DoHurtAnim],a

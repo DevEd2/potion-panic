@@ -20,8 +20,8 @@ GM_Debug:
     call    MemFill
     xor     a
     ldh     [rVBK],a
-    ld      hl,_SCRN0
-    ld      bc,_SCRN1-_SCRN0
+    ld      hl,_VRAM
+    ld      bc,_SRAM-_VRAM
     call    MemFill
     
     ; load font
