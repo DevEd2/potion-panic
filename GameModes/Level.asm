@@ -47,9 +47,10 @@ Level_Flags:                db  ; bit 0 = horizontaL/vertical
 Level_Size:                 db  ; 0-15
 
 Level_EnemyCount:           db
-Level_EnemiesPerWave:       db
 Level_EnemiesLeftInWave:    db
+Level_EnemiesPerWave:       db
 Level_CurrentWaveCount:     db
+Level_TotalSpawnedEnemies:  db
 Level_EnemySpawnTimer:      db
 Level_EnemyListBank:        db
 Level_EnemyListPtr:         dw
@@ -87,6 +88,7 @@ GM_Level:
     ld      [Level_ResetFlag],a
     ld      [Level_CurrentWaveCount],a
     ld      [Level_HUDUpdateFlag],a
+    ld      [Level_TotalSpawnedEnemies],a
 
     ; get map pointer from ID
     ld      a,[Level_ID]
@@ -556,28 +558,36 @@ LevelLoop:
 
 .noclear
     ; spawn enemies
-    ld      a,[Level_EnemiesLeftInWave]
+    ld      a,[Level_EnemyCount]
     and     a
-    jr      nz,:+
-    ld      a,[Level_CurrentWaveCount]
-    and     a
-    jr      nz,:+
-    xor     a
-    ld      [Level_CurrentWaveCount],a
-    ld      a,1 second
-    ld      [Level_EnemySpawnTimer],a
-:   ld      a,[Level_HitstopTimer]
-    and     a
-    jr      nz,:+
+    jr      z,.nospawn
     ld      a,[Level_EnemySpawnTimer]
+    and     a
+    jr      z,:+
     dec     a
     ld      [Level_EnemySpawnTimer],a
-    jr      nz,:+
-    ld      a,[Level_EnemiesPerWave]
+    jr      .nospawn
+:   ld      a,[Level_CurrentWaveCount]
     ld      b,a
-    ld      a,[Level_CurrentWaveCount]
+    ld      a,[Level_EnemiesPerWave]
     cp      b
-    jr      z,:+
+    jr      nz,:+
+    ld      a,[Level_EnemiesLeftInWave]
+    and     a
+    jr      nz,.nospawn
+    ld      [Level_CurrentWaveCount],a
+    ld      a,[Level_EnemiesPerWave]
+    ld      [Level_EnemiesLeftInWave],a
+    ld      a,1 second
+    ld      [Level_EnemySpawnTimer],a
+    jr      .nospawn
+:   
+
+    ld      hl,Level_CurrentWaveCount
+    inc     [hl]    ; Level_CurrentWaveCount
+    inc     hl
+    inc     [hl]    ; Level_TotalSpawnedEnemies
+
     ld      a,[Level_EnemyListBank]
     bankswitch_to_a
     ld      hl,Level_EnemyListPtr
@@ -586,7 +596,7 @@ LevelLoop:
     ld      l,a
     ld      a,[hl+] ; read object ID
     cp      -1      ; end of list reached?
-    jr      z,:+    ; if yes, skip
+    jr      z,:++    ; if yes, skip
     ld      c,a     ; save for later
     inc     hl      ; skip dummy byte
     ld      a,[hl+] ; read object X position
@@ -595,9 +605,12 @@ LevelLoop:
     ld      e,a
     push    hl
     ; create puff of smoke object
+    ld      a,c
+    cp      OBJID_JackOLantern
+    jr      z,:+
     ld      b,OBJID_PuffOfSmoke
     call    CreateObject
-    ; actually spawn the enemy
+:   ; actually spawn the enemy
     ld      b,c
     call    CreateObject
     ; save pointer
@@ -608,8 +621,7 @@ LevelLoop:
     ld      [Level_EnemyListPtr+1],a
     ld      a,LEVEL_TIME_BETWEEN_ENEMY_SPAWNS
     ld      [Level_EnemySpawnTimer],a
-    ld      hl,Level_CurrentWaveCount
-    inc     [hl]
+.nospawn
 :   ; debug builds only: noclip logic
     if BUILD_DEBUG
         ldh     a,[hPressedButtons]
@@ -1196,6 +1208,7 @@ Level_Pointers:
     dwbank  Map_DarkForest1
     dwbank  Map_DarkForest2
     dwbank  Map_DarkForest3
+    dwbank  Map_DarkForest4
 
 ; =============================================================================
 
@@ -1279,6 +1292,7 @@ Pal_TestTileset:    incbin  "Tilesets/TestTileset.pal"
     include "Levels/DarkForest1.inc"
     include "Levels/DarkForest2.inc"
     include "Levels/DarkForest3.inc"
+    include "Levels/DarkForest4.inc"
 
 ; =============================================================================
 

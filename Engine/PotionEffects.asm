@@ -47,7 +47,7 @@ Potion_ClearAllEffects:
 
 Potion_GiveEffect:
 :   call    Math_Random
-    and     bitwidth(NUM_POTION_EFFECTS)
+    and     7
     cp      NUM_POTION_EFFECTS
     jr      nc,:-
     

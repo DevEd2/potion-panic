@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="69">
+ <editorsettings>
+  <export target="../DarkForest4.json" format="json"/>
+ </editorsettings>
+ <tileset firstgid="1" source="DarkForest.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="16" height="16">
+  <data encoding="csv">
+8,33,17,97,17,1,97,81,33,1,33,65,1,17,33,7,
+22,49,49,81,50,1,33,17,17,17,81,97,51,81,97,53,
+38,1,33,33,66,65,97,49,65,49,49,33,67,49,49,5,
+54,33,65,81,1,65,49,1,49,1,97,97,17,49,49,21,
+6,33,81,17,49,49,51,97,65,65,1,97,97,49,33,37,
+22,44,45,46,97,1,67,23,24,97,1,33,39,40,41,53,
+38,17,97,50,49,1,49,63,64,81,49,50,65,65,81,5,
+54,1,65,66,65,81,33,47,48,17,33,66,17,33,65,21,
+6,49,97,81,23,24,81,63,64,1,23,24,49,81,65,37,
+22,49,1,49,31,32,97,15,16,33,15,16,49,81,81,53,
+38,1,39,40,23,24,41,23,24,44,23,24,45,46,33,5,
+54,50,17,97,31,32,49,47,48,51,47,48,81,51,49,21,
+6,66,49,97,47,48,33,63,64,67,63,64,65,67,1,37,
+22,97,97,65,2,3,3,3,3,3,3,4,81,81,81,53,
+3,3,3,3,19,19,19,19,19,19,19,20,3,3,3,3,
+19,19,19,19,35,35,35,35,35,35,35,36,19,19,19,19
+</data>
+ </layer>
+ <objectgroup id="2" name="Objects">
+  <object id="14" name="PlayerStart" x="18" y="47" width="32" height="32"/>
+  <object id="15" name="LevelProperties" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="EnemiesPerWave" value="4"/>
+    <property name="EnemyCount" value="9"/>
+    <property name="Music" value="Mus_DarkForest"/>
+    <property name="Objset" value="0"/>
+    <property name="Palette" value="Pal_DarkForest"/>
+    <property name="Tileset" value="Tileset_DarkForest"/>
+   </properties>
+  </object>
+  <object id="60" name="Frog" x="79.7545" y="111.475"/>
+  <object id="61" name="Frog" x="104.225" y="148.936"/>
+  <object id="62" name="Frog" x="213.283" y="66.16"/>
+  <object id="63" name="Frog" x="212.679" y="211.772"/>
+  <object id="64" name="JackOLantern" x="47.4298" y="191.532"/>
+  <object id="65" name="JackOLantern" x="201.501" y="102.11"/>
+  <object id="66" name="JackOLantern" x="27.7932" y="101.506"/>
+  <object id="67" name="JackOLantern" x="158.301" y="196.063"/>
+  <object id="68" name="Imp" x="126.882" y="120.538"/>
+ </objectgroup>
+</map>

@@ -58,7 +58,7 @@
                         {
                          "name":"EnemyCount",
                          "type":"string",
-                         "value":"7"
+                         "value":"6"
                         }, 
                         {
                          "name":"Music",
@@ -130,17 +130,6 @@
                  "width":0,
                  "x":194.333333333333,
                  "y":63
-                }, 
-                {
-                 "height":0,
-                 "id":56,
-                 "name":"JackOLantern",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":223.333333333333,
-                 "y":207.666666666667
                 }, 
                 {
                  "height":0,

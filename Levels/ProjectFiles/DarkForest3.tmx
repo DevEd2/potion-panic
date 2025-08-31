@@ -29,7 +29,7 @@
   <object id="15" name="LevelProperties" x="0" y="0" width="16" height="16">
    <properties>
     <property name="EnemiesPerWave" value="4"/>
-    <property name="EnemyCount" value="7"/>
+    <property name="EnemyCount" value="6"/>
     <property name="Music" value="Mus_DarkForest"/>
     <property name="Objset" value="0"/>
     <property name="Palette" value="Pal_DarkForest"/>
@@ -40,7 +40,6 @@
   <object id="53" name="Frog" x="187.333" y="160.667"/>
   <object id="54" name="Frog" x="51" y="113.667"/>
   <object id="55" name="Frog" x="194.333" y="63"/>
-  <object id="56" name="JackOLantern" x="223.333" y="207.667"/>
   <object id="57" name="JackOLantern" x="30.3333" y="167.333"/>
   <object id="58" name="JackOLantern" x="233.333" y="112"/>
  </objectgroup>
