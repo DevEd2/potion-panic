@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="77">
+ <editorsettings>
+  <export format="json"/>
+ </editorsettings>
+ <tileset firstgid="1" source="DarkForest.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="16" height="16">
+  <data encoding="csv">
+8,81,17,65,65,1,65,65,65,17,17,65,65,49,49,7,
+22,1,65,1,49,33,1,33,49,65,1,65,33,65,81,37,
+38,33,97,97,65,81,97,97,33,1,49,1,49,97,17,53,
+54,49,33,49,97,81,97,17,81,17,81,1,97,49,65,5,
+6,44,45,46,81,49,97,49,33,65,33,17,65,65,17,21,
+22,97,49,81,1,49,81,65,65,97,97,49,1,97,97,37,
+38,17,81,1,39,40,41,23,24,44,45,46,65,65,33,53,
+54,49,17,33,65,17,97,15,16,17,1,81,97,65,81,5,
+3,4,65,81,65,65,1,31,32,1,1,33,39,40,41,21,
+19,20,17,17,1,81,49,47,48,1,1,49,49,49,81,37,
+35,36,33,49,33,97,49,63,64,17,1,65,97,33,97,53,
+35,35,4,49,97,65,1,23,24,44,45,46,49,2,3,3,
+35,35,20,1,97,49,49,31,32,65,65,97,49,18,19,19,
+35,35,36,33,17,49,81,47,48,97,25,33,65,34,35,35,
+35,35,36,3,3,3,3,3,3,3,4,1,1,34,35,35,
+35,36,36,19,19,19,19,19,19,19,20,9,9,34,35,35
+</data>
+ </layer>
+ <objectgroup id="2" name="Objects">
+  <object id="14" name="PlayerStart" x="49.7206" y="192" width="32" height="32"/>
+  <object id="15" name="LevelProperties" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="EnemiesPerWave" value="3"/>
+    <property name="EnemyCount" value="6"/>
+    <property name="Music" value="Mus_DarkForest"/>
+    <property name="Objset" value="0"/>
+    <property name="Palette" value="Pal_DarkForest"/>
+    <property name="Tileset" value="Tileset_DarkForest"/>
+   </properties>
+  </object>
+  <object id="71" name="Frog" x="132.924" y="165.853"/>
+  <object id="72" name="Frog" x="170.083" y="164.343"/>
+  <object id="73" name="Imp" x="128.091" y="114.798"/>
+  <object id="74" name="JackOLantern" x="135.945" y="198.782"/>
+  <object id="75" name="Imp" x="78.244" y="126.58"/>
+  <object id="76" name="Imp" x="175.218" y="50.4508"/>
+ </objectgroup>
+</map>

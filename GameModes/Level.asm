@@ -1209,6 +1209,7 @@ Level_Pointers:
     dwbank  Map_DarkForest2
     dwbank  Map_DarkForest3
     dwbank  Map_DarkForest4
+    dwbank  Map_DarkForest5
 
 ; =============================================================================
 
@@ -1293,6 +1294,7 @@ Pal_TestTileset:    incbin  "Tilesets/TestTileset.pal"
     include "Levels/DarkForest2.inc"
     include "Levels/DarkForest3.inc"
     include "Levels/DarkForest4.inc"
+    include "Levels/DarkForest5.inc"
 
 ; =============================================================================
 
