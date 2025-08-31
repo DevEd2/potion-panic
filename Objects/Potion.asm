@@ -7,7 +7,7 @@ assert _RS <= 16, "Object uses too much RAM! (Max size = $10, got {_RS})"
 def POTION_HIT_WIDTH = 6
 def POTION_HIT_HEIGHT = 12
 
-def POTION_DROP_CHANCE = 20 percent
+def POTION_DROP_CHANCE = 25 percent
 
 Obj_Potion:
 ; Routine pointers.

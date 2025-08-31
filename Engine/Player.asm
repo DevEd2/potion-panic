@@ -258,8 +258,14 @@ InitPlayer:
 section fragment "Player ROMX",romx
 
 ProcessPlayer:
-    ; reset level if player goes below screen
     ld      a,[Player_DoHurtAnim]
+    and     a
+    jr      nz,:+
+    ld      a,[Player_LockInPlace]
+    and     a
+    jp      nz,.animateplayer
+    ld      a,[Player_DoHurtAnim]
+:   ; reset level if player goes below screen
     cp      3
     jr      z,.restart
     cp      2
@@ -1203,6 +1209,10 @@ Player_Wand:
 section fragment "Player ROM0",rom0
 
 KillPlayer:
+    ld      a,[BigText_ObjectID]
+    ld      l,a
+    ld      h,high(ObjList)
+    ld      [hl],0
     ld      b,OBJID_BigText
     lb      de,0,0
     call    CreateObject

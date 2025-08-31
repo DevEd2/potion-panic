@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="77">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="80">
  <editorsettings>
-  <export format="json"/>
+  <export target="../DarkForest5.json" format="json"/>
  </editorsettings>
  <tileset firstgid="1" source="DarkForest.tsx"/>
  <layer id="1" name="Tile Layer 1" width="16" height="16">
@@ -17,11 +17,11 @@
 3,4,65,81,65,65,1,31,32,1,1,33,39,40,41,21,
 19,20,17,17,1,81,49,47,48,1,1,49,49,49,81,37,
 35,36,33,49,33,97,49,63,64,17,1,65,97,33,97,53,
-35,35,4,49,97,65,1,23,24,44,45,46,49,2,3,3,
+35,2,4,49,97,65,1,23,24,44,45,46,49,2,3,3,
 35,35,20,1,97,49,49,31,32,65,65,97,49,18,19,19,
-35,35,36,33,17,49,81,47,48,97,25,33,65,34,35,35,
-35,35,36,3,3,3,3,3,3,3,4,1,1,34,35,35,
-35,36,36,19,19,19,19,19,19,19,20,9,9,34,35,35
+35,35,36,33,17,49,81,47,48,97,1,33,65,34,35,35,
+35,35,2,3,3,3,3,3,3,3,3,3,3,4,35,35,
+35,36,36,19,19,19,19,19,19,19,19,19,19,19,35,35
 </data>
  </layer>
  <objectgroup id="2" name="Objects">
@@ -29,7 +29,7 @@
   <object id="15" name="LevelProperties" x="0" y="0" width="16" height="16">
    <properties>
     <property name="EnemiesPerWave" value="3"/>
-    <property name="EnemyCount" value="6"/>
+    <property name="EnemyCount" value="9"/>
     <property name="Music" value="Mus_DarkForest"/>
     <property name="Objset" value="0"/>
     <property name="Palette" value="Pal_DarkForest"/>
@@ -42,5 +42,8 @@
   <object id="74" name="JackOLantern" x="135.945" y="198.782"/>
   <object id="75" name="Imp" x="78.244" y="126.58"/>
   <object id="76" name="Imp" x="175.218" y="50.4508"/>
+  <object id="77" name="Imp" x="86.7029" y="72.5041"/>
+  <object id="78" name="Imp" x="126.882" y="145.31"/>
+  <object id="79" name="Imp" x="176.125" y="77.3377"/>
  </objectgroup>
 </map>

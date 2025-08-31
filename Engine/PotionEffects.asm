@@ -138,8 +138,19 @@ PotionEffect_Heal_End:
 
 PotionEffect_Fat_Start:
     ld      hl,Player_Flags
+    bit     BIT_PLAYER_FAT,[hl]
+    jr      nz,PotionEffect_Nothing_Start
     res     BIT_PLAYER_TINY,[hl]
     set     BIT_PLAYER_FAT,[hl]
+    player_set_animation_direct Fatten
+    ld      a,1
+    ld      [Player_LockInPlace],a
+    ld      [FreezeObjects],a
+    dec     a
+    ld      [Player_XVel],a
+    ld      [Player_XVel+1],a
+    ld      [Player_YVel],a
+    ld      [Player_YVel+1],a
     ret
 
 PotionEffect_Fat_End:
@@ -149,8 +160,20 @@ PotionEffect_Fat_End:
 
 PotionEffect_Tiny_Start:
     ld      hl,Player_Flags
+    bit     BIT_PLAYER_TINY,[hl]
+    jr      nz,PotionEffect_Nothing_Start
+    ld      hl,Player_Flags
     res     BIT_PLAYER_FAT,[hl]
     set     BIT_PLAYER_TINY,[hl]
+    player_set_animation_direct Shrink
+    ld      a,1
+    ld      [Player_LockInPlace],a
+    ld      [FreezeObjects],a
+    dec     a
+    ld      [Player_XVel],a
+    ld      [Player_XVel+1],a
+    ld      [Player_YVel],a
+    ld      [Player_YVel+1],a    
     ret
 
 PotionEffect_Tiny_End:

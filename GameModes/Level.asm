@@ -548,13 +548,19 @@ LevelLoop:
     jr      nz,:+
     ld      a,[Level_ID]
     inc     a
-    ; TODO: check for last level
     ld      [Level_ID],a
+    cp      NUM_LEVELS-1
+    jr      z,.endofdemo
     ld      a,1
     ld      [Level_ResetFlag],a
     jp      .doproc
 :   call    Pal_DoFade
     jp      .doproc
+.endofdemo
+    xor     a
+    ldh     [rSCX],a
+    ldh     [rSCY],a
+    jp      _GM_Credits
 
 .noclear
     ; spawn enemies
@@ -1205,11 +1211,12 @@ GetCollisionIndex:
 
 Level_Pointers:
     dwbank  Map_testlevel
-    dwbank  Map_DarkForest1
+:   dwbank  Map_DarkForest1
     dwbank  Map_DarkForest2
     dwbank  Map_DarkForest3
     dwbank  Map_DarkForest4
     dwbank  Map_DarkForest5
+def NUM_LEVELS = (@ - :-) /2
 
 ; =============================================================================
 

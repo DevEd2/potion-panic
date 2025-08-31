@@ -307,9 +307,9 @@ BigText_Pointers:
     dw      .potion_reverse
     dw      .potion_1up
     dw      .potion_heal
-    dw      .potion_dmgmode
-    ;dw      .potion_tripping
-    ;dw      .potion_familiar
+;    dw      .potion_dmgmode
+;    dw      .potion_tripping
+;    dw      .potion_familiar
 :
 
 .getready               db  88 - ((:++ - :+) * 4)
@@ -331,7 +331,7 @@ BigText_Pointers:
 :                       db  "UH OH BIG"
 :                       db  -1
 .potion_tiny            db  88 - ((:++ - :+) * 4)
-:                       db  "UH OH TINY"
+:                       db  "SMOL WITCH"
 :                       db  -1
 .potion_nothing         db  88 - ((:++ - :+) * 4)
 :                       db  "NOTHING"
@@ -345,15 +345,15 @@ BigText_Pointers:
 .potion_heal            db  88 - ((:++ - :+) * 4)
 :                       db  "FULL HEAL"
 :                       db  -1
-.potion_dmgmode         db  88 - ((:++ - :+) * 4)
-:                       db  "SO RETRO"
-:                       db  -1
-.potion_tripping        db  88 - ((:++ - :+) * 4)
-:                       db  "TRIPPING"
-:                       db  -1
-.potion_familiar        db  88 - ((:++ - :+) * 4)
-:                       db  "FAMILIAR"
-:                       db  -1
+;.potion_dmgmode         db  88 - ((:++ - :+) * 4)
+;:                       db  "SO RETRO"
+;:                       db  -1
+;.potion_tripping        db  88 - ((:++ - :+) * 4)
+;:                       db  "TRIPPING"
+;:                       db  -1
+;.potion_familiar        db  88 - ((:++ - :+) * 4)
+;:                       db  "FAMILIAR"
+;:                       db  -1
     popc
 
 BigText_EaseInTable:

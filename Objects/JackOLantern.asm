@@ -59,6 +59,30 @@ Obj_JackOLantern_Init:
     inc     l
     ld      [hl],0                      ; JackOLantern_Lifetime
     
+    ldobjrp JackOLantern_Lifetime
+    inc     [hl]
+    ld      a,[hl]
+    add     a
+    call    Math_SinCos
+    sra     h
+    rr      l
+    sra     h
+    rr      l
+    sra     h
+    rr      l
+    ld      b,l
+    ldobjrp JackOLantern_InitYPos
+    ld      a,[hl]
+    add     b
+    ld      b,a
+    ldobjp  OBJ_Y
+    ld      [hl],b
+    ld      e,b
+    ldobjp  OBJ_X
+    ld      d,[hl]
+    ld      b,OBJID_PuffOfSmoke
+    call    CreateObject
+    
     ; fall through
 
 Obj_JackOLantern_Float:

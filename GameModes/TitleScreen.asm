@@ -118,7 +118,7 @@ GM_Title:
     call    DSFX_Init
     
     ; ld      a,bank(Mus_LostInTranslation)-1 ; TODO: Proper title screen music
-    ; call    GBM_LoadModule    
+    ; call    GBM_LoadModule
     
     ; TODO: Remaining init stuff
     
@@ -237,9 +237,9 @@ TitleLoop:
 :   ldh     a,[hPressedButtons]
     and     BTN_UP | BTN_DOWN | BTN_SELECT
     jr      z,.skipmenu
-    ld      a,[Title_MenuPos]
-    xor     1
-    ld      [Title_MenuPos],a
+    ;ld      a,[Title_MenuPos]
+    ;xor     1
+    ;ld      [Title_MenuPos],a
     ld      e,SFX_MENU_CURSOR
     call    DSFX_PlaySound
 .skipmenu
@@ -547,7 +547,8 @@ endm
 
 Title_Menu_Main:
     menu_entry  MENU_DIR_UP,   Title_StartGameSelectedOAM, Title_StartGameUnselectedOAM, Title_StartGame
-    menu_entry  MENU_DIR_UP,     Title_OptionsSelectedOAM,   Title_OptionsUnselectedOAM, Title_GotoOptionsMenu
+    ; menu_entry  MENU_DIR_UP,     Title_OptionsSelectedOAM,   Title_OptionsUnselectedOAM, Title_GotoOptionsMenu
+    menu_entry  MENU_DIR_NONE,             Title_DummyOAM,               Title_DummyOAM, Title_DummyOption
     menu_entry  MENU_DIR_NONE,             Title_DummyOAM,               Title_DummyOAM, Title_DummyOption
 
 ;Title_Menu_Options:
@@ -616,12 +617,12 @@ Title_DummyOAM:
 
 Title_StartGameSelectedOAM:
     for n,10
-        oam_entry    92, 40+(n*8), $00+(n*2), OAMF_BANK1
+        oam_entry    115, 40+(n*8), $00+(n*2), OAMF_BANK1
     endr
     db      -1
 Title_StartGameUnselectedOAM:
     for n,10
-        oam_entry    92, 40+(n*8), $14+(n*2), OAMF_BANK1
+        oam_entry    115, 40+(n*8), $14+(n*2), OAMF_BANK1
     endr
     db      -1
 
