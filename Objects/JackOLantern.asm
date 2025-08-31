@@ -32,9 +32,18 @@ Obj_JackOLantern_Init:
     ld      [hl+],a         ; y subpixel
     ld      e,[hl]  
     inc     l               ; y position
-    ld      [hl],low(-$80)  ; x velocity low
+    push    hl
+    call    Math_Random
+    ld      hl,$80
+    bit     0,a
+    jr      z,:+
+    call    Math_Neg16
+:   ld      d,h
+    ld      e,l
+    pop     hl
+    ld      [hl],e          ; x velocity low
     inc     l
-    ld      [hl],high(-$80) ; x velocity high
+    ld      [hl],d          ; x velocity high
     inc     l
     ld      [hl+],a         ; y velocity low
     ld      [hl+],a         ; y velocity high

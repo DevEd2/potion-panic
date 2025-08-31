@@ -120,6 +120,8 @@ Potion_EffectPointers:
     effect_def  ReverseControls
     effect_def  1Up
     effect_def  Heal
+    ;effect_def  Tripping
+    ;effect_def  Familiar
 .end
 
 def NUM_POTION_EFFECTS equ (Potion_EffectPointers.end-Potion_EffectPointers)/4

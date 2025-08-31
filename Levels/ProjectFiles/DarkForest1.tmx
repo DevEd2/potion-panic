@@ -37,9 +37,9 @@
    </properties>
   </object>
   <object id="31" name="Frog" x="86" y="161.333"/>
-  <object id="32" name="Frog" x="124.333" y="162.667"/>
-  <object id="33" name="Frog" x="206.667" y="180"/>
-  <object id="35" name="Frog" x="167.334" y="209"/>
   <object id="37" name="Frog" x="106" y="131"/>
+  <object id="32" name="Frog" x="124.333" y="162.667"/>
+  <object id="35" name="Frog" x="167.334" y="209"/>
+  <object id="33" name="Frog" x="206.667" y="180"/>
  </objectgroup>
 </map>

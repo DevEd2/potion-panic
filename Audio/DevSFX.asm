@@ -561,6 +561,7 @@ macro kill_channel
 	if		\1 == 3
 	ld		a,$ff
 	ld		[GBM_LastWave],a
+    ld      [GBM_ForceWaveRetrig],a
 	endc
 	xor		a
 	ldh		[rNR\12],a

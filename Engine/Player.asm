@@ -46,6 +46,11 @@ def PLAYER_INVULNERABILITY_TIME = 60 * 2
 def SIZEOF_PROJECTILE = 10
 def MAX_PROJECTILES = 2
 
+; scoring formula: each enemy awards (50 * c) * m points
+; c = combo
+; m = global multiplier
+def POINTS_PER_ENEMY = $50
+
 rsreset
 def PROJECTILE_SPR rb
 def PROJECTILE_TTL rb
@@ -90,13 +95,17 @@ Player_ControlBitFlipMask:              db
 Player_LockInPlace:                     db
 Player_LockControls:                    db
 Player_PauseTempFrame:                  db
-Player_HitboxPointTL:                   dw ; x, y
-Player_HitboxPointBR:                   dw ; x, y
+Player_HitboxPointTL:                   dw      ; x, y
+Player_HitboxPointBR:                   dw      ; x, y
 Player_Health:                          db
 Player_InvulnerabilityTimer:            db
-Player_DoHurtAnim:                      db  ; if 1, hurt animation is playing; if 2, death animation is playing
-Player_RAMEnd:
-Player_Lives:                           db  ; needs to be separate from rest of player RAM so it isn't overwritten
+Player_DoHurtAnim:                      db      ; if 1, hurt animation is playing; if 2, death animation is playing
+Player_ProjectileComboCounter:          dw
+Player_Multiplier:                      db
+Player_RAMEnd:  
+Player_Lives:                           db      ; needs to be separate from rest of player RAM so it isn't overwritten
+Player_Score:                           ds 3    ; same as above
+
 
 ; Set the player's current animation.
 ; INPUT:    arg1 = animation name
@@ -268,6 +277,8 @@ ProcessPlayer:
     ld      a,[sys_FadeState]
     and     a
     ret     nz
+    ld      hl,Player_Lives
+    dec     [hl]
     ld      a,1
     ld      [Level_ResetFlag],a
     ld      a,[Player_Lives]
@@ -1848,18 +1859,6 @@ IntS_HUD:
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_OBJOFF | LCDCF_BLK21 | LCDCF_OBJ16 | LCDCF_WINON | LCDCF_WIN9C00
     ldh     [rLCDC],a
     ret
-    
-HUD_NumberTiles:
-    db  $5e,$70 ; 0
-    db  $5f,$71 ; 1
-    db  $60,$72 ; 2
-    db  $61,$73 ; 3
-    db  $62,$74 ; 4
-    db  $63,$75 ; 5
-    db  $64,$76 ; 6
-    db  $65,$77 ; 7
-    db  $66,$78 ; 8
-    db  $67,$79 ; 9
 
 HUD_TileMap:
 .row1   db  $5a,$5b,$5c,$5c,$6a,$6c,$6c,$6c,$6a,$66,$67,$68,$69,$5c,$5c,$5c,$5c,$5c,$5c,$6b
@@ -1868,6 +1867,29 @@ HUD_TileMap:
 HUD_AttrMap:
 .row1   db  $0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e,$0e
 .row2   db  $0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f,$0f
+
+; Award a number of points stored in HL.
+; INPUT:    hl = poitns
+; OUTPUT:   none
+; DESTROYS: af
+Player_GivePoints:
+    ld      a,[Player_Score+2]
+    add     l
+    daa
+    ld      [Player_Score+2],a
+    ld      a,[Player_Score+1]
+    adc     h
+    daa
+    ld      [Player_Score+1],a
+    ld      a,[Player_Score]
+    adc     0
+    ld      [Player_Score],a
+    ret     nc
+    ld      a,$99
+    ld      [Player_Score],a
+    ld      [Player_Score+1],a
+    ld      [Player_Score+2],a
+    ret
 
 Player_ProcessProjectiles:
     ld      hl,Player_Projectiles
@@ -2227,14 +2249,21 @@ Player_ProcessProjectiles:
 
 .skipcollisionchecks
     
-:   ; TODO: Delete projectile if it touches an enemy
-    pop     bc
+:   pop     bc
     dec     b
     jp      nz,.loop
     ret
 .delete
     dec     hl
 .delete2
+    push    hl
+    push    bc
+    call    Player_GetProjectileID
+    ld      bc,Player_ProjectileComboCounter
+    add     hl,bc
+    ld      [hl],0
+    pop     bc
+    pop     hl
     xor     a
     rept    SIZEOF_PROJECTILE
         ld      [hl+],a
@@ -2244,6 +2273,30 @@ Player_ProcessProjectiles:
     ret
 .startable
     db  $10,$10,$12,$12,$14,$14,$12,$12
+
+; INPUT:    hl = projectile pointer
+; OUTPUT:   hl = projectile ID
+; DESTROYS: af bc
+Player_GetProjectileID:
+    ld      bc,-Player_Projectiles
+    add     hl,bc
+    ld      bc,$0d0a
+    xor     a
+    add     hl,hl
+    rla
+    add     hl,hl
+    rla
+    add     hl,hl
+    rla
+:   add     hl,hl
+    rla
+    cp      c
+    jr      c,:+
+    sub     c
+    inc     l
+:   dec     b
+    jr      nz,:--
+    ret
 
 section fragment "Player ROM0",rom0
 

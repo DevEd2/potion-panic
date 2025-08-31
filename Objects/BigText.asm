@@ -289,7 +289,7 @@ endr
 rsreset
 def BIGTEXT_GET_READY   rb
 def BIGTEXT_WELL_DONE   rb
-def BIGTEXT_TIME_UP     rb
+;def BIGTEXT_TIME_UP     rb
 def BIGTEXT_TOO_BAD     rb
 def BIGTEXT_GAME_OVER   rb
 
@@ -298,7 +298,7 @@ def BIGTEXT_POTIONS     rb
 BigText_Pointers:
     dw      .getready
     dw      .welldone
-    dw      .timeup
+;    dw      .timeup
     dw      .toobad
     dw      .gameover
 :   dw      .potion_nothing
@@ -308,8 +308,8 @@ BigText_Pointers:
     dw      .potion_1up
     dw      .potion_heal
     dw      .potion_dmgmode
-    dw      .potion_tripping
-    dw      .potion_familiar
+    ;dw      .potion_tripping
+    ;dw      .potion_familiar
 :
 
 .getready               db  88 - ((:++ - :+) * 4)
@@ -318,9 +318,9 @@ BigText_Pointers:
 .welldone               db  88 - ((:++ - :+) * 4)
 :                       db  "WELL DONE"
 :                       db  -1
-.timeup                 db  88 - ((:++ - :+) * 4)
-:                       db  "TIME UP"
-:                       db  -1
+;.timeup                 db  88 - ((:++ - :+) * 4)
+;:                       db  "TIME UP"
+;:                       db  -1
 .toobad                 db  88 - ((:++ - :+) * 4)
 :                       db  "TOO BAD"
 :                       db  -1

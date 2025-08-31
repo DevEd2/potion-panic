@@ -1,4 +1,4 @@
-section fragment "Object pointer table",rom0
+section fragment "Object pointer table",romx
 ObjPointers:
     objdef  Template
     objdef  Sparkle

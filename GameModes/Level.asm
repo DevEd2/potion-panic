@@ -58,6 +58,8 @@ Level_ClearTimer:           db
 
 Level_Paused:               db
 
+Level_HUDUpdateFlag:        db
+
 section "Level routines",rom0
 GM_Level:
     call    LCDOff
@@ -84,6 +86,7 @@ GM_Level:
     ld      [Level_HitstopTimer],a
     ld      [Level_ResetFlag],a
     ld      [Level_CurrentWaveCount],a
+    ld      [Level_HUDUpdateFlag],a
 
     ; get map pointer from ID
     ld      a,[Level_ID]
@@ -755,8 +758,6 @@ LevelLoop:
     ld      a,[Level_ResetFlag]
     dec     a
     jp      nz,:+
-    ld      hl,Player_Lives
-    dec     [hl]
     jp      GM_Level
 :   dec     a
     jr      nz,:+
@@ -827,7 +828,158 @@ LevelLoop:
     ld      a,[Level_CameraOffsetY]
     add     b
     ldh     [rSCY],a
+    
+    ; update HUD
+    ;ld      a,[Level_HUDUpdateFlag]
+    ;and     a
+    ;jp      z,LevelLoop
+    ;xor     a
+    ;ld      [Level_HUDUpdateFlag],a
+    xor     a
+    ldh     [rVBK],a
+    
+    ; draw lives
+    ld      a,[Player_Lives]
+    call    Math_Hex2BCD8
+    push    af
+    and     $f0
+    swap    a
+    add     a
+    ld      l,a
+    ld      h,0
+    ld      de,HUD_NumberTiles
+    add     hl,de
+    ld      a,[hl+]
+    ld      e,[hl]
+    ld      d,a
+:   ldh     a,[rSTAT]
+    and     STATF_BUSY
+    jr      nz,:-
+    ld      a,d
+    ld      [$9c02],a
+    ld      a,e
+    ld      [$9c22],a
+    pop     af
+    and     $f
+    add     a
+    ld      l,a
+    ld      h,0
+    ld      de,HUD_NumberTiles
+    add     hl,de
+    ld      a,[hl+]
+    ld      e,[hl]
+    ld      d,a
+:   ldh     a,[rSTAT]
+    and     STATF_BUSY
+    jr      nz,:-
+    ld      a,d
+    ld      [$9c03],a
+    ld      a,e
+    ld      [$9c23],a
+    ; draw health
+    ld      hl,$9c05
+    ld      de,$9c25
+    ld      a,[Player_Health]
+    rept    3
+        dec     a
+        bit     7,a
+        call    z,.heart
+        call    nz,.noheart
+    endr
+    ; draw score
+    ld      hl,Player_Score
+    ld      b,3
+    ld      de,$9C0D
+.scoreloop
+    push    hl
+    ld      a,[hl]
+    and     $f0
+    swap    a
+    ld      l,a
+    ld      h,0
+    add     hl,hl
+    push    bc
+    ld      bc,HUD_NumberTiles
+    add     hl,bc
+    pop     bc
+:   ldh     a,[rSTAT]
+    and     STATF_BUSY
+    jr      nz,:-
+    ld      a,[hl+]
+    ld      [de],a
+    ld      a,e
+    add     $20
+    ld      e,a
+    ld      a,[hl]
+    ld      [de],a
+    ld      a,e
+    sub     $1f
+    ld      e,a
+    pop     hl
+    ld      a,[hl+]
+    push    hl
+    and     $f
+    ld      l,a
+    ld      h,0
+    add     hl,hl
+    push    bc
+    ld      bc,HUD_NumberTiles
+    add     hl,bc
+    pop     bc
+:   ldh     a,[rSTAT]
+    and     STATF_BUSY
+    jr      nz,:-
+    ld      a,[hl+]
+    ld      [de],a
+    ld      a,e
+    add     $20
+    ld      e,a
+    ld      a,[hl]
+    ld      [de],a
+    ld      a,e
+    sub     $1f
+    ld      e,a
+    pop     hl
+    dec     b
+    jr      nz,.scoreloop
+    
     jp      LevelLoop
+.heart
+    push    af
+:   ldh     a,[rSTAT]
+    and     STATF_BUSY
+    jr      nz,:-
+    ld      a,$6c
+    ld      [hl+],a
+    ld      a,$7f
+    ld      [de],a
+    inc     e
+    pop     af
+    ret
+.noheart
+    push    af
+:   ldh     a,[rSTAT]
+    and     STATF_BUSY
+    jr      nz,:-
+    ld      a,$6a
+    ld      [hl+],a
+    ld      a,$7d
+    ld      [de],a
+    inc     e
+    pop     af
+    ret
+
+HUD_NumberTiles:
+    db  $5c,$6f ; 0
+    db  $5d,$70 ; 1
+    db  $5e,$71 ; 2
+    db  $5f,$72 ; 3
+    db  $60,$73 ; 4
+    db  $61,$74 ; 5
+    db  $62,$75 ; 6
+    db  $63,$76 ; 7
+    db  $64,$77 ; 8
+    db  $65,$78 ; 9
 
 LoadTileset:
     ; load GFX
@@ -1043,6 +1195,7 @@ Level_Pointers:
     dwbank  Map_testlevel
     dwbank  Map_DarkForest1
     dwbank  Map_DarkForest2
+    dwbank  Map_DarkForest3
 
 ; =============================================================================
 
@@ -1125,6 +1278,7 @@ Pal_TestTileset:    incbin  "Tilesets/TestTileset.pal"
     include "Levels/testlevel.inc"
     include "Levels/DarkForest1.inc"
     include "Levels/DarkForest2.inc"
+    include "Levels/DarkForest3.inc"
 
 ; =============================================================================
 

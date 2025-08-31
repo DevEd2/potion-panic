@@ -13,7 +13,7 @@
 
     include "hardware.inc/hardware.inc"
 		
-def BUILD_DEBUG = 1
+def BUILD_DEBUG = 0
 def STACK_TOP = $d000
 
 def BIT_A           equ 0
@@ -286,11 +286,25 @@ ProgramStart:
     
     ld      a,3
     ld      [Player_Lives],a
+    xor     a
+    ld      [Player_Score],a
+    ld      [Player_Score+1],a
+    ld      [Player_Score+2],a
     
-    ld      a,bank(GM_Debug)
-    bankswitch_to_a
-    jp      GM_Debug
+    ld      a,low(IntV_Default)
+    ldh     [hVBlankPointer],a
+    ld      a,high(IntV_Default)
+    ldh     [hVBlankPointer+1],a
     
+    if BUILD_DEBUG
+        ld      a,bank(GM_Debug)
+        bankswitch_to_a
+        jp      GM_Debug
+    else
+        ld      a,bank(GM_Copyright)
+        bankswitch_to_a
+        jp      GM_Copyright
+    endc
     jr      @
 
 ; =============================================================================

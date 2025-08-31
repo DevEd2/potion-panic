@@ -77,11 +77,6 @@ GM_Debug:
     ld      a,55
     ld      [Debug_MenuCursorOffset],a
     
-    ld      a,low(IntV_Default)
-    ldh     [hVBlankPointer],a
-    ld      a,high(IntV_Default)
-    ldh     [hVBlankPointer+1],a
-    
     ld      a,LCDCF_ON | LCDCF_BGON | LCDCF_BG8000 | LCDCF_OBJON
     ldh     [rLCDC],a
     ld      a,IEF_VBLANK

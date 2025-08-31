@@ -140,6 +140,8 @@ Obj_Potion_Idle:
     ; delete object
     ldobjp  OBJ_ID
     ld      [hl],0
+    ld      hl,$300
+    call    Player_GivePoints
     jp      Potion_GiveEffect
 
 Obj_Potion_Draw:

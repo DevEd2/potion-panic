@@ -52,14 +52,14 @@ endm
 ; ======================================================================
 
 
-def INC_MUL     = 1 ; multiplication
-def INC_DIV     = 1 ; division
-def INC_POW     = 1 ; square (NYI)
-def INC_SQRT    = 1 ; square root
+def INC_MUL     = 0 ; multiplication
+def INC_DIV     = 0 ; division
+def INC_POW     = 0 ; square
+def INC_SQRT    = 0 ; square root
 def INC_SINCOS  = 1 ; sine + cosine
 def INC_ATAN2   = 1 ; 2-argument arctangent
-def INC_RAND    = 1 ; 32-bit PRNG
-def INC_LERP    = 1 ; linear interpolation (NYI)
+def INC_RAND    = 1 ; 16-bit PRNG
+def INC_LERP    = 0 ; linear interpolation (NYI)
 def INC_HEX2BCD = 1 ; hexadecimal to BCD
 
 macro neg

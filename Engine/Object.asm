@@ -47,7 +47,7 @@ def OBJID_\1 = NUM_OBJECTS
 def NUM_OBJECTS = NUM_OBJECTS+1
 section fragment "Object GFX positions",wram0
 GFXPos_\1: db
-section fragment "Object pointer table",rom0
+section fragment "Object pointer table",romx
 ObjPointer_\1:
     db bank(Object_\1)
     dw Object_\1
@@ -176,16 +176,18 @@ ProcessObjects:
     ld      c,a
     ld      b,0
     push    hl
-    ld      hl,ObjPointers
+    farload hl,ObjPointers
     add     hl,bc
     add     hl,bc
     add     hl,bc
     pushbank
     ld      a,[hl+]
-    bankswitch_to_a
+    push    af
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
+    pop     af
+    bankswitch_to_a
     inc     e
     ld      a,[de]
     ld      c,a
@@ -327,6 +329,34 @@ Obj_CheckProjectileIntersecting:
     ret
 .hit
     ;ld      [hl],0
+    push    af
+    push    hl
+    
+    ;ld      hl,$100
+    ;call    Player_GivePoints
+    call    Player_GetProjectileID
+    ; get current projectile's combo
+    ld      bc,Player_ProjectileComboCounter
+    add     hl,bc
+    inc     [hl]
+    ld      a,[hl]
+    cp      8
+    jr      nc,.1up
+    ld      b,[hl]
+    ld      hl,POINTS_PER_ENEMY
+:   call    Player_GivePoints
+    dec     b
+    jr      nz,:-
+    pop     hl
+    pop     af
+    pop     bc
+    ret
+.1up
+    ld      hl,Player_Lives
+    inc     [hl]
+    ; TODO: 1up sound
+    pop     hl
+    pop     af
     pop     bc
     ret
 
