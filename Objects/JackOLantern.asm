@@ -38,10 +38,6 @@ Obj_JackOLantern_Init:
     bit     0,a
     jr      z,:+
     call    Math_Neg16
-    push    hl
-    ldobjp  OBJ_FLAGS
-    set     OBJB_XFLIP,[hl]
-    pop     hl
 :   ld      d,h
     ld      e,l
     pop     hl
@@ -129,7 +125,7 @@ Obj_JackOLantern_Defeat:
     ; fall through
 
 Obj_JackOLantern_Draw:
-    ldobjp  OBJ_FLAGS
+    ldobjp  OBJ_VX+1
     ;bit     OBJB_VISIBLE,[hl]
     ;ret     z
     ld      c,[hl]
@@ -143,8 +139,8 @@ Obj_JackOLantern_Draw:
     ld      a,[hl+]
     ld      h,[hl]
     ld      l,a
-    bit     OBJB_XFLIP,c
-    jr      z,:+
+    bit     7,c
+    jr      nz,:+
     inc     hl
     inc     hl
 :   ld      a,[hl+]
@@ -195,7 +191,14 @@ Obj_JackOLantern_Draw:
         inc     e
         ; attribute
         ld      a,[hl+]
-        bit     OBJB_YFLIP,c
+        push    de
+        ld      e,a
+        push    hl
+        ldobjp  OBJ_FLAGS
+        bit     OBJB_YFLIP,[hl]
+        pop     hl
+        ld      a,e
+        pop     de
         jr      z,:+
         or      OAMF_YFLIP
 :       ld      [de],a
