@@ -446,6 +446,8 @@ Frog_CheckHurtPlayer:
     call    DSFX_PlaySound
     ld      e,SFX_BELLY_BUMP_CH4
     call    DSFX_PlaySound
+    ld      hl,$150
+    call    Player_GivePoints
     
     ldobjp  OBJ_STATE
     ld      [hl],FROG_STATE_DEFEAT

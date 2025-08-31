@@ -38,6 +38,10 @@ Obj_JackOLantern_Init:
     bit     0,a
     jr      z,:+
     call    Math_Neg16
+    push    hl
+    ldobjp  OBJ_FLAGS
+    set     OBJB_XFLIP,[hl]
+    pop     hl
 :   ld      d,h
     ld      e,l
     pop     hl
@@ -239,6 +243,8 @@ JackOLantern_CheckHurtPlayer:
     call    DSFX_PlaySound
     ld      e,SFX_BELLY_BUMP_CH4
     call    DSFX_PlaySound
+    ld      hl,$150
+    call    Player_GivePoints
     
     ldobjp  OBJ_STATE
     ld      [hl],JACKOLANTERN_STATE_DEFEAT
