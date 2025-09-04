@@ -56,8 +56,11 @@ Potion_GiveEffect:
     ld      a,[BigText_ObjectID]
     ld      l,a
     ld      h,high(ObjList)
+    ld      a,[hl]
+    cp      OBJID_BigText
+    jr      nz,:+
     ld      [hl],0
-    ld      b,OBJID_BigText
+:   ld      b,OBJID_BigText
     lb      de,0,0
     call    CreateObject
     pop     af
