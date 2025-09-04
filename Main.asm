@@ -318,7 +318,7 @@ PrintString:
     ld      a,[hl+]
     and     a
     ret     z
-    sub     " "
+    sub     $20 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was " ")
     ld      [de],a
     inc     de
     jr      PrintString
@@ -330,7 +330,7 @@ PrintString2:
     ld      a,[hl+]
     cp      -1
     ret     z
-    sub     " "
+    sub     $20 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was " ")
     ld      [de],a
     inc     de
     jr      PrintString2
@@ -342,7 +342,7 @@ PrintStringInverted:
     ld      a,[hl+]
     and     a
     ret     z
-    sub     " "
+    sub     $20 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was " ")
     set     7,a
     ld      [de],a
     inc     de
@@ -357,18 +357,18 @@ PrintHex:
     and     $f
     cp      $a
     jr      nc,:+
-    add     "0"-" "
+    add     $10 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")
     jr      :++
-:   add     "A"-" "-$a
+:   add     $11 - $a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "A"-" "-$a)
 :   ld      [de],a
     inc     e
     ld      a,b
     and     $f
     cp      $a
     jr      nc,:+
-    add     "0"-" "
+    add     $10 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")
     jr      :++
-:   add     "A"-" "-$a
+:   add     $11 - $a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "A"-" "-$a)
 :   ld      [de],a
     inc     e
     ret

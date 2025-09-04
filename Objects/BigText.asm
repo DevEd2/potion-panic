@@ -282,7 +282,7 @@ Obj_BigText_Draw:
 redef chars equs "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ "
 def char = 0
 rept strlen("{chars}")
-    charmap strsub("{chars}", char + 1, 1), char
+    charmap strslice("{chars}", char, char+1), char
 def char = char + 1
 endr
 

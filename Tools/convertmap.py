@@ -149,7 +149,6 @@ if __name__ == "__main__":
                 elif obj[x]['properties'][q]['name'] == "EnemiesPerWave":
                     enemiesperwave = obj[x]['properties'][q]['value']
                     r += 1
-            print(r)
             if r != 6:
                 print("ERROR: Some level properties weren't set! (Ensure LevelProperties object has the Tileset, Music, Palette, and Objset tags set)")
                 exit(1)

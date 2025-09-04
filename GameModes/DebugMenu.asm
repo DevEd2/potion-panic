@@ -150,7 +150,7 @@ Debug_DrawMenuItems:
     cp      -1
     jr      z,.next
     inc     bc
-    sub     " "
+    sub     $20 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was " ")
     ld      [de],a
     inc     de
     jr      :-
@@ -177,7 +177,7 @@ Debug_DrawCursor:
     ld      [hl+],a
     ld      a,8
     ld      [hl+],a
-    ld      [hl],">"-" "
+    ld      [hl],$1e ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ">"-" ")
     ret
     
 Debug_JumpTable_Main:
@@ -201,7 +201,7 @@ def _DAY equs "0{d:__UTC_DAY__}"
 else
 def _DAY equs "{d:__UTC_DAY__}"
 endc
-def _YEAR equs strsub("{d:__UTC_YEAR__}",3)
+def _YEAR equs strslice("{d:__UTC_YEAR__}",2)
 
 Debug_String_BuildDate:     
     db  "Build {_MONTH}{_DAY}{_YEAR}",-1

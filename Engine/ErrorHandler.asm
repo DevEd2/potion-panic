@@ -112,21 +112,21 @@ ErrorScreen:
     
     ld      hl,_SCRN0+$144
     ld      bc,$20
-    ld      [hl],":"-" "
+    ld      [hl],$1a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ":"-" ")
     add     hl,bc
-    ld      [hl],":"-" "
+    ld      [hl],$1a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ":"-" ")
     add     hl,bc
-    ld      [hl],":"-" "
+    ld      [hl],$1a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ":"-" ")
     add     hl,bc
-    ld      [hl],":"-" "
+    ld      [hl],$1a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ":"-" ")
     add     hl,bc
-    ld      [hl],":"-" "
+    ld      [hl],$1a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ":"-" ")
     add     hl,bc
-    ld      [hl],":"-" "
+    ld      [hl],$1a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ":"-" ")
     add     hl,bc
-    ld      [hl],":"-" "
+    ld      [hl],$1a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ":"-" ")
     add     hl,bc
-    ld      [hl],":"-" "
+    ld      [hl],$1a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ":"-" ")
     
     ld      de,$9884
     ld      hl,hAF+1
@@ -216,18 +216,18 @@ ErrorScreen:
         and     $f
         cp      $a
         jr      nc,:+
-        add     "0"-" "
+        add     $10 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")
         jr      :++
-:       add     "A"-" "-$a
+:       add     $21 - $a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")"A"-" "-$a)
 :       ld      [de],a
         inc     e
         ld      a,h
         and     $f
         cp      $a
         jr      nc,:+
-        add     "0"-" "
+        add     $10 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")
         jr      :++
-:       add     "A"-" "-$a
+:       add     $21 - $a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")"A"-" "-$a)
 :       ld      [de],a
         inc     e
         ld      a,l
@@ -235,18 +235,18 @@ ErrorScreen:
         and     $f
         cp      $a
         jr      nc,:+
-        add     "0"-" "
+        add     $10 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")
         jr      :++
-:       add     "A"-" "-$a
+:       add     $21 - $a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")"A"-" "-$a)
 :       ld      [de],a
         inc     e
         ld      a,l
         and     $f
         cp      $a
         jr      nc,:+
-        add     "0"-" "
+        add     $10 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")
         jr      :++
-:       add     "A"-" "-$a
+:       add     $21 - $a ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was "0"-" ")"A"-" "-$a)
 :       ld      [de],a
         inc     e
         inc     de ; advance one char

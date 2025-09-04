@@ -35,9 +35,9 @@ done
 cd $BASEDIR
 
 echo "Assembling..."
-rgbasm -o $PROJECTNAME.obj -p 255 Main.asm -Wno-unmapped-char -Wtruncation=1
+rgbasm -o $PROJECTNAME.obj -p 255 Main.asm -Wno-unmapped-char
 echo "Linking..."
-rgblink -o $PROJECTNAME.gbc -p 255 -n $PROJECTNAME.sym $PROJECTNAME.obj
+rgblink -o $PROJECTNAME.gbc -p 255 -n $PROJECTNAME.sym $PROJECTNAME.obj -Wtruncation=1
 echo "Fixing..."
 rgbfix -v -p 255 $PROJECTNAME.gbc
 echo "Build complete."
