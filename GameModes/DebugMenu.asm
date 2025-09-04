@@ -150,7 +150,7 @@ Debug_DrawMenuItems:
     cp      -1
     jr      z,.next
     inc     bc
-    sub     $20 ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was " ")
+    sub     ' '
     ld      [de],a
     inc     de
     jr      :-
@@ -177,7 +177,7 @@ Debug_DrawCursor:
     ld      [hl+],a
     ld      a,8
     ld      [hl+],a
-    ld      [hl],$1e ; god fucking dammit rgbds 1.0-rc1 deprecated a feature i actually used and now i have to use magic numbers (was ">"-" ")
+    ld      [hl],'>' - ' '
     ret
     
 Debug_JumpTable_Main:
