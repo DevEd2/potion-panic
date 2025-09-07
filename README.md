@@ -7,7 +7,8 @@ A single-screen platformer for Game Boy Color, created for GBCompo 2025. After a
 - [SuperFamiconv](https://github.com/optiroc/superfamiconv)
 
 ## Building the ROM
-NOTE 1: On Windows, [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) is required.
-NOTE 2: I am currently unable to verify whether or not the repo can be built on macOS.
+NOTE: On Windows, [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) is required. I am currently unable to verify whether or not the repo can be built on macOS.
+
 1. Clone the repo: `$ git clone --recursive https://github.com/DevEd2/potion-panic`
 2. Run `build.sh`. If you get a "permission denied" error, run `chmod -x build.sh` and try again.
+
